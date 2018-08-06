@@ -1,18 +1,21 @@
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class LetterIslands {
     public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        /*String s = br.readLine();
-        s += (char)('z' + 1);*/
+        //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader br = new BufferedReader(new FileReader("D://letterIslands26.txt"));
+        String s = br.readLine();
 
-        int strLen = 100000;
+        /*int strLen = 5;
         StringBuilder build = new StringBuilder();
 
         for (int i = 0; i < strLen; i++) {
@@ -20,27 +23,25 @@ public class LetterIslands {
         }
 
 
-        String s = build.toString();
-        //String s = "abaabaabaa";
+        String s = build.toString();*/
+        //String s = "ababaabaaa";
         s+=(char)('z' + 1);
         //System.out.println(s);
 
         int k = Integer.parseInt(br.readLine());
-        Date start = new Date();
+        //Date start = new Date();
         System.out.println(new LetterIslands().countSubstrings(s, k));
-        Date end = new Date();
-        System.out.println(end.getTime() - start.getTime() + "ms");
+        //Date end = new Date();
+        //System.out.println(end.getTime() - start.getTime() + "ms");
     }
 
     private long countSubstrings(String s, int k) {
         Node root = new SuffixTreeApp().buildTreeOptimal(s);
         setStrLen(root, 0);
         //System.out.println(root.buildTree());
+        long result = 0;
 
         for (Edge edge : root.getEdges()) {
-            if (!edge.getChild().isLeaf()) {
-                edge.initIslandCount();
-            }
             List<Integer> prefix = new ArrayList<>();
             prefix.add(0);
             List<Character> str = new ArrayList<>();
@@ -49,27 +50,45 @@ public class LetterIslands {
             List<Edge> edges = new ArrayList<>();
             edges.add(edge);
 
-            List<Integer> edgePositions = new ArrayList<>();
-            edgePositions.add(0);
+            List<Long> islandsCount = new ArrayList<>();
+            islandsCount.add(edge.getChild().getSuffixCount());
 
-            root.setProcessedEdge(edge);
+            result += prefixCalc(edge, 1, prefix, str, edges, islandsCount, k);
 
-            prefixCalc(edge, 1, prefix, str, edges, edgePositions);
+            if (islandsCount.get(islandsCount.size() - 1) == k && !edge.getChild().isLeaf()) {
+                result++;
+                //System.out.println(str);
+            }
+
+            //System.out.print(islandsCount.get(islandsCount.size() - 1) + " ");
+            //System.out.println(str);
         }
 
-        return 0;
+        if (k == 1) {
+            result += countLeafEdges(root);
+        }
+
+        return result;
     }
 
-    private void prefixCalc(Edge edge, int pos, List<Integer> prefix, List<Character> str, List<Edge> edges, List<Integer> edgePositions) {
+    private long countLeafEdges(Node node) {
+        long result = 0;
+        for (Edge edge : node.getEdges()) {
+            if (edge.getChild().isLeaf()) {
+                result += edge.getEndIndex() - edge.getStartIndex();
+            } else {
+                result += countLeafEdges(edge.getChild());
+            }
+        }
+        return result;
+    }
+
+    private long prefixCalc(Edge edge, int pos, List<Integer> prefix, List<Character> str, List<Edge> edges, List<Long> islandsCount, int k) {
+        long result = 0;
         if (!edge.getChild().isLeaf() || pos < edge.getParent().getStrLen()) {
             if (edge.getEndIndex() - edge.getStartIndex() < pos) {
                 for (Edge ed : edge.getChild().getEdges()) {
-                    edge.getChild().setProcessedEdge(ed);
-                    if (!edge.getChild().isLeaf()) {
-                        ed.initIslandCount();
-                    }
-                    prefixCalc(ed, 0, prefix, str, edges, edgePositions);
-                    ed.disposeIslandCount();
+                    result += prefixCalc(ed, 0, prefix, str, edges, islandsCount, k);
                 }
             } else {
                 char currChar = edge.getChar(pos);
@@ -78,23 +97,37 @@ public class LetterIslands {
                 prefix.add(kmp);
                 str.add(currChar);
                 edges.add(edge);
-                edgePositions.add(pos);
+                islandsCount.add(edge.getChild().getSuffixCount());
 
+                //System.out.println("Add");
                 //System.out.println(str);
                 //System.out.println(prefix);
+                //System.out.println(islandsCount);
+                //System.out.println("==========");
 
                 if (kmp >= prefix.size() - kmp) {
-                    edges.get(kmp - 1).decreaseIslands(edgePositions.get(kmp - 1));
+                    long prevIslands = islandsCount.get(kmp - 1);
+                    islandsCount.set(kmp - 1, prevIslands - edge.getChild().getSuffixCount());
                 }
 
-                prefixCalc(edge, pos + 1, prefix, str, edges, edgePositions);
+                result += prefixCalc(edge, pos + 1, prefix, str, edges, islandsCount, k);
+
+                //System.out.print(islandsCount.get(islandsCount.size() - 1) + " ");
+                //System.out.println(str);
+
+                if (islandsCount.get(islandsCount.size() - 1) == k && !edge.getChild().isLeaf()) {
+                    result++;
+                    //System.out.println(str);
+                }
 
                 str.remove(str.size() - 1);
                 prefix.remove(prefix.size() - 1);
                 edges.remove(edges.size() - 1);
-                edgePositions.remove(edgePositions.size() - 1);
+                islandsCount.remove(islandsCount.size() - 1);
             }
         }
+
+        return result;
     }
 
     private int kmp(List<Character> str, List<Integer> prefix, char currentChar) {
@@ -180,8 +213,6 @@ public class LetterIslands {
         private Edge[] edgesMap2 = new Edge[27];
 
         private List<Edge> edges = new ArrayList<>();
-
-        private Edge processedEdge;
 
         public Node(final SuffixTreeInfo treeInfo, final Node parent) {
             this.treeInfo = treeInfo;
@@ -273,14 +304,6 @@ public class LetterIslands {
             return parent;
         }
 
-        public Edge getProcessedEdge() {
-            return processedEdge;
-        }
-
-        public void setProcessedEdge(final Edge processedEdge) {
-            this.processedEdge = processedEdge;
-        }
-
         public String buildTree() {
             String fullString = treeInfo.getFullString();
 
@@ -310,7 +333,6 @@ public class LetterIslands {
         private int startIndex;
         private int endIndex;
         private SuffixTreeInfo treeInfo;
-        private long[] islandCount;
 
         public Edge(final Node parent, final Node child, final int startIndex, int endIndex, SuffixTreeInfo treeInfo) {
             this.parent = parent;
@@ -318,19 +340,6 @@ public class LetterIslands {
             this.startIndex = startIndex;
             this.endIndex = endIndex;
             this.treeInfo = treeInfo;
-        }
-
-        public void initIslandCount() {
-            islandCount = new long[endIndex - startIndex + 1];
-            Arrays.fill(islandCount, getChild().getSuffixCount());
-        }
-
-        public void disposeIslandCount() {
-            islandCount = null;
-        }
-
-        public void decreaseIslands(int pos) {
-            islandCount[pos] -= getChild().getProcessedEdge().getChild().getSuffixCount();
         }
 
         public int getStartIndex() {
