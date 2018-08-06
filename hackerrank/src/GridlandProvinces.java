@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-public class GridlandProvinces2 {
+public class GridlandProvinces {
     private static final long HASH_BASE = 27;
     private static final long HASH_BASE2 = HASH_BASE * HASH_BASE;
     private static final long HASH_BASE4 = HASH_BASE2 * HASH_BASE2;

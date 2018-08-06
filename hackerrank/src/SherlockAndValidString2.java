@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 /**
  * Created by Denis_Mironchuk on 2/20/2018.
  */
-public class SherlockAndValidString {
+public class SherlockAndValidString2 {
     public static void  main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         String s = br.readLine();

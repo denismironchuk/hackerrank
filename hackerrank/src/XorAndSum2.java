@@ -4,7 +4,7 @@ import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
 
-public class XorAndSum {
+public class XorAndSum2 {
     private static long CNT = 314159;
 
     public static void main(String[] args) throws IOException {

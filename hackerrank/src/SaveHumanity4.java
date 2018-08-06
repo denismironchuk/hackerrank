@@ -3,7 +3,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.StringTokenizer;
 
-public class SaveHumanity {
+public class SaveHumanity4 {
     private static int[] buildPrefixFunction(String s) {
         int n = s.length();
         int[] prefix = new int[n];
