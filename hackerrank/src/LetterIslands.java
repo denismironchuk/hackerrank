@@ -2,36 +2,111 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 public class LetterIslands {
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        String s = br.readLine();
-        s += (char)('z' + 1);
+        /*String s = br.readLine();
+        s += (char)('z' + 1);*/
+
+        int strLen = 100000;
+        StringBuilder build = new StringBuilder();
+
+        for (int i = 0; i < strLen; i++) {
+            build.append((char) ('a' + (char) (Math.random() * 2)));
+        }
+
+
+        String s = build.toString();
+        //String s = "abaabaabaa";
+        s+=(char)('z' + 1);
+        //System.out.println(s);
 
         int k = Integer.parseInt(br.readLine());
+        Date start = new Date();
         System.out.println(new LetterIslands().countSubstrings(s, k));
+        Date end = new Date();
+        System.out.println(end.getTime() - start.getTime() + "ms");
     }
 
     private long countSubstrings(String s, int k) {
         Node root = new SuffixTreeApp().buildTreeOptimal(s);
         setStrLen(root, 0);
+        //System.out.println(root.buildTree());
 
+        for (Edge edge : root.getEdges()) {
+            if (!edge.getChild().isLeaf()) {
+                edge.initIslandCount();
+            }
+            List<Integer> prefix = new ArrayList<>();
+            prefix.add(0);
+            List<Character> str = new ArrayList<>();
+            str.add(edge.getChar(0));
 
+            List<Edge> edges = new ArrayList<>();
+            edges.add(edge);
+
+            List<Integer> edgePositions = new ArrayList<>();
+            edgePositions.add(0);
+
+            root.setProcessedEdge(edge);
+
+            prefixCalc(edge, 1, prefix, str, edges, edgePositions);
+        }
 
         return 0;
     }
 
-    private void prefixCalc(Edge edge, int pos, List<Integer> prefix) {
+    private void prefixCalc(Edge edge, int pos, List<Integer> prefix, List<Character> str, List<Edge> edges, List<Integer> edgePositions) {
         if (!edge.getChild().isLeaf() || pos < edge.getParent().getStrLen()) {
-            if (edge.getEndIndex() - edge.getStartIndex() > pos) {
-                for (Edge ed : edge.getChild(). getEdges()) {
-                    prefixCalc(ed, 0, prefix);
+            if (edge.getEndIndex() - edge.getStartIndex() < pos) {
+                for (Edge ed : edge.getChild().getEdges()) {
+                    edge.getChild().setProcessedEdge(ed);
+                    if (!edge.getChild().isLeaf()) {
+                        ed.initIslandCount();
+                    }
+                    prefixCalc(ed, 0, prefix, str, edges, edgePositions);
+                    ed.disposeIslandCount();
                 }
             } else {
-                prefixCalc(edge, pos + 1, prefix);
+                char currChar = edge.getChar(pos);
+                int kmp = kmp(str, prefix, currChar);
+
+                prefix.add(kmp);
+                str.add(currChar);
+                edges.add(edge);
+                edgePositions.add(pos);
+
+                //System.out.println(str);
+                //System.out.println(prefix);
+
+                if (kmp >= prefix.size() - kmp) {
+                    edges.get(kmp - 1).decreaseIslands(edgePositions.get(kmp - 1));
+                }
+
+                prefixCalc(edge, pos + 1, prefix, str, edges, edgePositions);
+
+                str.remove(str.size() - 1);
+                prefix.remove(prefix.size() - 1);
+                edges.remove(edges.size() - 1);
+                edgePositions.remove(edgePositions.size() - 1);
             }
+        }
+    }
+
+    private int kmp(List<Character> str, List<Integer> prefix, char currentChar) {
+        int prevIndex = str.size() - 1;
+        while (str.get(prefix.get(prevIndex)) != currentChar && prefix.get(prevIndex) != 0) {
+            prevIndex = prefix.get(prevIndex) - 1;
+        }
+
+        if (str.get(prefix.get(prevIndex)) == currentChar) {
+           return prefix.get(prevIndex) + 1;
+        } else {
+            return 0;
         }
     }
 
@@ -105,6 +180,8 @@ public class LetterIslands {
         private Edge[] edgesMap2 = new Edge[27];
 
         private List<Edge> edges = new ArrayList<>();
+
+        private Edge processedEdge;
 
         public Node(final SuffixTreeInfo treeInfo, final Node parent) {
             this.treeInfo = treeInfo;
@@ -196,6 +273,14 @@ public class LetterIslands {
             return parent;
         }
 
+        public Edge getProcessedEdge() {
+            return processedEdge;
+        }
+
+        public void setProcessedEdge(final Edge processedEdge) {
+            this.processedEdge = processedEdge;
+        }
+
         public String buildTree() {
             String fullString = treeInfo.getFullString();
 
@@ -209,10 +294,7 @@ public class LetterIslands {
                     }
                     res.append("\"")
                             .append(fullString.substring(e.getStartIndex(), e.getEndIndex() + 1))
-                            //.append("_").append(e.getChild().getSuffixNum())
                             //.append("_").append(e.getChild().strLen)
-                            //.append("_").append(e.getChild().palindomsCnt)
-                            .append("_").append(e.getChild().getSuffixCount())
                             .append("\":").append(e.getChild().buildTree()).append("");
                     isFirst = false;
                     hasAny=true;
@@ -228,6 +310,7 @@ public class LetterIslands {
         private int startIndex;
         private int endIndex;
         private SuffixTreeInfo treeInfo;
+        private long[] islandCount;
 
         public Edge(final Node parent, final Node child, final int startIndex, int endIndex, SuffixTreeInfo treeInfo) {
             this.parent = parent;
@@ -235,6 +318,19 @@ public class LetterIslands {
             this.startIndex = startIndex;
             this.endIndex = endIndex;
             this.treeInfo = treeInfo;
+        }
+
+        public void initIslandCount() {
+            islandCount = new long[endIndex - startIndex + 1];
+            Arrays.fill(islandCount, getChild().getSuffixCount());
+        }
+
+        public void disposeIslandCount() {
+            islandCount = null;
+        }
+
+        public void decreaseIslands(int pos) {
+            islandCount[pos] -= getChild().getProcessedEdge().getChild().getSuffixCount();
         }
 
         public int getStartIndex() {
@@ -286,6 +382,10 @@ public class LetterIslands {
             this.endIndex = startIndex + pos;
 
             return middleVerticle.process(c);
+        }
+
+        public char getChar(int pos) {
+            return treeInfo.fullString.charAt(startIndex + pos);
         }
     }
 
