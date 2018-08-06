@@ -1,7 +1,6 @@
 package cardsPermutations;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
@@ -9,6 +8,8 @@ import java.util.*;
 public class CardsPermutationFinal {
     private final static long MOD = 1000000007;
     private final static long INV_TWO = inverseElmnt(2);
+    private static final long Y_DISP = 10000000000l;
+    private static final Set<Long> USED_Y = new HashSet<>();
 
     private static long pow(long n, long p) {
         if (p == 0) {
@@ -26,18 +27,24 @@ public class CardsPermutationFinal {
         return pow(n, MOD - 2);
     }
 
-    public static void main(String[] args) throws IOException {
-        //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        BufferedReader br = new BufferedReader(new FileReader("D:\\cardPermsInpt2.txt"));
-        int n = Integer.parseInt(br.readLine());
-        int[] perm = new int[n];
-        StringTokenizer permTkn = new StringTokenizer(br.readLine());
-
-        for (int i = 0; i < n; i++) {
-            perm[i] = Integer.parseInt(permTkn.nextToken());
+    private static long fact(int n) {
+        long res = 1;
+        for(int i = 1; i <= n; i++) {
+            res = (res * i) % MOD;
         }
+        return res;
+    }
 
-        Date start = new Date();
+    private static long generateY() {
+        long y;
+        do {
+            y = (long)(Y_DISP * Math.random());
+        } while (USED_Y.contains(y));
+        USED_Y.add(y);
+        return y;
+    }
+
+    private long run(int n, int[] perm) {
         int[] undefinedAmnt = new int[n];
         undefinedAmnt[n - 1] = 0;
 
@@ -116,6 +123,36 @@ public class CardsPermutationFinal {
             }
         }
 
+        int[] lessAmntLeft = new int[n + 1];
+
+        cell = n - 1;
+        while (cell >= 0 && perm[cell] == 0) {
+            cell--;
+        }
+
+        Treap t = null;
+        if (cell >= 0) {
+            t = new Treap(perm[cell], generateY(), null, null);
+        }
+
+        for (int i = cell - 1; i >= 0; i--) {
+            if (perm[i] != 0) {
+                Treap res = new Treap(perm[i], generateY(), null, null);
+
+                Treap[] splitRes = t.split(perm[i]);
+                lessAmntLeft[perm[i]] = splitRes[0] == null ? 0 : splitRes[0].size;
+
+                if (null != splitRes[0]) {
+                    res = merge(splitRes[0], res);
+                }
+
+                if (null != splitRes[1]) {
+                    res = merge(res, splitRes[1]);
+                }
+                t = res;
+            }
+        }
+
         int[] defVals = new int[n - totalUndef];
         int defValsSize = 0;
 
@@ -123,23 +160,6 @@ public class CardsPermutationFinal {
             if (perm[i] != 0) {
                 defVals[defValsSize] = perm[i];
                 defValsSize++;
-            }
-        }
-
-        int[] lessAmntLeft = new int[n + 1];
-        int[] prevSmallerPos = new int[n - totalUndef];
-        prevSmallerPos[n - totalUndef - 1] = -1;
-        lessAmntLeft[defVals[n - totalUndef - 1]] = 0;
-        for (int i = n - totalUndef - 2; i >= 0; i--) {
-            int smalPos = i + 1;
-            while (smalPos != -1 && defVals[i] < defVals[smalPos]) {
-                smalPos = prevSmallerPos[smalPos];
-            }
-            prevSmallerPos[i] = smalPos;
-            if (prevSmallerPos[i] == -1) {
-                lessAmntLeft[defVals[i]] = 0;
-            } else {
-                lessAmntLeft[defVals[i]] = lessAmntLeft[defVals[prevSmallerPos[i]]] + 1;
             }
         }
 
@@ -162,7 +182,7 @@ public class CardsPermutationFinal {
 
         for (int i = n - 1; i >= 0; i--) {
             if (perm[i] != 0) {
-                 resultInpt[i] = (((incr[i] * (perm[i] - 1 - smallerDefined[perm[i]])) % MOD) +
+                resultInpt[i] = (((incr[i] * (perm[i] - 1 - smallerDefined[perm[i]])) % MOD) +
                         (lessAmntLeft[perm[i]] * bin[i]) % MOD) % MOD;
             }
         }
@@ -212,75 +232,109 @@ public class CardsPermutationFinal {
         for (int i = 0; i < n; i++) {
             result = (result + resultInpt[i]) % MOD;
         }
-        Date end = new Date();
-        System.out.println(result);
-        System.out.println(end.getTime() - start.getTime() + "ms");
+
+        return result;
     }
 
-    private static long fact(int n) {
-        long res = 1;
-        for(int i = 1; i <= n; i++) {
-           res = (res * i) % MOD;
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        //BufferedReader br = new BufferedReader(new FileReader("D:\\cards44.txt"));
+        //BufferedReader br = new BufferedReader(new FileReader("D:\\cards41.txt"));
+        int n = Integer.parseInt(br.readLine());
+        int[] perm = new int[n];
+        StringTokenizer permTkn = new StringTokenizer(br.readLine());
+
+        for (int i = 0; i < n; i++) {
+            perm[i] = Integer.parseInt(permTkn.nextToken());
         }
+
+        //Date start = new Date();
+        long res = new CardsPermutationFinal().run(n, perm);
+        //Date end = new Date();
+        //System.out.println(end.getTime() - start.getTime() + "ms");
+        System.out.println(res);
+    }
+
+    private static void recalculateSize(Treap t) {
+        if (null != t) {
+            t.recalculateSize();
+        }
+    }
+
+    public Treap merge(Treap l, Treap r) {
+        if (null == l) {
+            return r;
+        }
+
+        if (null == r) {
+            return l;
+        }
+
+        Treap res;
+
+        if (l.y > r.y) {
+            Treap newTreap = merge(l.right, r);
+            recalculateSize(newTreap);
+            res = new Treap(l.x, l.y, l.left, newTreap);
+        } else {
+            Treap newTreap = merge(l, r.left);
+            recalculateSize(newTreap);
+            res = new Treap(r.x, r.y, newTreap, r.right);
+        }
+
+        recalculateSize(res);
         return res;
     }
 
-    public static int findFirstGreater(List<Integer> list, int val, int start, int end) {
-        if (val > list.get(list.size() - 1)) {
-            return list.size();
+    private class Treap {
+        private int x;
+        private long y;
+
+        private Treap left;
+        private Treap right;
+
+        private int size;
+
+        public Treap(final int x, final long y, final Treap left, final Treap right) {
+            this.x = x;
+            this.y = y;
+            this.right = right;
+            this.left = left;
         }
 
-        if (val < list.get(0)) {
-            return 0;
+        private void recalculateSize() {
+            size = (null == left ? 0 : left.size) + (null == right ? 0 : right.size) + 1;
         }
 
-        return findFirstGreaterInner(list, val, start, end);
-    }
 
-    public static int findFirstGreaterInner(List<Integer> list, int val, int start, int end) {
-        while (start != end) {
-            int middle = (start + end) / 2;
-            int middleElmnt = list.get(middle);
-            if (val < middleElmnt) {
-                end = middle;
+        public Treap[] split(int x) {
+            Treap newLeft = null;
+            Treap newRight = null;
+
+            if (x < this.x) {
+
+                if (this.left == null) {
+                    newRight = new Treap(this.x, this.y, this.left, this.right);
+                } else {
+                    Treap[] splitResult = this.left.split(x);
+                    newLeft = splitResult[0];
+                    newRight = new Treap(this.x, this.y, splitResult[1], this.right);
+                }
             } else {
-                start = middle + 1;
+                if (this.right == null) {
+                    newLeft = new Treap(this.x, this.y, this.left, this.right);
+                } else {
+                    Treap[] splitResult = this.right.split(x);
+                    newLeft = new Treap(this.x, this.y, this.left, splitResult[0]);
+                    newRight = splitResult[1];
+                }
             }
+
+            CardsPermutationFinal.recalculateSize(newLeft);
+            CardsPermutationFinal.recalculateSize(newRight);
+
+            return new Treap[]{newLeft, newRight};
         }
-
-        return start;
-    }
-
-    public static int findFirstGreater(int[] list, int val, int start, int end) {
-        if (val > list[end]) {
-            return end + 1;
-        }
-
-        if (val < list[0]) {
-            return 0;
-        }
-
-        return findFirstGreaterInner(list, val, start, end);
-    }
-
-    public static int findFirstGreaterInner(int[] list, int val, int start, int end) {
-        while (start != end) {
-            int middle = (start + end) / 2;
-            int middleElmnt = list[middle];
-            if (val < middleElmnt) {
-                end = middle;
-            } else {
-                start = middle + 1;
-            }
-        }
-
-        return start;
-    }
-
-    public static void insertIntoList(int[] list, int val, int posToInsert, int listSize) {
-        System.arraycopy(list, posToInsert, list, posToInsert + 1,
-                listSize - posToInsert);
-
-        list[posToInsert] = val;
     }
 }
+
