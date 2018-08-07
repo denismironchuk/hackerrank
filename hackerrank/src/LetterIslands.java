@@ -1,3 +1,5 @@
+import utils.KMP;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -13,12 +15,14 @@ import java.util.Set;
 import java.util.Stack;
 
 public class LetterIslands {
-    public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        //BufferedReader br = new BufferedReader(new FileReader("D://letterIslands26.txt"));
-        //String s = br.readLine();
+    private static long KMP_TIME = 0;
 
-        int strLen = 100000;
+    public static void main(String[] args) throws IOException {
+        //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader br = new BufferedReader(new FileReader("D://letterIslands31.txt"));
+        String s = br.readLine();
+
+        /*int strLen = 100000;
         StringBuilder build = new StringBuilder();
 
         for (int i = 0; i < strLen; i++) {
@@ -27,7 +31,7 @@ public class LetterIslands {
         }
 
 
-        String s = build.toString();
+        String s = build.toString();*/
         s+=(char)('z' + 1);
         //System.out.println(s);
 
@@ -35,6 +39,7 @@ public class LetterIslands {
         Date start = new Date();
         System.out.println(new LetterIslands().countSubstrings(s, k));
         Date end = new Date();
+        System.out.println("KMP took" + KMP_TIME + "ms");
         System.out.println(end.getTime() - start.getTime() + "ms");
     }
 
@@ -45,9 +50,9 @@ public class LetterIslands {
         //System.out.println(root.buildTree());
         long result = prefixCalcNoRecursion(root, k);
 
-        if (k == 1) {
+        /*if (k == 1) {
             result += countLeafEdges(root);
-        }
+        }*/
 
         return result;
     }
@@ -70,7 +75,9 @@ public class LetterIslands {
 
         long result = 0;
 
+        int edgeCnt = 0;
         for (Edge ed : root.getEdges()) {
+
             stack.push(ed);
 
             List<Integer> prefix = new ArrayList<>();
@@ -78,6 +85,9 @@ public class LetterIslands {
             List<Long> islandsCount = new ArrayList<>();
 
             while (!stack.isEmpty()) {
+                edgeCnt++;
+                System.out.println(edgeCnt);
+
                 Edge edge = stack.peek();
 
                 if (!processed.contains(edge)) {
@@ -110,7 +120,10 @@ public class LetterIslands {
 
         while (pos < limit) {
             char currChar = edge.getChar(pos);
+            Date kmpStart = new Date();
             int kmp = kmp(str, prefix, currChar);
+            Date kmpEnd = new Date();
+            KMP_TIME += kmpEnd.getTime() - kmpStart.getTime();
 
             prefix.add(kmp);
             str.add(currChar);
@@ -145,7 +158,7 @@ public class LetterIslands {
     }
 
     private int kmp(List<Character> str, List<Integer> prefix, char currentChar) {
-        if (str.isEmpty()) {
+        if (str.isEmpty() || currentChar == '{') {
             return 0;
         }
 
