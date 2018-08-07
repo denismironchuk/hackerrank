@@ -6,63 +6,44 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
+import java.util.Stack;
 
 public class LetterIslands {
     public static void main(String[] args) throws IOException {
-        //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        BufferedReader br = new BufferedReader(new FileReader("D://letterIslands26.txt"));
-        String s = br.readLine();
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        //BufferedReader br = new BufferedReader(new FileReader("D://letterIslands26.txt"));
+        //String s = br.readLine();
 
-        /*int strLen = 5;
+        int strLen = 100000;
         StringBuilder build = new StringBuilder();
 
         for (int i = 0; i < strLen; i++) {
-            build.append((char) ('a' + (char) (Math.random() * 2)));
+            //build.append((char) ('a' + (char) (Math.random() * 2)));
+            build.append("ab");
         }
 
 
-        String s = build.toString();*/
-        //String s = "ababaabaaa";
+        String s = build.toString();
         s+=(char)('z' + 1);
         //System.out.println(s);
 
         int k = Integer.parseInt(br.readLine());
-        //Date start = new Date();
+        Date start = new Date();
         System.out.println(new LetterIslands().countSubstrings(s, k));
-        //Date end = new Date();
-        //System.out.println(end.getTime() - start.getTime() + "ms");
+        Date end = new Date();
+        System.out.println(end.getTime() - start.getTime() + "ms");
     }
 
     private long countSubstrings(String s, int k) {
         Node root = new SuffixTreeApp().buildTreeOptimal(s);
-        setStrLen(root, 0);
+        setStrLenNoRecursion(root);
+        setSuffixCountNoRecursion(root);
         //System.out.println(root.buildTree());
-        long result = 0;
-
-        for (Edge edge : root.getEdges()) {
-            List<Integer> prefix = new ArrayList<>();
-            prefix.add(0);
-            List<Character> str = new ArrayList<>();
-            str.add(edge.getChar(0));
-
-            List<Edge> edges = new ArrayList<>();
-            edges.add(edge);
-
-            List<Long> islandsCount = new ArrayList<>();
-            islandsCount.add(edge.getChild().getSuffixCount());
-
-            result += prefixCalc(edge, 1, prefix, str, edges, islandsCount, k);
-
-            if (islandsCount.get(islandsCount.size() - 1) == k && !edge.getChild().isLeaf()) {
-                result++;
-                //System.out.println(str);
-            }
-
-            //System.out.print(islandsCount.get(islandsCount.size() - 1) + " ");
-            //System.out.println(str);
-        }
+        long result = prefixCalcNoRecursion(root, k);
 
         if (k == 1) {
             result += countLeafEdges(root);
@@ -83,54 +64,91 @@ public class LetterIslands {
         return result;
     }
 
-    private long prefixCalc(Edge edge, int pos, List<Integer> prefix, List<Character> str, List<Edge> edges, List<Long> islandsCount, int k) {
+    private long prefixCalcNoRecursion(Node root, int k) {
+        Stack<Edge> stack = new Stack<>();
+        Set<Edge> processed = new HashSet<>();
+
         long result = 0;
-        if (!edge.getChild().isLeaf() || pos < edge.getParent().getStrLen()) {
-            if (edge.getEndIndex() - edge.getStartIndex() < pos) {
-                for (Edge ed : edge.getChild().getEdges()) {
-                    result += prefixCalc(ed, 0, prefix, str, edges, islandsCount, k);
+
+        for (Edge ed : root.getEdges()) {
+            stack.push(ed);
+
+            List<Integer> prefix = new ArrayList<>();
+            List<Character> str = new ArrayList<>();
+            List<Long> islandsCount = new ArrayList<>();
+
+            while (!stack.isEmpty()) {
+                Edge edge = stack.peek();
+
+                if (!processed.contains(edge)) {
+                    processed.add(edge);
+                    int pos = moveForward(edge, prefix, str, islandsCount);
+
+                    if (!edge.getChild().isLeaf()) {
+                        for (Edge nextEdge : edge.getChild().getEdges()) {
+                            stack.push(nextEdge);
+                        }
+                    } else {
+                        result += moveBackward(edge, pos, prefix, str, islandsCount, k);
+                        stack.pop();
+                    }
+                } else {
+                    int pos = edge.getEndIndex() - edge.getStartIndex() + 1;
+                    result += moveBackward(edge, pos, prefix, str, islandsCount, k);
+                    stack.pop();
                 }
-            } else {
-                char currChar = edge.getChar(pos);
-                int kmp = kmp(str, prefix, currChar);
-
-                prefix.add(kmp);
-                str.add(currChar);
-                edges.add(edge);
-                islandsCount.add(edge.getChild().getSuffixCount());
-
-                //System.out.println("Add");
-                //System.out.println(str);
-                //System.out.println(prefix);
-                //System.out.println(islandsCount);
-                //System.out.println("==========");
-
-                if (kmp >= prefix.size() - kmp) {
-                    long prevIslands = islandsCount.get(kmp - 1);
-                    islandsCount.set(kmp - 1, prevIslands - edge.getChild().getSuffixCount());
-                }
-
-                result += prefixCalc(edge, pos + 1, prefix, str, edges, islandsCount, k);
-
-                //System.out.print(islandsCount.get(islandsCount.size() - 1) + " ");
-                //System.out.println(str);
-
-                if (islandsCount.get(islandsCount.size() - 1) == k && !edge.getChild().isLeaf()) {
-                    result++;
-                    //System.out.println(str);
-                }
-
-                str.remove(str.size() - 1);
-                prefix.remove(prefix.size() - 1);
-                edges.remove(edges.size() - 1);
-                islandsCount.remove(islandsCount.size() - 1);
             }
         }
 
         return result;
     }
 
+    private int moveForward(Edge edge, List<Integer> prefix, List<Character> str, List<Long> islandsCount) {
+        int edgeLen = edge.getEndIndex() - edge.getStartIndex() + 1;
+        int limit = edge.getChild().isLeaf() ? Math.min(edge.getParent().getStrLen(), edgeLen) : edgeLen;
+        int pos = 0;
+
+        while (pos < limit) {
+            char currChar = edge.getChar(pos);
+            int kmp = kmp(str, prefix, currChar);
+
+            prefix.add(kmp);
+            str.add(currChar);
+            islandsCount.add(edge.getChild().getSuffixCount());
+
+            if (kmp >= prefix.size() - kmp) {
+                long prevIslands = islandsCount.get(kmp - 1);
+                islandsCount.set(kmp - 1, prevIslands - edge.getChild().getSuffixCount());
+            }
+
+            pos++;
+        }
+
+        return pos;
+    }
+
+    private long moveBackward(Edge edge, int pos, List<Integer> prefix, List<Character> str, List<Long> islandsCount, int k) {
+        long result = 0;
+
+        while (pos > 0) {
+            if (islandsCount.get(islandsCount.size() - 1) == k && !edge.getChild().isLeaf()) {
+                result++;
+            }
+
+            str.remove(str.size() - 1);
+            prefix.remove(prefix.size() - 1);
+            islandsCount.remove(islandsCount.size() - 1);
+            pos--;
+        }
+
+        return result;
+    }
+
     private int kmp(List<Character> str, List<Integer> prefix, char currentChar) {
+        if (str.isEmpty()) {
+            return 0;
+        }
+
         int prevIndex = str.size() - 1;
         while (str.get(prefix.get(prevIndex)) != currentChar && prefix.get(prevIndex) != 0) {
             prevIndex = prefix.get(prevIndex) - 1;
@@ -143,11 +161,47 @@ public class LetterIslands {
         }
     }
 
-    private  void setStrLen(Node node, int len) {
-        for (Edge childEdge : node.getEdges()) {
-            int newLen = len + childEdge.getEndIndex() - childEdge.getStartIndex() + 1;
-            childEdge.getChild().setStrLen(newLen);
-            setStrLen(childEdge.getChild(), newLen);
+    private void setStrLenNoRecursion(Node root) {
+        Queue<Edge> queue = new LinkedList<>();
+        for (Edge edge : root.getEdges()) {
+            queue.add(edge);
+        }
+
+        while (!queue.isEmpty()) {
+            Edge edge = queue.poll();
+            edge.getChild().setStrLen(edge.getParent().getStrLen() + edge.getEndIndex() - edge.getStartIndex() + 1);
+
+            for (Edge childEdge : edge.getChild().getEdges()) {
+                queue.add(childEdge);
+            }
+        }
+    }
+
+    private void setSuffixCountNoRecursion(Node root) {
+        Stack<Node> stack = new Stack<>();
+        Set<Node> processed = new HashSet<>();
+
+        stack.push(root);
+        while (!stack.isEmpty()) {
+            Node nd = stack.peek();
+
+            if (!processed.contains(nd)) {
+                if (nd.isLeaf()) {
+                    nd.setSuffixCount(1);
+                    stack.pop();
+                } else {
+                    for (Edge edge : nd.getEdges()) {
+                        stack.push(edge.getChild());
+                    }
+                }
+
+                processed.add(nd);
+            } else {
+                for (Edge edge : nd.getEdges()) {
+                    nd.setSuffixCount(nd.getSuffixCount() + edge.getChild().getSuffixCount());
+                }
+                stack.pop();
+            }
         }
     }
 
@@ -207,7 +261,7 @@ public class LetterIslands {
         private Node suffix = null;
         private SuffixTreeInfo treeInfo;
         private int strLen = 0;
-        private int suffixCount = -1;
+        private long suffixCount = 0;
 
         private int childCnt = 0;
         private Edge[] edgesMap2 = new Edge[27];
@@ -274,18 +328,11 @@ public class LetterIslands {
         }
 
         public long getSuffixCount() {
-            if (suffixCount == -1) {
-                if (isLeaf()) {
-                    suffixCount = 1;
-                } else {
-                    suffixCount = 0;
-                    for (Edge edge : getEdges()) {
-                        suffixCount += edge.getChild().getSuffixCount();
-                    }
-                }
-            }
-
             return suffixCount;
+        }
+
+        public void setSuffixCount(final long suffixCount) {
+            this.suffixCount = suffixCount;
         }
 
         public boolean isRoot() {
@@ -317,7 +364,7 @@ public class LetterIslands {
                     }
                     res.append("\"")
                             .append(fullString.substring(e.getStartIndex(), e.getEndIndex() + 1))
-                            //.append("_").append(e.getChild().strLen)
+                            .append("_").append(e.getChild().getSuffixCount())
                             .append("\":").append(e.getChild().buildTree()).append("");
                     isFirst = false;
                     hasAny=true;
