@@ -1,11 +1,8 @@
-import utils.KMP;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -16,6 +13,10 @@ import java.util.Stack;
 
 public class LetterIslands {
     private static long KMP_TIME = 0;
+    private static Set<Character> CHARS = new HashSet<>();
+    private static char[] CHARS_ARRAY;
+    private static int STR_LEN;
+    private static int ARRAY_LEN = 0;
 
     public static void main(String[] args) throws IOException {
         //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -33,17 +34,31 @@ public class LetterIslands {
 
         String s = build.toString();*/
         s+=(char)('z' + 1);
+        STR_LEN = s.length();
         //System.out.println(s);
 
         int k = Integer.parseInt(br.readLine());
         Date start = new Date();
         System.out.println(new LetterIslands().countSubstrings(s, k));
         Date end = new Date();
-        System.out.println("KMP took" + KMP_TIME + "ms");
+        //System.out.println("KMP took " + KMP_TIME + " ms");
         System.out.println(end.getTime() - start.getTime() + "ms");
     }
 
     private long countSubstrings(String s, int k) {
+        for (int i = 0; i < s.length(); i++) {
+            if (s.charAt(i) != '{') {
+                CHARS.add(s.charAt(i));
+            }
+        }
+
+        CHARS_ARRAY = new char[CHARS.size()];
+        int i = 0;
+        for (Character c : CHARS) {
+            CHARS_ARRAY[i] = c;
+            i++;
+        }
+
         Node root = new SuffixTreeApp().buildTreeOptimal(s);
         setStrLenNoRecursion(root);
         setSuffixCountNoRecursion(root);
@@ -74,37 +89,39 @@ public class LetterIslands {
         Set<Edge> processed = new HashSet<>();
 
         long result = 0;
+        //int edgeCnt = 0;
 
-        int edgeCnt = 0;
+        char[] str = new char[STR_LEN];
+        long[] islandsCount = new long[STR_LEN];
+        int[][] transitions = new int[STR_LEN][CHARS_ARRAY.length];
+
         for (Edge ed : root.getEdges()) {
 
             stack.push(ed);
 
-            List<Integer> prefix = new ArrayList<>();
-            List<Character> str = new ArrayList<>();
-            List<Long> islandsCount = new ArrayList<>();
-
             while (!stack.isEmpty()) {
-                edgeCnt++;
-                System.out.println(edgeCnt);
+                /*edgeCnt++;
+                if (edgeCnt % 10000 == 0) {
+                    System.out.println(edgeCnt);
+                }*/
 
                 Edge edge = stack.peek();
 
                 if (!processed.contains(edge)) {
                     processed.add(edge);
-                    int pos = moveForward(edge, prefix, str, islandsCount);
+                    int pos = moveForward(edge, str, islandsCount, transitions);
 
                     if (!edge.getChild().isLeaf()) {
                         for (Edge nextEdge : edge.getChild().getEdges()) {
                             stack.push(nextEdge);
                         }
                     } else {
-                        result += moveBackward(edge, pos, prefix, str, islandsCount, k);
+                        result += moveBackward(edge, pos, islandsCount, k);
                         stack.pop();
                     }
                 } else {
                     int pos = edge.getEndIndex() - edge.getStartIndex() + 1;
-                    result += moveBackward(edge, pos, prefix, str, islandsCount, k);
+                    result += moveBackward(edge, pos, islandsCount, k);
                     stack.pop();
                 }
             }
@@ -113,25 +130,23 @@ public class LetterIslands {
         return result;
     }
 
-    private int moveForward(Edge edge, List<Integer> prefix, List<Character> str, List<Long> islandsCount) {
+    private int moveForward(Edge edge, char[] str, long[] islandsCount, int[][] transitions) {
         int edgeLen = edge.getEndIndex() - edge.getStartIndex() + 1;
         int limit = edge.getChild().isLeaf() ? Math.min(edge.getParent().getStrLen(), edgeLen) : edgeLen;
         int pos = 0;
 
         while (pos < limit) {
             char currChar = edge.getChar(pos);
-            Date kmpStart = new Date();
-            int kmp = kmp(str, prefix, currChar);
-            Date kmpEnd = new Date();
-            KMP_TIME += kmpEnd.getTime() - kmpStart.getTime();
+            str[ARRAY_LEN] = currChar;
+            //Date kmpStart = new Date();
+            int kmp = kmp(str, currChar, transitions);
+            //Date kmpEnd = new Date();
+            //KMP_TIME += kmpEnd.getTime() - kmpStart.getTime();
 
-            prefix.add(kmp);
-            str.add(currChar);
-            islandsCount.add(edge.getChild().getSuffixCount());
-
-            if (kmp >= prefix.size() - kmp) {
-                long prevIslands = islandsCount.get(kmp - 1);
-                islandsCount.set(kmp - 1, prevIslands - edge.getChild().getSuffixCount());
+            islandsCount[ARRAY_LEN] = edge.getChild().getSuffixCount();
+            ARRAY_LEN++;
+            if (kmp >= ARRAY_LEN - kmp) {
+                islandsCount[kmp - 1] -= edge.getChild().getSuffixCount();
             }
 
             pos++;
@@ -140,39 +155,56 @@ public class LetterIslands {
         return pos;
     }
 
-    private long moveBackward(Edge edge, int pos, List<Integer> prefix, List<Character> str, List<Long> islandsCount, int k) {
+    private long moveBackward(Edge edge, int pos, long[] islandsCount, int k) {
         long result = 0;
 
         while (pos > 0) {
-            if (islandsCount.get(islandsCount.size() - 1) == k && !edge.getChild().isLeaf()) {
+            if (islandsCount[ARRAY_LEN - 1] == k && !edge.getChild().isLeaf()) {
                 result++;
             }
 
-            str.remove(str.size() - 1);
-            prefix.remove(prefix.size() - 1);
-            islandsCount.remove(islandsCount.size() - 1);
             pos--;
+            ARRAY_LEN--;
         }
 
         return result;
     }
 
-    private int kmp(List<Character> str, List<Integer> prefix, char currentChar) {
-        if (str.isEmpty() || currentChar == '{') {
+    private int kmp(char[] str, char currentChar, int[][] transitions) {
+        if (ARRAY_LEN == 0 || currentChar == '{') {
+            initFirstTransitions(str, transitions);
             return 0;
         }
 
-        int prevIndex = str.size() - 1;
-        while (str.get(prefix.get(prevIndex)) != currentChar && prefix.get(prevIndex) != 0) {
-            prevIndex = prefix.get(prevIndex) - 1;
-        }
+        int[] lastTransitions = transitions[ARRAY_LEN - 1];
+        int newPrefix = lastTransitions[currentChar - 'a'];
 
-        if (str.get(prefix.get(prevIndex)) == currentChar) {
-           return prefix.get(prevIndex) + 1;
+        if (newPrefix > 0) {
+            int[] prefixTransitions = transitions[newPrefix - 1];
+            for (char c : CHARS_ARRAY) {
+                if (str[newPrefix] == c) {
+                    transitions[ARRAY_LEN][c - 'a'] = newPrefix + 1;
+                } else {
+                    transitions[ARRAY_LEN][c - 'a'] = prefixTransitions[c - 'a'];
+                }
+            }
         } else {
-            return 0;
+            initFirstTransitions(str, transitions);
+        }
+
+        return newPrefix;
+    }
+
+    private void initFirstTransitions(char[] str, final int[][] transitions) {
+        for (char c : CHARS_ARRAY) {
+            if (str[0] == c) {
+                transitions[ARRAY_LEN][c - 'a'] = 1;
+            } else {
+                transitions[ARRAY_LEN][c - 'a'] = 0;
+            }
         }
     }
+
 
     private void setStrLenNoRecursion(Node root) {
         Queue<Edge> queue = new LinkedList<>();
