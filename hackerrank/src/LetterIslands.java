@@ -19,8 +19,8 @@ public class LetterIslands {
     private static int ARRAY_LEN = 0;
 
     public static void main(String[] args) throws IOException {
-        //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        BufferedReader br = new BufferedReader(new FileReader("D://letterIslands31.txt"));
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        //BufferedReader br = new BufferedReader(new FileReader("D://letterIslands31.txt"));
         String s = br.readLine();
 
         /*int strLen = 100000;
@@ -38,11 +38,11 @@ public class LetterIslands {
         //System.out.println(s);
 
         int k = Integer.parseInt(br.readLine());
-        Date start = new Date();
+        //Date start = new Date();
         System.out.println(new LetterIslands().countSubstrings(s, k));
-        Date end = new Date();
+        //Date end = new Date();
         //System.out.println("KMP took " + KMP_TIME + " ms");
-        System.out.println(end.getTime() - start.getTime() + "ms");
+        //System.out.println(end.getTime() - start.getTime() + "ms");
     }
 
     private long countSubstrings(String s, int k) {
@@ -65,9 +65,9 @@ public class LetterIslands {
         //System.out.println(root.buildTree());
         long result = prefixCalcNoRecursion(root, k);
 
-        /*if (k == 1) {
+        if (k == 1) {
             result += countLeafEdges(root);
-        }*/
+        }
 
         return result;
     }
