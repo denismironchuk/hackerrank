@@ -1,8 +1,6 @@
 package utils;
 
 import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Created by Denis_Mironchuk on 8/17/2018.
