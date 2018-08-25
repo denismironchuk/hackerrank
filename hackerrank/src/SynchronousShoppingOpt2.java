@@ -3,13 +3,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 
-public class SynchronousShoppingOptimize {
+public class SynchronousShoppingOpt2 {
     static class Node {
         private int num;
         private int fishTypes = 0;
         private Map<Node, Integer> connectedNodes = new HashMap<>();
-        //fishType -> time
-        private Map<Integer, Long> knownTime = new HashMap<>();
 
         public Node(final int num, final int fishTypes) {
             this.num = num;
@@ -34,6 +32,43 @@ public class SynchronousShoppingOptimize {
             return fastPow(n * n, p / 2);
         } else {
             return n * fastPow(n, p - 1);
+        }
+    }
+
+    static class NodeInfo implements Comparable{
+        private long time;
+        private int store;
+        private int fishTypes;
+
+        public NodeInfo(int store, long time, int fishTypes) {
+            this.store = store;
+            this.time = time;
+            this.fishTypes = fishTypes;
+        }
+
+        public int getStore() {
+            return store;
+        }
+
+        public long getTime() {
+            return time;
+        }
+
+        public int getFishTypes() {
+            return fishTypes;
+        }
+
+
+        @Override
+        public int compareTo(Object o) {
+            NodeInfo info2 = (NodeInfo)o;
+            int timeCompare = Long.compare(time, info2.time);
+            if (timeCompare == 0) {
+                int storeCompare = Integer.compare(store, info2.store);
+                return storeCompare == 0 ? Integer.compare(fishTypes, info2.fishTypes) : storeCompare;
+            } else {
+                return timeCompare;
+            }
         }
     }
 
@@ -71,50 +106,35 @@ public class SynchronousShoppingOptimize {
         }
 
         int fishStates = fastPow(2, k);
-        //time -> fishTypes -> set of shop numbers
-        TreeMap<Long, Map<Integer, Set<Integer>>> q = new TreeMap<>();
+        long[][] q = new long[fishStates][n];
 
-        Set<Integer> initShopsSet = new HashSet<>();
-        initShopsSet.add(0);
+        for (int i = 0; i < fishStates; i++) {
+            for (int j = 0; j < n; j++) {
+                q[i][j] = Long.MAX_VALUE;
+            }
+        }
 
-        TreeMap<Integer, Set<Integer>> initFishState = new TreeMap<>();
-        initFishState.put(shops[0].fishTypes, initShopsSet);
+        q[shops[0].fishTypes][0] = 0;
 
-        q.put(0L, initFishState);
-        shops[0].knownTime.put(shops[0].fishTypes, 0L);
+        TreeSet<NodeInfo> tree = new TreeSet<>();
+        tree.add(new NodeInfo(0, 0, shops[0].fishTypes));
 
         long[][] processed = new long[fishStates][n];
         List<Pair> pairs = new ArrayList<>();
 
-        while (true) {
-            Map.Entry<Long, Map<Integer, Set<Integer>>> entry = q.firstEntry();
-            if (null == entry) {
-                break;
+        while (!tree.isEmpty()) {
+            NodeInfo minVal = tree.pollFirst();
+
+            int minNode = minVal.getStore();
+            int minFishState = minVal.getFishTypes();
+
+            processed[minFishState][minNode] = 1;
+
+            if (minNode == n - 1) {
+                pairs.add(new Pair(minFishState, q[minFishState][minNode]));
             }
 
-            long minTime = entry.getKey();
-            Map<Integer, Set<Integer>> fishTypesMap = entry.getValue();
-            Map.Entry<Integer, Set<Integer>> fishTypesEntry = fishTypesMap.entrySet().iterator().next();
-            int minFishState = fishTypesEntry.getKey();
-            Set<Integer> minTimeShops = fishTypesEntry.getValue();
-            int minShopNum = minTimeShops.iterator().next();
-
-            if (minTimeShops.size() == 1) {
-                fishTypesMap.remove(minFishState);
-                if (fishTypesMap.size() == 0) {
-                    q.pollFirstEntry();
-                }
-            } else {
-                minTimeShops.remove(minShopNum);
-            }
-
-            processed[minFishState][minShopNum] = 1;
-
-            if (minShopNum == n - 1) {
-                pairs.add(new Pair(minFishState, minTime));
-            }
-
-            for (Map.Entry<Node, Integer> ndEntry : shops[minShopNum].getConnectedNodes().entrySet()) {
+            for (Map.Entry<Node, Integer> ndEntry : shops[minNode].getConnectedNodes().entrySet()) {
                 Node nd = ndEntry.getKey();
                 int time = ndEntry.getValue();
 
@@ -124,37 +144,12 @@ public class SynchronousShoppingOptimize {
                     continue;
                 }
 
-                Long knownTime = nd.knownTime.get(newFishState);
-                long newTime = minTime + time;
+                long newTime = q[minFishState][minNode] + time;
 
-                if (null == knownTime || newTime <  knownTime) {
-                    nd.knownTime.put(newFishState, newTime);
-
-                    if (knownTime != null) {
-                        Map<Integer, Set<Integer>> fishStatesMap = q.get(knownTime);
-                        Set<Integer> knownShops = fishStatesMap.get(newFishState);
-                        knownShops.remove(nd.num);
-                        if (knownShops.size() == 0) {
-                            fishStatesMap.remove(newFishState);
-                            if (fishStatesMap.isEmpty()){
-                                q.remove(knownTime);
-                            }
-                        }
-                    }
-
-                    Map<Integer, Set<Integer>> fishStatesMap = q.get(newTime);
-                    if (fishStatesMap == null) {
-                        fishStatesMap = new HashMap<>();
-                        q.put(newTime, fishStatesMap);
-                    }
-
-                    Set<Integer> newShops = fishStatesMap.get(newFishState);
-                    if (null == newShops) {
-                        newShops = new HashSet<>();
-                        fishStatesMap.put(newFishState, newShops);
-                    }
-                    newShops.add(nd.num);
-
+                if (newTime < q[newFishState][nd.num]) {
+                    tree.remove(new NodeInfo(nd.num, q[newFishState][nd.num], newFishState));
+                    q[newFishState][nd.num] = newTime;
+                    tree.add(new NodeInfo(nd.num, q[newFishState][nd.num], newFishState));
                 }
             }
         }
