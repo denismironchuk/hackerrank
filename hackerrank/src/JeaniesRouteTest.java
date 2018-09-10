@@ -85,10 +85,10 @@ public class JeaniesRouteTest {
         }
 
         int[] nodesToDelete = new int[n];
-        int[] processed = new int[n];
+        //int[] processed = new int[n];
         for (Node nd : leaveNodes) {
             if (nodesToDelete[nd.getNum()] == 0) {
-                deleteNodes(nd, processed, nodesToDelete, deliveryCities);
+                deleteNodes(nd, new int[n], nodesToDelete, deliveryCities);
             }
         }
 

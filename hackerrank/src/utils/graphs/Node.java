@@ -12,6 +12,8 @@ public class Node {
     private boolean fake = false;
     private Set<Node> neighbours = new HashSet<>();
     private Set<Node> collapsedNodes = new HashSet<>();
+    private boolean oddCycleNode = false;
+    private Node nextNodeInCycle;
 
     public Node(final int num) {
         this.num = num;
@@ -72,5 +74,21 @@ public class Node {
         }
 
         return fakeNode;
+    }
+
+    public boolean isOddCycleNode() {
+        return oddCycleNode;
+    }
+
+    public void setOddCycleNode(boolean oddCycleNode) {
+        this.oddCycleNode = oddCycleNode;
+    }
+
+    public Node getNextNodeInCycle() {
+        return nextNodeInCycle;
+    }
+
+    public void setNextNodeInCycle(Node nextNodeInCycle) {
+        this.nextNodeInCycle = nextNodeInCycle;
     }
 }

@@ -26,11 +26,12 @@ public class Edmonds {
                 continue;
             }
 
-            getIncreasingPath(nd, new HashMap<>(), pair, nodes, new Stack<>());
+            //getIncreasingPath(nd, new HashMap<>(), pair, nodes, new Stack<>());
         }
     }
 
-    private static boolean getIncreasingPath(Node nd, Map<Integer, Integer> processed, int[] pair, List<Node> nodes, Stack<Node> path) {
+    /*private static boolean getIncreasingPath(Node nd, Map<Integer, Integer> processed, int[] pair,
+                                             List<Node> nodes, Map<Integer, Integer> parent) {
         int ndNum = nd.getNum();
         processed.put(ndNum, 1);
         path.push(nd);
@@ -68,5 +69,5 @@ public class Edmonds {
         }
 
         return false;
-    }
+    }*/
 }

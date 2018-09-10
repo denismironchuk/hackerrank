@@ -1,13 +1,7 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * Created by Denis_Mironchuk on 9/10/2018.
@@ -32,16 +26,6 @@ public class JeaniesRoute {
 
         public int getNum() {
             return num;
-        }
-
-        public int getNonDeletedNeighboursCnt(int[] deletedNodes) {
-            int res = 0;
-            for (Map.Entry<Node, Integer> entry : neighbours.entrySet()) {
-                if (deletedNodes[entry.getKey().getNum()] == 0) {
-                    res++;
-                }
-            }
-            return res;
         }
     }
 
@@ -75,7 +59,7 @@ public class JeaniesRoute {
             nodes.get(n2).addNeighbour(nodes.get(n1), dist);
         }
 
-        List<Node> leaveNodes = new ArrayList<>();
+        Queue<Node> leaveNodes = new LinkedList<>();
 
         for (int i = 0; i < nodes.size(); i++) {
             Node nd = nodes.get(i);
@@ -85,22 +69,19 @@ public class JeaniesRoute {
         }
 
         int[] nodesToDelete = new int[n];
-        int[] processed = new int[n];
-        for (Node nd : leaveNodes) {
-            if (nodesToDelete[nd.getNum()] == 0) {
-                deleteNodes(nd, processed, nodesToDelete, deliveryCities);
-            }
-        }
 
-        for (int i = 0; i < n; i++) {
-            if (nodesToDelete[i] == 1) {
-                Node toDel = nodes.get(i);
-                for (Node nd : toDel.getNeighbours().keySet()) {
-                    nd.getNeighbours().remove(toDel);
+        while (!leaveNodes.isEmpty()) {
+            Node leaf = leaveNodes.poll();
+            if (!deliveryCities.contains(leaf.getNum())) {
+                nodesToDelete[leaf.getNum()] = 1;
+                for (Node nd : leaf.getNeighbours().keySet()) {
+                    nd.getNeighbours().remove(leaf);
+                    if (nd.getNeighbours().size() == 1) {
+                        leaveNodes.add(nd);
+                    }
                 }
             }
         }
-
 
         Node startNode = null;
 
@@ -164,19 +145,6 @@ public class JeaniesRoute {
             if (processed[neigh.getNum()] == 0) {
                 dists[neigh.getNum()] = dists[nd.getNum()] + dist;
                 countDists(neigh, processed, dists);
-            }
-        }
-    }
-
-    private static void deleteNodes(Node nd, int[] processed, int[] nodesToDelete, Set<Integer> deliveryCities) {
-        processed[nd.getNum()] = 1;
-
-        if (!deliveryCities.contains(nd.getNum()) && nodesToDelete[nd.getNum()] == 0 && nd.getNonDeletedNeighboursCnt(nodesToDelete) <= 1) {
-            nodesToDelete[nd.getNum()] = 1;
-            for (Node neigh : nd.getNeighbours().keySet()) {
-                if (processed[neigh.getNum()] == 0) {
-                    deleteNodes(neigh, processed, nodesToDelete, deliveryCities);
-                }
             }
         }
     }

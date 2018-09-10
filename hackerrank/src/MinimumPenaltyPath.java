@@ -115,13 +115,12 @@ public class MinimumPenaltyPath {
 
         d[a] = 0;
         int[] processed = new int[n];
-        processed[a] = 1;
 
         while (!tree.isEmpty()) {
             Pair p = tree.pollFirst();
             int dist = p.getDist();
             Node nd = nodes[p.getNum()];
-
+            processed[p.getNum()] = 1;
             for (Map.Entry<Node, List<Integer>> neighEntry : nd.getNeighbours().entrySet()) {
                 Node neigh = neighEntry.getKey();
 
