@@ -27,11 +27,19 @@ public class RoadsInHackerland {
         private int n1;
         private int n2;
         private int dist;
+        private int cnt;
 
         public Edge(final int n1, final int n2, final int dist) {
             this.n1 = n1;
             this.n2 = n2;
             this.dist = dist;
+        }
+
+        public Edge(int n1, int n2, int dist, int cnt) {
+            this.n1 = n1;
+            this.n2 = n2;
+            this.dist = dist;
+            this.cnt = cnt;
         }
     }
 
@@ -88,7 +96,32 @@ public class RoadsInHackerland {
             spanningNodes[edge.n2].addNeighbour(spanningNodes[edge.n1], edge.dist);
         }
 
+        List<Edge> edges = new ArrayList<>();
+        countFurtherVerts(spanningNodes[0], null, -1, new int[n], edges, spanningNodes);
 
+        System.out.println();
+    }
+
+    private static int countFurtherVerts(Node curr, Node prev, int dist, int[] processed, List<Edge> edges, Node[] nodes) {
+        processed[curr.num] = 1;
+
+        int cnt = 1;
+
+        for (Map.Entry<Integer, Integer> entry : curr.dists.entrySet()) {
+            int nextNum = entry.getKey();
+            Node next = nodes[nextNum];
+            int nextDist = entry.getValue();
+
+            if (processed[nextNum] == 0) {
+                cnt += countFurtherVerts(next, curr, nextDist, processed, edges, nodes);
+            }
+        }
+
+        if (prev != null) {
+            edges.add(new Edge(curr.num, prev.num, dist, cnt));
+        }
+
+        return cnt;
     }
 
     private static List<Edge> createSpanningTree(Node[] nodes, int n) {
