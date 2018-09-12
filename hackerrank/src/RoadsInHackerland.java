@@ -2,15 +2,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
 
-/**
- * Created by Denis_Mironchuk on 9/11/2018.
- */
 public class RoadsInHackerland {
     static class Node {
         private int num;
@@ -25,7 +23,7 @@ public class RoadsInHackerland {
         }
     }
 
-    /*static class Edge {
+    static class Edge {
         private int n1;
         private int n2;
         private int dist;
@@ -35,27 +33,20 @@ public class RoadsInHackerland {
             this.n2 = n2;
             this.dist = dist;
         }
-    }*/
+    }
 
     static class TreeElem implements Comparable<TreeElem> {
-        private int outNum;
-        private int inNum;
+        private int num;
         private int dist;
 
-        public TreeElem(final int outNum, final int inNum, final int dist) {
-            this.outNum = outNum;
-            this.inNum = inNum;
+        public TreeElem(final int num, final int dist) {
+            this.num = num;
             this.dist = dist;
         }
 
         @Override
         public int compareTo(final TreeElem o) {
-            int distsCompare = Integer.compare(dist, o.dist);
-            if (distsCompare == 0) {
-                return Integer.compare(inNum, o.inNum);
-            } else {
-                return distsCompare;
-            }
+            return Integer.compare(dist, o.dist);
         }
     }
 
@@ -81,34 +72,69 @@ public class RoadsInHackerland {
             nodes[n2].addNeighbour(nodes[n1], dist);
         }
 
+        List<Edge> spanningTree = createSpanningTree(nodes, n);
+
+        Node[] spanningNodes = new Node[n];
+
+        for (Edge edge : spanningTree) {
+            if (spanningNodes[edge.n1] == null) {
+                spanningNodes[edge.n1] = new Node(edge.n1);
+            }
+            if (spanningNodes[edge.n2] == null) {
+                spanningNodes[edge.n2] = new Node(edge.n2);
+            }
+
+            spanningNodes[edge.n1].addNeighbour(spanningNodes[edge.n2], edge.dist);
+            spanningNodes[edge.n2].addNeighbour(spanningNodes[edge.n1], edge.dist);
+        }
+
+
+    }
+
+    private static List<Edge> createSpanningTree(Node[] nodes, int n) {
         int[] processedNodes = new int[n];
-        List<TreeElem> spanningTree = new ArrayList<>();
+        List<Edge> spanningTree = new ArrayList<>();
         TreeSet<TreeElem> tree = new TreeSet<>();
 
         Node start = nodes[0];
         processedNodes[start.num] = 1;
 
+        int[] dists = new int[n];
+        Arrays.fill(dists, Integer.MAX_VALUE);
+
+        int[] parentNode = new int[n];
+        Arrays.fill(parentNode, -1);
+
         for (Map.Entry<Integer, Integer> entry : start.dists.entrySet()) {
             int nodeNum = entry.getKey();
             int dist = entry.getValue();
 
-            tree.add(new TreeElem(start.num, nodeNum, dist));
+            tree.add(new TreeElem(nodeNum, dist));
+            dists[nodeNum] = dist;
+            parentNode[nodeNum] = start.num;
         }
 
         while (!tree.isEmpty()) {
             TreeElem first = tree.pollFirst();
-            spanningTree.add(first);
-            processedNodes[first.inNum] = 1;
+            spanningTree.add(new Edge(parentNode[first.num], first.num, first.dist));
+            processedNodes[first.num] = 1;
 
-            for (Map.Entry<Integer, Integer> entry : nodes[first.inNum].dists.entrySet()) {
+            for (Map.Entry<Integer, Integer> entry : nodes[first.num].dists.entrySet()) {
                 int nodeNum = entry.getKey();
                 int dist = entry.getValue();
+
                 if (processedNodes[nodeNum] == 0) {
-                    tree.add(new TreeElem(first.inNum, nodeNum, dist));
+                    int oldDist = dists[nodeNum];
+                    if (oldDist > dist) {
+                        tree.remove(new TreeElem(nodeNum, oldDist));
+                        tree.add(new TreeElem(nodeNum, dist));
+                        dists[nodeNum] = dist;
+                        parentNode[nodeNum] = first.num;
+                    }
                 }
             }
         }
 
-        System.out.println();
+        return spanningTree;
     }
 }
