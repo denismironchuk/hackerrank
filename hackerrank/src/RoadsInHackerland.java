@@ -1,6 +1,8 @@
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -59,7 +61,8 @@ public class RoadsInHackerland {
     }
 
     public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader br = new BufferedReader(new FileReader("D:/test16.txt"));
         StringTokenizer tkn1 = new StringTokenizer(br.readLine());
         int n = Integer.parseInt(tkn1.nextToken());
         int m = Integer.parseInt(tkn1.nextToken());
@@ -99,7 +102,69 @@ public class RoadsInHackerland {
         List<Edge> edges = new ArrayList<>();
         countFurtherVerts(spanningNodes[0], null, -1, new int[n], edges, spanningNodes);
 
-        System.out.println();
+        edges.sort((e1, e2) -> Integer.compare(e1.dist, e2.dist));
+
+        int[] res = new int[edges.get(edges.size() - 1).dist + 100];
+
+        /*BigDecimal resLong = BigDecimal.ZERO;
+        for (Edge ed : edges) {
+            BigDecimal edgeCnt = new BigDecimal(ed.cnt * (n - ed.cnt));
+            //resLong += edgeCnt * Math.pow(2, ed.dist);
+            resLong = BigDecimal.valueOf(2).pow(ed.dist).multiply(edgeCnt).add(resLong);
+
+        }
+        System.out.println(resLong);
+
+        StringBuilder resStr = new StringBuilder();
+
+        int i = 0;
+        while (!resLong.equals(BigDecimal.ZERO)) {
+            resStr.insert(0, resLong.remainder(BigDecimal.valueOf(2)));
+            resLong = resLong.divide(BigDecimal.valueOf(2));
+            System.out.println(i);
+            i++;
+        }*/
+
+        //System.out.println(resStr.toString());
+
+        for (Edge ed : edges) {
+            long edgeCnt = ed.cnt * (n - ed.cnt);
+            int resIndex = ed.dist;
+            int perenos = 0;
+
+            while (edgeCnt != 0) {
+                int sum = ((int)(edgeCnt % 2) + res[resIndex] + perenos);
+                res[resIndex] = sum % 2;
+                perenos = sum > 1 ? 1 : 0;
+                resIndex++;
+                edgeCnt /= 2;
+            }
+
+            while (perenos != 0) {
+                int sum = res[resIndex] + perenos;
+                res[resIndex] = sum % 2;
+                perenos = sum > 1 ? 1 : 0;
+                resIndex++;
+            }
+        }
+
+        boolean started = false;
+        int i = res.length - 1;
+
+        for (; i >= 0 && !started; i--) {
+            if (res[i] == 1) {
+                started = true;
+            }
+        }
+
+        if (i < 0) {
+            System.out.println(0);
+        } else {
+            i++;
+            for (; i >= 0; i--) {
+                System.out.print(res[i]);
+            }
+        }
     }
 
     private static int countFurtherVerts(Node curr, Node prev, int dist, int[] processed, List<Edge> edges, Node[] nodes) {
