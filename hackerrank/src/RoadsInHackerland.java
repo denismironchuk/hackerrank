@@ -1,10 +1,15 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +26,12 @@ public class RoadsInHackerland {
         }
 
         public void addNeighbour(Node neigh, int dist) {
-            dists.merge(neigh.num, dist, (oldVal, newVal) -> Math.min(oldVal, newVal));
+            Integer oldDist = dists.get(neigh.num);
+            if (null == oldDist) {
+                dists.put(neigh.num, dist);
+            } else {
+                dists.put(neigh.num, Math.min(oldDist, dist));
+            }
         }
     }
 
@@ -61,8 +71,7 @@ public class RoadsInHackerland {
     }
 
     public static void main(String[] args) throws IOException {
-        //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        BufferedReader br = new BufferedReader(new FileReader("D:/test16.txt"));
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer tkn1 = new StringTokenizer(br.readLine());
         int n = Integer.parseInt(tkn1.nextToken());
         int m = Integer.parseInt(tkn1.nextToken());
@@ -102,50 +111,32 @@ public class RoadsInHackerland {
         List<Edge> edges = new ArrayList<>();
         countFurtherVerts(spanningNodes[0], null, -1, new int[n], edges, spanningNodes);
 
-        edges.sort((e1, e2) -> Integer.compare(e1.dist, e2.dist));
+        edges.sort(Comparator.comparingInt(e -> e.dist));
+
+        long[] res1 = new long[edges.get(edges.size() - 1).dist + 1];
+
+        for (Edge ed : edges) {
+            long edgeCnt = ((long)ed.cnt) * (long)(n - ed.cnt);
+            int resIndex = ed.dist;
+
+            res1[resIndex] = edgeCnt + res1[resIndex];
+        }
 
         int[] res = new int[edges.get(edges.size() - 1).dist + 100];
 
-        /*BigDecimal resLong = BigDecimal.ZERO;
-        for (Edge ed : edges) {
-            BigDecimal edgeCnt = new BigDecimal(ed.cnt * (n - ed.cnt));
-            //resLong += edgeCnt * Math.pow(2, ed.dist);
-            resLong = BigDecimal.valueOf(2).pow(ed.dist).multiply(edgeCnt).add(resLong);
+        long perenos = 0;
+        int j = 0;
 
+        for (; j < res1.length; j++) {
+            long sum = res1[j] + perenos;
+            res[j] = (int)(sum % 2);
+            perenos = sum / 2;
         }
-        System.out.println(resLong);
 
-        StringBuilder resStr = new StringBuilder();
-
-        int i = 0;
-        while (!resLong.equals(BigDecimal.ZERO)) {
-            resStr.insert(0, resLong.remainder(BigDecimal.valueOf(2)));
-            resLong = resLong.divide(BigDecimal.valueOf(2));
-            System.out.println(i);
-            i++;
-        }*/
-
-        //System.out.println(resStr.toString());
-
-        for (Edge ed : edges) {
-            long edgeCnt = ed.cnt * (n - ed.cnt);
-            int resIndex = ed.dist;
-            int perenos = 0;
-
-            while (edgeCnt != 0) {
-                int sum = ((int)(edgeCnt % 2) + res[resIndex] + perenos);
-                res[resIndex] = sum % 2;
-                perenos = sum > 1 ? 1 : 0;
-                resIndex++;
-                edgeCnt /= 2;
-            }
-
-            while (perenos != 0) {
-                int sum = res[resIndex] + perenos;
-                res[resIndex] = sum % 2;
-                perenos = sum > 1 ? 1 : 0;
-                resIndex++;
-            }
+        while (perenos != 0) {
+            res[j] = (int)(perenos % 2);
+            perenos /= 2;
+            j++;
         }
 
         boolean started = false;
@@ -157,14 +148,13 @@ public class RoadsInHackerland {
             }
         }
 
-        if (i < 0) {
-            System.out.println(0);
-        } else {
-            i++;
-            for (; i >= 0; i--) {
-                System.out.print(res[i]);
-            }
+        StringBuilder resBuild = new StringBuilder();
+        i++;
+        for (; i >= 0; i--) {
+            resBuild.append(res[i]);
         }
+
+        System.out.println(resBuild.toString());
     }
 
     private static int countFurtherVerts(Node curr, Node prev, int dist, int[] processed, List<Edge> edges, Node[] nodes) {
