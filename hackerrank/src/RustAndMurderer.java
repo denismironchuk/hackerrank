@@ -24,6 +24,10 @@ public class RustAndMurderer {
         public Set<Node> getNeighbours() {
             return neighbours;
         }
+
+        public int getNum() {
+            return num;
+        }
     }
 
     public static void main(String[] args) throws IOException {
@@ -44,7 +48,7 @@ public class RustAndMurderer {
             for (int i = 0; i < m; i++) {
                 StringTokenizer roadTkn = new StringTokenizer(br.readLine());
                 int n1 = Integer.parseInt(roadTkn.nextToken()) - 1;
-                int n2 = Integer.parseInt(roadTkn.nextToken()) - 2;
+                int n2 = Integer.parseInt(roadTkn.nextToken()) - 1;
 
                 nodes[n1].addNeighbour(nodes[n2]);
                 nodes[n2].addNeighbour(nodes[n1]);
@@ -60,25 +64,41 @@ public class RustAndMurderer {
             Set<Node> notProcessed = new HashSet<>();
 
             for (int i = 0; i < n; i++) {
-                if (i != s) {
-                    notProcessed.add(nodes[i]);
-                }
+                notProcessed.add(nodes[i]);
             }
 
-            while (!lastProcessed.isEmpty()) {
+            notProcessed.remove(nodes[s]);
+
+            while (!notProcessed.isEmpty()) {
+                dist++;
                 Set<Node> newProc = new HashSet<>();
 
                 for (Node nd : notProcessed) {
-                    Set<Node> neighToRemove = new HashSet<>();
-                    for (Node neigh: nd.getNeighbours()) {
-                        if (!lastProcessed.contains(neigh)) {
+                    for (Node proc : lastProcessed) {
+                        if (!proc.getNeighbours().contains(nd)) {
                             newProc.add(nd);
+                            dists[nd.getNum()] = dist;
+                            break;
                         } else {
-                            neighToRemove.add(neigh);
+                            nd.getNeighbours().remove(proc);
                         }
                     }
                 }
+
+                lastProcessed = newProc;
+                notProcessed.removeAll(lastProcessed);
             }
+
+            StringBuilder res = new StringBuilder();
+
+            for (int i = 0; i < s; i++) {
+                res.append(dists[i]).append(" ");
+            }
+            for (int i = s + 1; i < n; i++) {
+                res.append(dists[i]).append(" ");
+            }
+
+            System.out.println(res.toString());
         }
     }
 }
