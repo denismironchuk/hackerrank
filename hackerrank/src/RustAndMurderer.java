@@ -20,6 +20,10 @@ public class RustAndMurderer {
         public void addNeighbour(Node neigh) {
             neighbours.add(neigh);
         }
+
+        public Set<Node> getNeighbours() {
+            return neighbours;
+        }
     }
 
     public static void main(String[] args) throws IOException {
@@ -46,9 +50,35 @@ public class RustAndMurderer {
                 nodes[n2].addNeighbour(nodes[n1]);
             }
 
-            int s = Integer.parseInt(br.readLine());
+            int s = Integer.parseInt(br.readLine()) - 1;
 
+            int[] dists = new int[n];
+            int dist = 0;
+            Set<Node> lastProcessed = new HashSet<>();
+            lastProcessed.add(nodes[s]);
 
+            Set<Node> notProcessed = new HashSet<>();
+
+            for (int i = 0; i < n; i++) {
+                if (i != s) {
+                    notProcessed.add(nodes[i]);
+                }
+            }
+
+            while (!lastProcessed.isEmpty()) {
+                Set<Node> newProc = new HashSet<>();
+
+                for (Node nd : notProcessed) {
+                    Set<Node> neighToRemove = new HashSet<>();
+                    for (Node neigh: nd.getNeighbours()) {
+                        if (!lastProcessed.contains(neigh)) {
+                            newProc.add(nd);
+                        } else {
+                            neighToRemove.add(neigh);
+                        }
+                    }
+                }
+            }
         }
     }
 }
