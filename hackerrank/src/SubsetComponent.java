@@ -4,7 +4,7 @@ import java.io.InputStreamReader;
 import java.util.*;
 
 public class SubsetComponent {
-    private static final int BITS_CNT = 63;
+    private static final int BITS_CNT = 64;
 
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -26,28 +26,36 @@ public class SubsetComponent {
             bitsRepres.add(bits);
         }
 
-        Date start = new Date();
+        //Date start = new Date();
 
         List<int[]> combs = buildCombinations(bitsRepres);
 
         long res = 0;
-        Set<Integer> distincts = new HashSet<>();
+        int[] distincts = new int[BITS_CNT];
         for (int[] comb : combs) {
             for (int i = 0; i< BITS_CNT; i++) {
-                distincts.add(comb[i]);
-                res += comb[i];
+                if (distincts[comb[i]] == 0) {
+                    res++;
+                    distincts[comb[i]] = 1;
+                }
             }
-            distincts.clear();
+            for (int i = 0; i< BITS_CNT; i++) {
+                distincts[i] = 0;
+            }
         }
 
-        Date end = new Date();
+        //Date end = new Date();
         System.out.println(res);
-        System.out.println(end.getTime() - start.getTime() + "ms");
+        //System.out.println(end.getTime() - start.getTime() + "ms");
     }
 
     private static List<int[]> buildCombinations(List<int[]> bitRepresentations) {
         if (bitRepresentations.size() == 0) {
-            return Arrays.asList(new int[BITS_CNT]);
+            int[] res = new int[BITS_CNT];
+            for (int i = 0; i < BITS_CNT; i++) {
+                res[i] = i;
+            }
+            return Arrays.asList(res);
         }
 
         int[] bits = bitRepresentations.get(0);
@@ -66,32 +74,18 @@ public class SubsetComponent {
 
     private static int[] combineRepresentations(int[] bits1, int[] bits2) {
         int[] commonPos = new int[BITS_CNT];
-        int nonZeroElems = 0;
-        int lastSubsetIndex = 0;
+        int lastSubsetIndex = -1;
         for (int i = 0; i < BITS_CNT; i++) {
             if (bits1[i] != 0 && bits2[i] != 0) {
-                commonPos[i] = 1;
-            }
-
-            if (bits1[i] > lastSubsetIndex) {
+                commonPos[bits1[i]] = 1;
                 lastSubsetIndex = bits1[i];
             }
-
-            if (bits2[i] != 0) {
-                nonZeroElems++;
-            }
-        }
-
-        lastSubsetIndex++;
-
-        if (nonZeroElems < 2) {
-            return Arrays.copyOf(bits1, bits1.length);
         }
 
         int[] res = new int[BITS_CNT];
 
         for (int i = 0; i < BITS_CNT; i++) {
-            if (commonPos[i] == 1 || bits2[i] != 0) {
+            if (commonPos[bits1[i]] == 1) {
                 res[i] = lastSubsetIndex;
             } else {
                 res[i] = bits1[i];
