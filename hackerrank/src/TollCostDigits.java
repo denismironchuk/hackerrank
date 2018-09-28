@@ -63,35 +63,28 @@ public class TollCostDigits {
         for (int i = 0; i < n; i++) {
             tree[i] = new Node(i);
         }
-        int[] islands = new int[n];
-        int islandsCnt = buildTrees(nodes, tree, islands);
 
-        long[] allPairs = new long[COST_LIMIT];
-        long[] ingoing = new long[COST_LIMIT];
-        long[] outgoing = new long[COST_LIMIT];
-
-        countPairs(tree[0], tree, new int[n], allPairs, ingoing, outgoing);
-
-        System.out.println();
+        processGraph(nodes, tree);
     }
 
-    public static int buildTrees(Node[] graph, Node[] tree, int[] islands) {
+    public static long[] processGraph(Node[] graph, Node[] tree) {
         int n = graph.length;
-
-        int island = 0;
+        int[] processed = new int[n];
+        long[] resultPairs = new long[COST_LIMIT];
 
         for (int i = 0; i < n; i++) {
-            if (islands[i] == 0) {
-                island++;
-                deepSearch(graph, tree, islands, graph[i], island);
+            if (processed[i] == 0) {
+                deepSearch(graph, tree, processed, graph[i]);
+                long[] allPairs = new long[COST_LIMIT];
+                countPairsInTree(tree[i], tree, new int[n], allPairs, new long[COST_LIMIT], new long[COST_LIMIT]);
             }
         }
 
-        return island;
+        return resultPairs;
     }
 
-    private static void deepSearch(Node[] graph, Node[] tree, int[] processed, Node nd, int island) {
-        processed[nd.getNum()] = island;
+    private static void deepSearch(Node[] graph, Node[] tree, int[] processed, Node nd) {
+        processed[nd.getNum()] = 1;
 
         for (Map.Entry<Integer, List<Integer>> entry : nd.getCosts().entrySet()) {
             int nodeNum = entry.getKey();
@@ -102,12 +95,12 @@ public class TollCostDigits {
                 tree[nd.getNum()].addCost(tree[nodeNum], firstCost);
                 tree[nodeNum].addCost(tree[nd.getNum()], COST_LIMIT - firstCost);
 
-                deepSearch(graph, tree, processed, graph[nodeNum], island);
+                deepSearch(graph, tree, processed, graph[nodeNum]);
             }
         }
     }
 
-    private static void countPairs(Node nd, Node[] tree, int[] processed, long[] allPairs, long[] ingoing, long[] outgoing) {
+    private static void countPairsInTree(Node nd, Node[] tree, int[] processed, long[] allPairs, long[] ingoing, long[] outgoing) {
         processed[nd.getNum()] = 1;
 
         for (Map.Entry<Integer, List<Integer>> entry : nd.getCosts().entrySet()) {
@@ -120,7 +113,7 @@ public class TollCostDigits {
                 long[] ingoingNew = new long[COST_LIMIT];
                 long[] outgoingNew = new long[COST_LIMIT];
 
-                countPairs(tree[nodeNum], tree, processed, allPairsNew, ingoingNew, outgoingNew);
+                countPairsInTree(tree[nodeNum], tree, processed, allPairsNew, ingoingNew, outgoingNew);
                 combine(allPairs, ingoing, outgoing, allPairsNew, ingoingNew, outgoingNew,
                             COST_LIMIT - firstCost, firstCost);
             }
