@@ -31,38 +31,44 @@ public class TollCostDigitsTest {
         }
     }
 
+    public static Node[] generateGraph(int n) {
+        Node[] nodes = new Node[n];
+        List<Integer> notConnected = new ArrayList<>();
+        List<Integer> connected = new ArrayList<>();
+
+        for (int i = 0; i < n; i++) {
+            nodes[i] = new Node(i);
+            notConnected.add(i);
+        }
+
+        connected.add(notConnected.get(0));
+        notConnected.remove(0);
+
+        while (!notConnected.isEmpty()) {
+            int conIndex = (int) (Math.random() * (connected.size() - 1));
+            int conNodeNum = connected.get(conIndex);
+            Node conNode = nodes[conNodeNum];
+
+            int notConIndex = (int) (Math.random() * (notConnected.size() - 1));
+            int notConNodeNum = notConnected.get(notConIndex);
+            Node notConNode = nodes[notConNodeNum];
+
+            connected.add(notConNodeNum);
+            notConnected.remove(notConIndex);
+
+            int cost = (int) (10 * Math.random());
+
+            conNode.addCost(notConNode, cost);
+            notConNode.addCost(conNode, COST_LIMIT - cost);
+        }
+
+        return nodes;
+    }
+
     public static void main(String[] args) {
         while (true) {
             int n = 1000;
-            Node[] nodes = new Node[n];
-            List<Integer> notConnected = new ArrayList<>();
-            List<Integer> connected = new ArrayList<>();
-
-            for (int i = 0; i < n; i++) {
-                nodes[i] = new Node(i);
-                notConnected.add(i);
-            }
-
-            connected.add(notConnected.get(0));
-            notConnected.remove(0);
-
-            while (!notConnected.isEmpty()) {
-                int conIndex = (int) (Math.random() * (connected.size() - 1));
-                int conNodeNum = connected.get(conIndex);
-                Node conNode = nodes[conNodeNum];
-
-                int notConIndex = (int) (Math.random() * (notConnected.size() - 1));
-                int notConNodeNum = notConnected.get(notConIndex);
-                Node notConNode = nodes[notConNodeNum];
-
-                connected.add(notConNodeNum);
-                notConnected.remove(notConIndex);
-
-                int cost = (int) (10 * Math.random());
-
-                conNode.addCost(notConNode, cost);
-                notConNode.addCost(conNode, COST_LIMIT - cost);
-            }
+            Node[] nodes = generateGraph(n);
 
             long[] pairsTriv = new long[COST_LIMIT];
 
