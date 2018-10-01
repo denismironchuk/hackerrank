@@ -10,16 +10,11 @@ public class TollCostDigits {
         private int num;
         private Map<Integer, List<Integer>> costs = new HashMap<>();
         private int pathFromRootCost = 0;
-
         long[] allPairs = new long[COST_LIMIT];
         long[] ingoing = new long[COST_LIMIT];
         long[] outgoing = new long[COST_LIMIT];
-
         private Node parent;
-
         private Set<Integer> cyclesResult = new HashSet<>();
-
-        private Set<Integer> pairsForLca = new HashSet<>();
 
         public Node(final int num) {
             this.num = num;
@@ -77,14 +72,6 @@ public class TollCostDigits {
         public void setCyclesResult(final Set<Integer> cyclesResult) {
             this.cyclesResult = cyclesResult;
         }
-
-        public Set<Integer> getPairsForLca() {
-            return pairsForLca;
-        }
-
-        public void setPairsForLca(final Set<Integer> pairsForLca) {
-            this.pairsForLca = pairsForLca;
-        }
     }
 
     public static Node[] generateGraph(int n) {
@@ -140,7 +127,7 @@ public class TollCostDigits {
     }
 
     public static void main(String[] args) throws IOException {
-        /*BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer tkn1 = new StringTokenizer(br.readLine());
         int n = Integer.parseInt(tkn1.nextToken());
         int e = Integer.parseInt(tkn1.nextToken());
@@ -159,13 +146,13 @@ public class TollCostDigits {
 
             nodes[n1].addCost(nodes[n2], cost);
             nodes[n2].addCost(nodes[n1], COST_LIMIT - cost);
-        }*/
+        }
 
-        int n = 100000;
+        /*int n = 100000;
         Node[] nodes = generateGraph(n);
         addEdges(100000, nodes);
 
-        System.out.println("Graph is generated");
+        System.out.println("Graph is generated");*/
 
         Node[] tree = new Node[n];
 
@@ -344,7 +331,7 @@ public class TollCostDigits {
                     int nextNode = entry.getKey();
 
                     if (tree[nextNode] != currNode.getParent()) {
-                        stack.add(tree[nextNode]);
+                        stack.push(tree[nextNode]);
                     }
                 }
             } else {
