@@ -67,12 +67,12 @@ public class TollCostDigitsTest {
 
     public static void main(String[] args) {
         while (true) {
-            int n = 1000;
+            int n = 100000;
             Node[] nodes = generateGraph(n);
 
             long[] pairsTriv = new long[COST_LIMIT];
 
-            Date start1 = new Date();
+            /*Date start1 = new Date();
             for (int i = 0; i < n; i++) {
                 long[] newPairs = countPairsSimple(nodes[i], new int[n], nodes);
 
@@ -80,7 +80,7 @@ public class TollCostDigitsTest {
                     pairsTriv[j] += newPairs[j];
                 }
             }
-            Date end1 = new Date();
+            Date end1 = new Date();*/
             //System.out.println(end1.getTime() - start1.getTime() + "ms");
 
             long[] allPairsOpt = new long[COST_LIMIT];
@@ -88,18 +88,18 @@ public class TollCostDigitsTest {
             countPairsOptimal(nodes[0], nodes, new int[n], allPairsOpt, new long[COST_LIMIT], new long[COST_LIMIT]);
             Date end2 = new Date();
 
-            //System.out.println(end2.getTime() - start2.getTime() + "ms");
+            System.out.println(end2.getTime() - start2.getTime() + "ms");
 
             int sum = 0;
             StringBuilder res = new StringBuilder();
             for (int i = 0; i < COST_LIMIT; i++) {
                 res.append(allPairsOpt[i]).append(" ");
                 sum += allPairsOpt[i];
-                if (pairsTriv[i] != allPairsOpt[i]) {
+                /*if (pairsTriv[i] != allPairsOpt[i]) {
                     throw new RuntimeException();
-                }
+                }*/
             }
-            System.out.println(sum + " = " + res.toString());
+            //System.out.println(sum + " = " + res.toString());
         }
     }
 

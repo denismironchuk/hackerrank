@@ -11,6 +11,16 @@ public class TollCostDigits {
         private Map<Integer, List<Integer>> costs = new HashMap<>();
         private int pathFromRootCost = 0;
 
+        long[] allPairs = new long[COST_LIMIT];
+        long[] ingoing = new long[COST_LIMIT];
+        long[] outgoing = new long[COST_LIMIT];
+
+        private Node parent;
+
+        private Set<Integer> cyclesResult = new HashSet<>();
+
+        private Set<Integer> pairsForLca = new HashSet<>();
+
         public Node(final int num) {
             this.num = num;
         }
@@ -38,6 +48,42 @@ public class TollCostDigits {
 
         public void setPathFromRootCost(int pathFromRootCost) {
             this.pathFromRootCost = pathFromRootCost;
+        }
+
+        public long[] getAllPairs() {
+            return allPairs;
+        }
+
+        public long[] getIngoing() {
+            return ingoing;
+        }
+
+        public long[] getOutgoing() {
+            return outgoing;
+        }
+
+        public Node getParent() {
+            return parent;
+        }
+
+        public void setParent(final Node parent) {
+            this.parent = parent;
+        }
+
+        public Set<Integer> getCyclesResult() {
+            return cyclesResult;
+        }
+
+        public void setCyclesResult(final Set<Integer> cyclesResult) {
+            this.cyclesResult = cyclesResult;
+        }
+
+        public Set<Integer> getPairsForLca() {
+            return pairsForLca;
+        }
+
+        public void setPairsForLca(final Set<Integer> pairsForLca) {
+            this.pairsForLca = pairsForLca;
         }
     }
 
@@ -115,9 +161,9 @@ public class TollCostDigits {
             nodes[n2].addCost(nodes[n1], COST_LIMIT - cost);
         }*/
 
-        int n = 10000;
+        int n = 100000;
         Node[] nodes = generateGraph(n);
-        addEdges(10000, nodes);
+        addEdges(100000, nodes);
 
         System.out.println("Graph is generated");
 
@@ -141,17 +187,17 @@ public class TollCostDigits {
         int[] procForCycles = new int[n];
         int[] ancestors = new int[n];
         int[] black = new int[n];
+        int[] procForCountPairs = new int[n];
         DisjointSet dSet = new DisjointSet(n);
 
         for (int i = 0; i < n; i++) {
             if (processed[i] == 0) {
-                Map<Integer, Set<Integer>> pairsForLca = new HashMap<>();
-                deepSearch(graph, tree, processed, graph[i], pairsForLca);
-                long[] localPairs = new long[COST_LIMIT];
-                countPairsInTree(tree[i], tree, new int[n], localPairs, new long[COST_LIMIT], new long[COST_LIMIT]);
-                Set<Integer> cycles = getCycles(tree[i], procForCycles, ancestors, black,
-                        dSet, pairsForLca, graph, tree);
-                combineResultsWithCycles(resultPairs, localPairs, cycles);
+                deepSearchNoRecur(graph, tree, graph[i], processed);
+                countPairsInTreeNoRecur(tree[i], tree, procForCountPairs);
+                getCyclesNoRecur(tree[i], procForCycles, ancestors, black,
+                        dSet, graph, tree);
+
+                combineResultsWithCycles(resultPairs, tree[i].getAllPairs(), tree[i].getCyclesResult());
             }
         }
 
@@ -195,94 +241,127 @@ public class TollCostDigits {
         }
     }
 
-    private static Set<Integer> getCycles(Node nd, int[] proc, int[] anc, int[] black, DisjointSet dSet,
-                                          Map<Integer, Set<Integer>> pairs, Node[] graph, Node[] tree) {
-        Set<Integer> cyclesResult = new HashSet<>();
-        int ndNum = nd.getNum();
-        proc[ndNum] = 1;
-        dSet.makeSet(ndNum);
-        anc[dSet.find(ndNum)] = ndNum;
+    private static void getCyclesNoRecur(Node nd, int[] proc, int[] anc, int[] black, DisjointSet dSet, Node[] graph, Node[] tree) {
+        Stack<Node> stack = new Stack<>();
+        stack.push(nd);
 
-        for (Map.Entry<Integer, List<Integer>> entry : nd.getCosts().entrySet()) {
-            int childNum = entry.getKey();
+        while (!stack.isEmpty()) {
+            Node currNode = stack.peek();
+            int currNodeNum = currNode.getNum();
+            if (proc[currNodeNum] == 0) {
+                proc[currNodeNum] = 1;
+                dSet.makeSet(currNodeNum);
+                anc[dSet.find(currNodeNum)] = currNodeNum;
 
-            if (proc[childNum] == 0) {
-                cyclesResult.addAll(getCycles(tree[childNum], proc, anc, black, dSet, pairs, graph, tree));
-                dSet.unite(dSet.find(ndNum), dSet.find(childNum));
-                anc[dSet.find(ndNum)] = ndNum;
-            }
-        }
+                for (Map.Entry<Integer, List<Integer>> entry : currNode.getCosts().entrySet()) {
+                    int childNum = entry.getKey();
+                    Node child = tree[childNum];
+                    if (child != currNode.getParent()) {
+                        stack.push(child);
+                    }
+                }
+            } else {
+                stack.pop();
+                black[currNodeNum] = 1;
 
-        black[ndNum] = 1;
+                for (Map.Entry<Integer, List<Integer>> entry : currNode.getCosts().entrySet()) {
+                    int childNum = entry.getKey();
+                    Node child = tree[childNum];
+                    if (child != currNode.getParent()) {
+                        currNode.getCyclesResult().addAll(child.getCyclesResult());
+                        dSet.unite(dSet.find(currNodeNum), dSet.find(childNum));
+                        anc[dSet.find(currNodeNum)] = currNodeNum;
+                    }
+                }
 
-        if (null != pairs.get(ndNum)) {
-            for (Integer pair : pairs.get(ndNum)) {
-                if (black[pair] == 1) {
-                    int lca = anc[dSet.find(pair)];
+                for (Map.Entry<Integer, List<Integer>> entry : graph[currNodeNum].getCosts().entrySet()) {
+                    int pair = entry.getKey();
 
-                    int cycleLen = (tree[ndNum].getPathFromRootCost() - tree[lca].getPathFromRootCost() + COST_LIMIT) % COST_LIMIT;
-                    cycleLen += COST_LIMIT - ((tree[pair].getPathFromRootCost() - tree[lca].getPathFromRootCost() + COST_LIMIT) % COST_LIMIT);
+                    if (black[pair] == 1) {
+                        int lca = anc[dSet.find(pair)];
 
-                    for (Integer pairCost : graph[ndNum].getCosts().get(pair)) {
-                        cyclesResult.add((cycleLen + pairCost) % COST_LIMIT);
+                        int cycleLen = (tree[currNodeNum].getPathFromRootCost() - tree[lca].getPathFromRootCost() + COST_LIMIT) % COST_LIMIT;
+                        cycleLen += COST_LIMIT - ((tree[pair].getPathFromRootCost() - tree[lca].getPathFromRootCost() + COST_LIMIT) % COST_LIMIT);
+
+                        for (Integer pairCost : entry.getValue()) {
+                            int cycleRes = (cycleLen + pairCost) % COST_LIMIT;
+                            currNode.getCyclesResult().add(cycleRes);
+
+                            boolean hasOdd = currNode.getCyclesResult().contains(1) || currNode.getCyclesResult().contains(3) || currNode.getCyclesResult().contains(7) || currNode.getCyclesResult().contains(9);
+                            boolean hasEven = currNode.getCyclesResult().contains(2) || currNode.getCyclesResult().contains(4) || currNode.getCyclesResult().contains(6) || currNode.getCyclesResult().contains(8);
+                            boolean hasFive = currNode.getCyclesResult().contains(5);
+
+                            if (hasOdd || (hasEven && hasFive)) {
+                                nd.getCyclesResult().add(1);
+                                return;
+                            }
+                        }
                     }
                 }
             }
         }
-
-        return cyclesResult;
     }
 
-    private static void deepSearch(Node[] graph, Node[] tree, int[] processed, Node nd, Map<Integer, Set<Integer>> pairs) {
-        int ndNum = nd.getNum();
-        processed[ndNum] = 1;
+    private static void deepSearchNoRecur(Node[] graph, Node[] tree, Node nd, int[] processed) {
+        Stack<Node> stack = new Stack<>();
+        stack.push(nd);
+        processed[nd.getNum()] = 1;
 
-        for (Map.Entry<Integer, List<Integer>> entry : nd.getCosts().entrySet()) {
-            int childNum = entry.getKey();
-            List<Integer> costs = entry.getValue();
-            Integer firstCost = costs.get(0);
+        while (!stack.isEmpty()) {
+            Node current = stack.pop();
+            int currNum = current.getNum();
 
-            if (processed[childNum] == 0) {
-                tree[ndNum].addCost(tree[childNum], firstCost);
-                tree[childNum].addCost(tree[ndNum], COST_LIMIT - firstCost);
+            for (Map.Entry<Integer, List<Integer>> entry : current.getCosts().entrySet()) {
+                int childNum = entry.getKey();
+                List<Integer> costs = entry.getValue();
+                Integer firstCost = costs.get(0);
 
-                tree[childNum].setPathFromRootCost((tree[ndNum].getPathFromRootCost() + firstCost) % COST_LIMIT);
+                if (processed[childNum] == 0) {
+                    tree[currNum].addCost(tree[childNum], firstCost);
+                    tree[childNum].addCost(tree[currNum], COST_LIMIT - firstCost);
 
-                deepSearch(graph, tree, processed, graph[childNum], pairs);
-            } else {
-                Set<Integer> pairSet1 = pairs.get(ndNum);
-                if (pairSet1 == null) {
-                    pairSet1 = new HashSet<>();
-                    pairs.put(ndNum, pairSet1);
+                    tree[childNum].setPathFromRootCost((tree[currNum].getPathFromRootCost() + firstCost) % COST_LIMIT);
+                    tree[childNum].setParent(tree[currNum]);
+
+                    processed[childNum] = 1;
+                    stack.push(graph[childNum]);
                 }
-                pairSet1.add(childNum);
-
-                Set<Integer> pairSet2 = pairs.get(childNum);
-                if (pairSet2 == null) {
-                    pairSet2 = new HashSet<>();
-                    pairs.put(childNum, pairSet2);
-                }
-                pairSet2.add(ndNum);
             }
         }
     }
 
-    private static void countPairsInTree(Node nd, Node[] tree, int[] processed, long[] allPairs, long[] ingoing, long[] outgoing) {
-        processed[nd.getNum()] = 1;
+    private static void countPairsInTreeNoRecur(Node nd, Node[] tree, int[] processed) {
+        Stack<Node> stack = new Stack<>();
+        stack.push(nd);
 
-        for (Map.Entry<Integer, List<Integer>> entry : nd.getCosts().entrySet()) {
-            int nodeNum = entry.getKey();
-            List<Integer> costs = entry.getValue();
-            Integer firstCost = costs.get(0);
+        while (!stack.isEmpty()) {
+            Node currNode = stack.peek();
+            int currNodeNum = currNode.getNum();
+            if (processed[currNodeNum] == 0) {
+                processed[currNodeNum] = 1;
 
-            if (processed[nodeNum] == 0) {
-                long[] allPairsNew = new long[COST_LIMIT];
-                long[] ingoingNew = new long[COST_LIMIT];
-                long[] outgoingNew = new long[COST_LIMIT];
+                for (Map.Entry<Integer, List<Integer>> entry : currNode.getCosts().entrySet()) {
+                    int nextNode = entry.getKey();
 
-                countPairsInTree(tree[nodeNum], tree, processed, allPairsNew, ingoingNew, outgoingNew);
-                combine(allPairs, ingoing, outgoing, allPairsNew, ingoingNew, outgoingNew,
-                            COST_LIMIT - firstCost, firstCost);
+                    if (tree[nextNode] != currNode.getParent()) {
+                        stack.add(tree[nextNode]);
+                    }
+                }
+            } else {
+                stack.pop();
+
+                for (Map.Entry<Integer, List<Integer>> entry : currNode.getCosts().entrySet()) {
+                    int nextNodeNum = entry.getKey();
+                    Node nextNode = tree[nextNodeNum];
+                    List<Integer> costs = entry.getValue();
+                    Integer firstCost = costs.get(0);
+
+                    if (nextNode != currNode.getParent()) {
+                        combine(currNode.getAllPairs(), currNode.getIngoing(), currNode.getOutgoing(),
+                                nextNode.getAllPairs(), nextNode.getIngoing(), nextNode.getOutgoing(),
+                                COST_LIMIT - firstCost, firstCost);
+                    }
+                }
             }
         }
     }
