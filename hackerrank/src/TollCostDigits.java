@@ -1,6 +1,4 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
 
 public class TollCostDigits {
@@ -8,7 +6,7 @@ public class TollCostDigits {
 
     static class Node {
         private int num;
-        private Map<Integer, List<Integer>> costs = new HashMap<>();
+        private Map<Node, List<Integer>> costs = new HashMap<>();
         private int pathFromRootCost = 0;
         long[] allPairs = new long[COST_LIMIT];
         long[] ingoing = new long[COST_LIMIT];
@@ -28,12 +26,12 @@ public class TollCostDigits {
             List<Integer> ndCosts = costs.get(nd.getNum());
             if (ndCosts == null) {
                 ndCosts = new ArrayList<>();
-                costs.put(nd.getNum(), ndCosts);
+                costs.put(nd, ndCosts);
             }
             ndCosts.add(cost);
         }
 
-        public Map<Integer, List<Integer>> getCosts() {
+        public Map<Node, List<Integer>> getCosts() {
             return costs;
         }
 
@@ -127,7 +125,9 @@ public class TollCostDigits {
     }
 
     public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        Date d1 = new Date();
+        //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader br = new BufferedReader(new FileReader("D:/tollCostDigits1.txt"));
         StringTokenizer tkn1 = new StringTokenizer(br.readLine());
         int n = Integer.parseInt(tkn1.nextToken());
         int e = Integer.parseInt(tkn1.nextToken());
@@ -148,11 +148,7 @@ public class TollCostDigits {
             nodes[n2].addCost(nodes[n1], COST_LIMIT - cost);
         }
 
-        /*int n = 100000;
-        Node[] nodes = generateGraph(n);
-        addEdges(100000, nodes);
-
-        System.out.println("Graph is generated");*/
+        Date d2 = new Date();
 
         Node[] tree = new Node[n];
 
@@ -165,6 +161,11 @@ public class TollCostDigits {
         for (int i = 0; i < COST_LIMIT; i++) {
             System.out.println(result[i]);
         }
+
+        Date d3 = new Date();
+        System.out.println(d2.getTime() - d1.getTime() + "ms");
+        System.out.println(d3.getTime() - d2.getTime() + "ms");
+        System.out.println(d3.getTime() - d1.getTime() + "ms");
     }
 
     public static long[] processGraph(Node[] graph, Node[] tree) {
@@ -240,9 +241,8 @@ public class TollCostDigits {
                 dSet.makeSet(currNodeNum);
                 anc[dSet.find(currNodeNum)] = currNodeNum;
 
-                for (Map.Entry<Integer, List<Integer>> entry : currNode.getCosts().entrySet()) {
-                    int childNum = entry.getKey();
-                    Node child = tree[childNum];
+                for (Map.Entry<Node, List<Integer>> entry : currNode.getCosts().entrySet()) {
+                    Node child = entry.getKey();
                     if (child != currNode.getParent()) {
                         stack.push(child);
                     }
@@ -251,18 +251,17 @@ public class TollCostDigits {
                 stack.pop();
                 black[currNodeNum] = 1;
 
-                for (Map.Entry<Integer, List<Integer>> entry : currNode.getCosts().entrySet()) {
-                    int childNum = entry.getKey();
-                    Node child = tree[childNum];
+                for (Map.Entry<Node, List<Integer>> entry : currNode.getCosts().entrySet()) {
+                    Node child = entry.getKey();
                     if (child != currNode.getParent()) {
                         currNode.getCyclesResult().addAll(child.getCyclesResult());
-                        dSet.unite(dSet.find(currNodeNum), dSet.find(childNum));
+                        dSet.unite(dSet.find(currNodeNum), dSet.find(child.getNum()));
                         anc[dSet.find(currNodeNum)] = currNodeNum;
                     }
                 }
 
-                for (Map.Entry<Integer, List<Integer>> entry : graph[currNodeNum].getCosts().entrySet()) {
-                    int pair = entry.getKey();
+                for (Map.Entry<Node, List<Integer>> entry : graph[currNodeNum].getCosts().entrySet()) {
+                    int pair = entry.getKey().getNum();
 
                     if (black[pair] == 1) {
                         int lca = anc[dSet.find(pair)];
@@ -273,15 +272,6 @@ public class TollCostDigits {
                         for (Integer pairCost : entry.getValue()) {
                             int cycleRes = (cycleLen + pairCost) % COST_LIMIT;
                             currNode.getCyclesResult().add(cycleRes);
-
-                            boolean hasOdd = currNode.getCyclesResult().contains(1) || currNode.getCyclesResult().contains(3) || currNode.getCyclesResult().contains(7) || currNode.getCyclesResult().contains(9);
-                            boolean hasEven = currNode.getCyclesResult().contains(2) || currNode.getCyclesResult().contains(4) || currNode.getCyclesResult().contains(6) || currNode.getCyclesResult().contains(8);
-                            boolean hasFive = currNode.getCyclesResult().contains(5);
-
-                            if (hasOdd || (hasEven && hasFive)) {
-                                nd.getCyclesResult().add(1);
-                                return;
-                            }
                         }
                     }
                 }
@@ -298,8 +288,8 @@ public class TollCostDigits {
             Node current = stack.pop();
             int currNum = current.getNum();
 
-            for (Map.Entry<Integer, List<Integer>> entry : current.getCosts().entrySet()) {
-                int childNum = entry.getKey();
+            for (Map.Entry<Node, List<Integer>> entry : current.getCosts().entrySet()) {
+                int childNum = entry.getKey().getNum();
                 List<Integer> costs = entry.getValue();
                 Integer firstCost = costs.get(0);
 
@@ -327,19 +317,18 @@ public class TollCostDigits {
             if (processed[currNodeNum] == 0) {
                 processed[currNodeNum] = 1;
 
-                for (Map.Entry<Integer, List<Integer>> entry : currNode.getCosts().entrySet()) {
-                    int nextNode = entry.getKey();
+                for (Map.Entry<Node, List<Integer>> entry : currNode.getCosts().entrySet()) {
+                    Node nextNode = entry.getKey();
 
-                    if (tree[nextNode] != currNode.getParent()) {
-                        stack.push(tree[nextNode]);
+                    if (nextNode != currNode.getParent()) {
+                        stack.push(nextNode);
                     }
                 }
             } else {
                 stack.pop();
 
-                for (Map.Entry<Integer, List<Integer>> entry : currNode.getCosts().entrySet()) {
-                    int nextNodeNum = entry.getKey();
-                    Node nextNode = tree[nextNodeNum];
+                for (Map.Entry<Node, List<Integer>> entry : currNode.getCosts().entrySet()) {
+                    Node nextNode = entry.getKey();
                     List<Integer> costs = entry.getValue();
                     Integer firstCost = costs.get(0);
 
