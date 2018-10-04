@@ -33,10 +33,6 @@ public class DemandingMoney {
             return cost;
         }
 
-        public void setCost(int cost) {
-            this.cost = cost;
-        }
-
         public Set<Node> getNeighbours() {
             return neighbours;
         }
@@ -73,7 +69,6 @@ public class DemandingMoney {
     }
 
     private static int maxCost(Node[] nodes, Set<Node> clique, Set<Node> ignore, int cost) {
-        int n = nodes.length;
         List<Node> addedIgnoreNodes = new ArrayList<>();
         int maxCost = cost;
         for (Node node : nodes) {
@@ -84,7 +79,7 @@ public class DemandingMoney {
             boolean connected = true;
 
             for (Node cliqueNode : clique) {
-                if (!cliqueNode.getNeighbours().contains(node)) {
+                if (cliqueNode.getNeighbours().contains(node)) {
                     connected = false;
                     break;
                 }
@@ -96,9 +91,8 @@ public class DemandingMoney {
             if (connected) {
                 clique.add(node);
                 System.out.println(clique);
-                int newCost = cost + node.getCost();
-                int newMaxCost = maxCost(nodes, clique, ignore, newCost);
-                maxCost = Math.max(Math.max(maxCost, newCost), newMaxCost);
+                int newMaxCost = maxCost(nodes, clique, ignore, cost + node.getCost());
+                maxCost = Math.max(maxCost, newMaxCost);
                 clique.remove(node);
             }
         }
