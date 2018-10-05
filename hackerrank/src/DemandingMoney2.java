@@ -1,19 +1,23 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 /**
  * Created by Влада on 04.10.2018.
  */
-public class DemandingMoney {
-    private static long CNT = 0;
+public class DemandingMoney2 {
     static class Node {
         private int num;
-        private int cost;
+        private long cost;
         private Set<Node> neighbours = new HashSet<>();
 
-        public Node(int num, int cost) {
+        public Node(int num, long cost) {
             this.num = num;
             this.cost = cost;
         }
@@ -30,7 +34,7 @@ public class DemandingMoney {
             this.num = num;
         }
 
-        public int getCost() {
+        public long getCost() {
             return cost;
         }
 
@@ -40,7 +44,7 @@ public class DemandingMoney {
 
         @Override
         public String toString() {
-            return String.valueOf(num + 1);
+            return String.valueOf(num + 1) + "-" + String.valueOf(cost);
         }
     }
 
@@ -54,7 +58,7 @@ public class DemandingMoney {
             notConnected.add(i);
         }
 
-        /*connected.add(notConnected.get(0));
+        connected.add(notConnected.get(0));
         notConnected.remove(0);
 
         while (!notConnected.isEmpty()) {
@@ -71,7 +75,7 @@ public class DemandingMoney {
 
             conNode.addNeighbour(notConNode);
             notConNode.addNeighbour(conNode);
-        }*/
+        }
 
         return nodes;
     }
@@ -79,12 +83,12 @@ public class DemandingMoney {
     private static void addEdges(int edgesToAdd, Node[] graph) {
         int n = graph.length;
         for (int i = 0; i < edgesToAdd; i++) {
-            int v1 = (int)((n - 1) * Math.random());
+            int v1 = (int)((n) * Math.random());
 
             int v2 = v1;
 
             while (v1 == v2) {
-                v2 = (int)((n - 1) * Math.random());
+                v2 = (int)((n) * Math.random());
             }
 
             graph[v1].addNeighbour(graph[v2]);
@@ -93,7 +97,7 @@ public class DemandingMoney {
     }
 
     public static void main(String[] args) throws IOException {
-        /*BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer line1Tkn = new StringTokenizer(br.readLine());
         int n = Integer.parseInt(line1Tkn.nextToken());
         int m = Integer.parseInt(line1Tkn.nextToken());
@@ -112,60 +116,92 @@ public class DemandingMoney {
             int n2 = Integer.parseInt(edgeTkn.nextToken()) - 1;
             nodes[n1].addNeighbour(nodes[n2]);
             nodes[n2].addNeighbour(nodes[n1]);
-        }*/
-
-        int n = 32;
-        Node[] nodes = generateGraph(n);
-        addEdges(0, nodes);
-
-        Date start = new Date();
-        int[] maxCost = new int[2];
-        Set<Node> toProcess = new HashSet<>();
-        for (Node nd : nodes) {
-            toProcess.add(nd);
         }
-        maxCost(toProcess, new HashSet<>(), 0, maxCost);
-        System.out.println(maxCost[0] + " " + maxCost[1]);
-        Date end = new Date();
 
-        System.out.println((end.getTime() - start.getTime()) + "ms");
-        System.out.println(CNT);
+        /*int n = 34;
+        Node[] nodes = generateGraph(n);
+        addEdges(500, nodes);*/
+
+        long[] maxCost = new long[2];
+        List<Set<Node>> maxCliques = new ArrayList<>();
+        maxCost(nodes, new HashSet<>(), 0, maxCost, maxCliques);
+        maxCliques.forEach(System.out::println);
+
+        for (Node nd : nodes) {
+            if (nd.getCost() == 0) {
+                List<Set<Node>> newCliques = new ArrayList<>();
+
+                for (Set<Node> clique : maxCliques) {
+                    boolean notConected = true;
+                    for (Node cliqueNode : clique) {
+                        if (cliqueNode.getNeighbours().contains(nd)) {
+                            notConected = false;
+                            break;
+                        }
+                    }
+
+                    if (notConected) {
+                        Set<Node> newClique = new HashSet<>();
+                        newClique.addAll(clique);
+                        newClique.add(nd);
+                        newCliques.add(newClique);
+                    }
+                }
+                maxCliques.addAll(newCliques);
+            }
+        }
+        System.out.println(maxCost[0] + " " + maxCliques.size());
     }
 
-    private static void maxCost(Set<Node> nodes, Set<Node> clique, int cost, int[] maxCost) {
-        Set<Node> toProcess = new HashSet<>();
-        toProcess.addAll(nodes);
+    private static Set<Node> maxCost(Node[] nodes, Set<Node> clique, long cost, long[] maxCost, List<Set<Node>> maxCliques) {
+        Set<Node> processed = new HashSet<>();
 
-        for (Node node : nodes) {
-            CNT++;
+        boolean wasIncreased = false;
+        for (Node nd : nodes) {
+            if (clique.contains(nd) || processed.contains(nd) || nd.getCost() == 0) {
+                continue;
+            }
 
             boolean connected = true;
 
             for (Node cliqueNode : clique) {
-                if (cliqueNode.getNeighbours().contains(node)) {
+                if (cliqueNode.getNeighbours().contains(nd)) {
                     connected = false;
                     break;
                 }
             }
 
-            toProcess.remove(node);
+            if (!connected) {
+                continue;
+            }
 
-            if (connected) {
-                clique.add(node);
-                //System.out.println(clique);
-                int newCost = cost + node.getCost();
+            wasIncreased = true;
+            processed.add(nd);
 
-                if (newCost > maxCost[0]) {
-                    maxCost[0] = newCost;
-                    maxCost[1] = 1;
-                } else if (newCost == maxCost[0]) {
-                    maxCost[1]++;
-                }
+            clique.add(nd);
+            processed.addAll(maxCost(nodes, clique, cost + nd.getCost(), maxCost, maxCliques));
+            clique.remove(nd);
+        }
 
-                maxCost(toProcess, clique, newCost, maxCost);
+        if (!wasIncreased) {
+            //System.out.println(clique + " " + cost);
+            if (cost > maxCost[0]) {
+                maxCost[0] = cost;
+                maxCost[1] = 1;
 
-                clique.remove(node);
+                maxCliques.clear();
+                Set<Node> maxClique = new HashSet<>();
+                maxClique.addAll(clique);
+                maxCliques.add(maxClique);
+            } else if (cost == maxCost[0]) {
+                maxCost[1] += 1;
+
+                Set<Node> maxClique = new HashSet<>();
+                maxClique.addAll(clique);
+                maxCliques.add(maxClique);
             }
         }
+
+        return processed;
     }
 }
