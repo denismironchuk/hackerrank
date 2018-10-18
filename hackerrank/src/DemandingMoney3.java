@@ -2,17 +2,18 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.TreeSet;
 
 /**
- * Created by Влада on 04.10.2018.
+ * Created by Denis_Mironchuk on 10/18/2018.
  */
-public class DemandingMoney2 {
-    static class Node {
+public class DemandingMoney3 {
+    static class Node implements Comparable<Node> {
         private int num;
         private long cost;
         private Set<Node> neighbours = new HashSet<>();
@@ -44,7 +45,12 @@ public class DemandingMoney2 {
 
         @Override
         public String toString() {
-            return String.valueOf(num + 1) + "-" + String.valueOf(cost);
+            return String.valueOf(num + 1);
+        }
+
+        @Override
+        public int compareTo(final Node o) {
+            return Integer.compare(num, o.getNum());
         }
     }
 
@@ -97,7 +103,7 @@ public class DemandingMoney2 {
     }
 
     public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        /*BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer line1Tkn = new StringTokenizer(br.readLine());
         int n = Integer.parseInt(line1Tkn.nextToken());
         int m = Integer.parseInt(line1Tkn.nextToken());
@@ -116,92 +122,86 @@ public class DemandingMoney2 {
             int n2 = Integer.parseInt(edgeTkn.nextToken()) - 1;
             nodes[n1].addNeighbour(nodes[n2]);
             nodes[n2].addNeighbour(nodes[n1]);
-        }
+        }*/
 
-        /*int n = 34;
+        int n = 34;
         Node[] nodes = generateGraph(n);
-        addEdges(500, nodes);*/
+        addEdges(2000, nodes);
 
-        long[] maxCost = new long[2];
-        List<Set<Node>> maxCliques = new ArrayList<>();
-        maxCost(nodes, new ArrayList<>(), 0, maxCost, maxCliques);
-        maxCliques.forEach(System.out::println);
-
-        for (Node nd : nodes) {
-            if (nd.getCost() == 0) {
-                List<Set<Node>> newCliques = new ArrayList<>();
-
-                for (Set<Node> clique : maxCliques) {
-                    boolean notConected = true;
-                    for (Node cliqueNode : clique) {
-                        if (cliqueNode.getNeighbours().contains(nd)) {
-                            notConected = false;
-                            break;
-                        }
-                    }
-
-                    if (notConected) {
-                        Set<Node> newClique = new HashSet<>();
-                        newClique.addAll(clique);
-                        newClique.add(nd);
-                        newCliques.add(newClique);
-                    }
-                }
-                maxCliques.addAll(newCliques);
-            }
+        Set<Node> p = new HashSet<>();
+        for (Node node : nodes) {
+            p.add(node);
         }
-        System.out.println(maxCost[0] + " " + maxCliques.size());
+
+        bronKerbosh(new HashSet<>(), p, new HashSet<>());
     }
 
-    private static Set<Node> maxCost(Node[] nodes, List<Node> clique, long cost, long[] maxCost, List<Set<Node>> maxCliques) {
-        Set<Node> processed = new HashSet<>();
+    public static void bronKerbosh(Set<Node> r, Set<Node> p, Set<Node> x) {
+        if (p.isEmpty() && x.isEmpty()) {
+            Set<Node> res = new TreeSet<>();
+            res.addAll(r);
+            System.out.println(res);
+            return;
+        }
 
-        boolean wasIncreased = false;
-        for (Node nd : nodes) {
-            if (clique.contains(nd) || processed.contains(nd)/* || nd.getCost() == 0*/) {
-                continue;
-            }
+        Node pivot = null;
+        int maxNeighCnt = -1;
 
-            boolean connected = true;
-
-            for (Node cliqueNode : clique) {
-                if (cliqueNode.getNeighbours().contains(nd)) {
-                    connected = false;
-                    break;
+        for (Node nd : p) {
+            int neignCnt = 0;
+            for (Node neigh : nd.getNeighbours()) {
+                if (p.contains(neigh)) {
+                    neignCnt++;
                 }
             }
 
-            if (!connected) {
-                continue;
-            }
-
-            wasIncreased = true;
-            processed.add(nd);
-
-            clique.add(nd);
-            processed.addAll(maxCost(nodes, clique, cost + nd.getCost(), maxCost, maxCliques));
-            clique.remove(nd);
-        }
-
-        if (!wasIncreased) {
-            System.out.println(clique + " " + cost);
-            if (cost > maxCost[0]) {
-                maxCost[0] = cost;
-                maxCost[1] = 1;
-
-                maxCliques.clear();
-                Set<Node> maxClique = new HashSet<>();
-                maxClique.addAll(clique);
-                maxCliques.add(maxClique);
-            } else if (cost == maxCost[0]) {
-                maxCost[1] += 1;
-
-                Set<Node> maxClique = new HashSet<>();
-                maxClique.addAll(clique);
-                maxCliques.add(maxClique);
+            if (neignCnt > maxNeighCnt) {
+                pivot = nd;
             }
         }
 
-        return processed;
+        for (Node nd : x) {
+            int neignCnt = 0;
+            for (Node neigh : nd.getNeighbours()) {
+                if (p.contains(neigh)) {
+                    neignCnt++;
+                }
+            }
+
+            if (neignCnt > maxNeighCnt) {
+                pivot = nd;
+            }
+        }
+
+        Set<Node> pNoPivot = new HashSet<>();
+        pNoPivot.addAll(p);
+        pNoPivot.removeAll(pivot.getNeighbours());
+
+        Iterator<Node> itr = pNoPivot.iterator();
+
+        while (itr.hasNext()) {
+            Node v = itr.next();
+
+            Set<Node> newP = new HashSet<>();
+            for (Node neigh : v.getNeighbours()) {
+                if (p.contains(neigh)) {
+                    newP.add(neigh);
+                }
+            }
+
+            Set<Node> newX = new HashSet<>();
+            for (Node neigh : v.getNeighbours()) {
+                if (x.contains(neigh)) {
+                    newX.add(neigh);
+                }
+            }
+
+            r.add(v);
+            bronKerbosh(r, newP, newX);
+            r.remove(v);
+
+            p.remove(v);
+            x.add(v);
+        }
     }
 }

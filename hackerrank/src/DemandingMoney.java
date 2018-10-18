@@ -40,7 +40,7 @@ public class DemandingMoney {
 
         @Override
         public String toString() {
-            return String.valueOf(num + 1);
+            return String.valueOf(num + 1) + "-" + getCost();
         }
     }
 
@@ -93,7 +93,7 @@ public class DemandingMoney {
     }
 
     public static void main(String[] args) throws IOException {
-        /*BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer line1Tkn = new StringTokenizer(br.readLine());
         int n = Integer.parseInt(line1Tkn.nextToken());
         int m = Integer.parseInt(line1Tkn.nextToken());
@@ -112,11 +112,11 @@ public class DemandingMoney {
             int n2 = Integer.parseInt(edgeTkn.nextToken()) - 1;
             nodes[n1].addNeighbour(nodes[n2]);
             nodes[n2].addNeighbour(nodes[n1]);
-        }*/
+        }
 
-        int n = 32;
+        /*int n = 32;
         Node[] nodes = generateGraph(n);
-        addEdges(0, nodes);
+        addEdges(0, nodes);*/
 
         Date start = new Date();
         int[] maxCost = new int[2];
@@ -133,6 +133,7 @@ public class DemandingMoney {
     }
 
     private static void maxCost(Set<Node> nodes, Set<Node> clique, int cost, int[] maxCost) {
+        System.out.println(clique + " - " + cost);
         Set<Node> toProcess = new HashSet<>();
         toProcess.addAll(nodes);
 
@@ -152,7 +153,6 @@ public class DemandingMoney {
 
             if (connected) {
                 clique.add(node);
-                //System.out.println(clique);
                 int newCost = cost + node.getCost();
 
                 if (newCost > maxCost[0]) {
