@@ -1,19 +1,16 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.TreeSet;
 
 /**
  * Created by Denis_Mironchuk on 10/18/2018.
  */
 public class DemandingMoney3 {
-    static class Node implements Comparable<Node> {
+    static class Node {
         private int num;
         private long cost;
         private Set<Node> neighbours = new HashSet<>();
@@ -43,67 +40,21 @@ public class DemandingMoney3 {
             return neighbours;
         }
 
-        @Override
-        public String toString() {
-            return String.valueOf(num + 1);
-        }
+        public void inverseEdges(Node[] nodes) {
+            Set<Node> newNeighbours = new HashSet<>();
 
-        @Override
-        public int compareTo(final Node o) {
-            return Integer.compare(num, o.getNum());
-        }
-    }
-
-    public static Node[] generateGraph(int n) {
-        Node[] nodes = new Node[n];
-        List<Integer> notConnected = new ArrayList<>();
-        List<Integer> connected = new ArrayList<>();
-
-        for (int i = 0; i < n; i++) {
-            nodes[i] = new Node(i, 1);
-            notConnected.add(i);
-        }
-
-        connected.add(notConnected.get(0));
-        notConnected.remove(0);
-
-        while (!notConnected.isEmpty()) {
-            int conIndex = (int) (Math.random() * (connected.size() - 1));
-            int conNodeNum = connected.get(conIndex);
-            Node conNode = nodes[conNodeNum];
-
-            int notConIndex = (int) (Math.random() * (notConnected.size() - 1));
-            int notConNodeNum = notConnected.get(notConIndex);
-            Node notConNode = nodes[notConNodeNum];
-
-            connected.add(notConNodeNum);
-            notConnected.remove(notConIndex);
-
-            conNode.addNeighbour(notConNode);
-            notConNode.addNeighbour(conNode);
-        }
-
-        return nodes;
-    }
-
-    private static void addEdges(int edgesToAdd, Node[] graph) {
-        int n = graph.length;
-        for (int i = 0; i < edgesToAdd; i++) {
-            int v1 = (int)((n) * Math.random());
-
-            int v2 = v1;
-
-            while (v1 == v2) {
-                v2 = (int)((n) * Math.random());
+            for (Node nd : nodes) {
+                if (!neighbours.contains(nd) && nd != this) {
+                    newNeighbours.add(nd);
+                }
             }
 
-            graph[v1].addNeighbour(graph[v2]);
-            graph[v2].addNeighbour(graph[v1]);
+            neighbours = newNeighbours;
         }
     }
 
     public static void main(String[] args) throws IOException {
-        /*BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer line1Tkn = new StringTokenizer(br.readLine());
         int n = Integer.parseInt(line1Tkn.nextToken());
         int m = Integer.parseInt(line1Tkn.nextToken());
@@ -122,25 +73,43 @@ public class DemandingMoney3 {
             int n2 = Integer.parseInt(edgeTkn.nextToken()) - 1;
             nodes[n1].addNeighbour(nodes[n2]);
             nodes[n2].addNeighbour(nodes[n1]);
-        }*/
+        }
 
-        int n = 34;
-        Node[] nodes = generateGraph(n);
-        addEdges(2000, nodes);
+        for (Node node : nodes) {
+            node.inverseEdges(nodes);
+        }
 
         Set<Node> p = new HashSet<>();
         for (Node node : nodes) {
             p.add(node);
         }
 
-        bronKerbosh(new HashSet<>(), p, new HashSet<>());
+        long[] res = new long[2];
+        bronKerbosh(new HashSet<>(), p, new HashSet<>(), 0, res, 0);
+        System.out.printf("%s %s", res[0], res[1]);
     }
 
-    public static void bronKerbosh(Set<Node> r, Set<Node> p, Set<Node> x) {
+    private static long pow(long n, int p) {
+        if (p == 0) {
+            return 1;
+        }
+
+        if (p % 2 == 0) {
+            return pow(n * n, p / 2);
+        } else {
+            return n * pow(n, p - 1);
+        }
+    }
+
+    public static void bronKerbosh(Set<Node> r, Set<Node> p, Set<Node> x, long sum, long[] result, int zeros) {
         if (p.isEmpty() && x.isEmpty()) {
-            Set<Node> res = new TreeSet<>();
-            res.addAll(r);
-            System.out.println(res);
+            if (sum > result[0]) {
+                result[0] = sum;
+                result[1] = pow(2, zeros);
+            } else if (sum == result[0]) {
+                result[1] += pow(2, zeros);
+            }
+
             return;
         }
 
@@ -156,6 +125,7 @@ public class DemandingMoney3 {
             }
 
             if (neignCnt > maxNeighCnt) {
+                maxNeighCnt = neignCnt;
                 pivot = nd;
             }
         }
@@ -197,7 +167,7 @@ public class DemandingMoney3 {
             }
 
             r.add(v);
-            bronKerbosh(r, newP, newX);
+            bronKerbosh(r, newP, newX, sum + v.getCost(), result, v.getCost() == 0 ? zeros + 1:zeros);
             r.remove(v);
 
             p.remove(v);
