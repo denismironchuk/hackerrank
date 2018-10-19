@@ -1,10 +1,7 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * Created by Denis_Mironchuk on 10/18/2018.
@@ -51,6 +48,11 @@ public class DemandingMoney3 {
 
             neighbours = newNeighbours;
         }
+
+        @Override
+        public String toString() {
+            return String.valueOf(num + 1) + " - " + String.valueOf(cost);
+        }
     }
 
     public static void main(String[] args) throws IOException {
@@ -81,36 +83,57 @@ public class DemandingMoney3 {
 
         Set<Node> p = new HashSet<>();
         for (Node node : nodes) {
-            p.add(node);
+            if (node.getCost() != 0) {
+                p.add(node);
+            }
         }
 
-        long[] res = new long[2];
-        bronKerbosh(new HashSet<>(), p, new HashSet<>(), 0, res, 0);
+        long[] res = bronKerbosh(new HashSet<>(), p, new HashSet<>(), 0);
+
         System.out.printf("%s %s", res[0], res[1]);
     }
 
-    private static long pow(long n, int p) {
+    private static long fastPow(long n, int p) {
         if (p == 0) {
             return 1;
         }
 
         if (p % 2 == 0) {
-            return pow(n * n, p / 2);
+            return fastPow(n * n, p / 2);
         } else {
-            return n * pow(n, p - 1);
+            return n * fastPow(n, p - 1);
         }
     }
 
-    public static void bronKerbosh(Set<Node> r, Set<Node> p, Set<Node> x, long sum, long[] result, int zeros) {
+    public static long[] bronKerbosh(Set<Node> r, Set<Node> p, Set<Node> x, long sum) {
         if (p.isEmpty() && x.isEmpty()) {
-            if (sum > result[0]) {
-                result[0] = sum;
-                result[1] = pow(2, zeros);
-            } else if (sum == result[0]) {
-                result[1] += pow(2, zeros);
+
+            System.out.println(r);
+            Set<Node> newP = new HashSet<>();
+            for (Node coverNode : r) {
+                for (Node neigh : coverNode.getNeighbours()) {
+                    if (neigh.getCost() == 0) {
+                        boolean conected = true;
+                        for (Node n : r) {
+                            if (!n.getNeighbours().contains(neigh)) {
+                                conected = false;
+                                break;
+                            }
+                        }
+
+                        if (conected) {
+                            newP.add(neigh);
+                        }
+                    }
+                }
             }
 
-            return;
+            if (newP.size() == 0) {
+                return new long[]{sum, 1};
+            } else {
+                long zeroRes = bronKerboshZero(r, newP, new HashSet<>(), 0);
+                return new long[]{sum, 1 + (zeroRes / 2)};
+            }
         }
 
         Node pivot = null;
@@ -149,6 +172,8 @@ public class DemandingMoney3 {
 
         Iterator<Node> itr = pNoPivot.iterator();
 
+        long[] res = new long[2];
+
         while (itr.hasNext()) {
             Node v = itr.next();
 
@@ -167,11 +192,92 @@ public class DemandingMoney3 {
             }
 
             r.add(v);
-            bronKerbosh(r, newP, newX, sum + v.getCost(), result, v.getCost() == 0 ? zeros + 1:zeros);
+            long[] nextRes = bronKerbosh(r, newP, newX, sum + v.getCost());
+
+            if (nextRes[0] > res[0]) {
+                res = nextRes;
+            } else if (nextRes[0] == res[0]) {
+                res[1] += nextRes[1];
+            }
+
             r.remove(v);
 
             p.remove(v);
             x.add(v);
         }
+
+        return res;
+    }
+
+    public static long bronKerboshZero(Set<Node> r, Set<Node> p, Set<Node> x, long sum) {
+        if (p.isEmpty() && x.isEmpty()) {
+            return 1;
+        }
+
+        Node pivot = null;
+        int maxNeighCnt = -1;
+
+        for (Node nd : p) {
+            int neignCnt = 0;
+            for (Node neigh : nd.getNeighbours()) {
+                if (p.contains(neigh)) {
+                    neignCnt++;
+                }
+            }
+
+            if (neignCnt > maxNeighCnt) {
+                maxNeighCnt = neignCnt;
+                pivot = nd;
+            }
+        }
+
+        for (Node nd : x) {
+            int neignCnt = 0;
+            for (Node neigh : nd.getNeighbours()) {
+                if (p.contains(neigh)) {
+                    neignCnt++;
+                }
+            }
+
+            if (neignCnt > maxNeighCnt) {
+                pivot = nd;
+            }
+        }
+
+        Set<Node> pNoPivot = new HashSet<>();
+        pNoPivot.addAll(p);
+        pNoPivot.removeAll(pivot.getNeighbours());
+
+        Iterator<Node> itr = pNoPivot.iterator();
+
+        long res = 0;
+
+        while (itr.hasNext()) {
+            Node v = itr.next();
+
+            Set<Node> newP = new HashSet<>();
+            for (Node neigh : v.getNeighbours()) {
+                if (p.contains(neigh)) {
+                    newP.add(neigh);
+                }
+            }
+
+            Set<Node> newX = new HashSet<>();
+            for (Node neigh : v.getNeighbours()) {
+                if (x.contains(neigh)) {
+                    newX.add(neigh);
+                }
+            }
+
+            r.add(v);
+            res += 2 * bronKerboshZero(r, newP, newX, sum + v.getCost());
+
+            r.remove(v);
+
+            p.remove(v);
+            x.add(v);
+        }
+
+        return res;
     }
 }
