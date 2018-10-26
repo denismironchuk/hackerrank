@@ -3,7 +3,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.StringTokenizer;
 
-public class MinMST2 {
+public class MinMST3 {
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         int G = Integer.parseInt(br.readLine());
@@ -25,21 +25,28 @@ public class MinMST2 {
                 long n1 = n - 1;
                 long m1 = m - (n1 * (n1 - 1)) / 2;
 
-                long lowerK = 2 * (n1 - m1);
-                long upperK = ((n1 - 1) * (maxEdge - 1)) / n1;
+                if (maxEdge - n1 + 1 > 1) {
+                    long decr = m1 * (n1 - 1) - (n1) * (n1 - 1) / 2;
+                    if (decr > 0) {
+                        long k = (maxEdge - 1) / n1;
+                        res -= k * decr;
 
-                if (lowerK <= upperK) {
-                    long fullCost = 2;
-                    long newRes = res;
-                    maxEdge--;
+                        long singleCost = k + 1;
+                        maxEdge -= (n1 - 1) * k;
 
-                    while (maxEdge >= fullCost) {
-                        for (long add = n1 - 1; maxEdge >= fullCost && add > 0; add--) {
-                            newRes = newRes - m1 + add;
-                            res = Math.min(res, newRes);
-                            maxEdge--;
+                        long k2 = Math.max(maxEdge - singleCost - 1, 0);
+
+                        long newDecr = m1 * k2 - ((n1 - 1 + n1 - 1 - k2 + 1) * k2) / 2;
+
+                        if (newDecr > 0) {
+                            res = res - newDecr;
                         }
-                        fullCost++;
+                    }
+                } else {
+                    long k = Math.max(maxEdge - 2, 0);
+                    long newRes = res - m1 * k + ((n1 - 1 + n1 - 1 - k + 1) * k) / 2;
+                    if (newRes < res) {
+                        res = newRes;
                     }
                 }
             }
