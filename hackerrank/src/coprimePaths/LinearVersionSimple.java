@@ -1,84 +1,36 @@
 package coprimePaths;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class LinearVersionSimple {
+    public static final int PRIMES_LIMIT = 10;
+    public static final int PRIME_FACTOR_LIMIT = 3;
+    public static final int DATA_LEN = 5;
+
     public static void main(String[] args) {
-        int numbers = 100;
-        int[] isPrime = new int[numbers];
-        int[] processed = new int[numbers];
-
-        List<Integer> primes = new ArrayList<>();
-
-        for (int i = 2; i < numbers; i++) {
-            if (processed[i] == 0) {
-                processed[i] = 1;
-                isPrime[i] = 1;
-                primes.add(i);
-
-                for (int j = 2; i * j < numbers; j++) {
-                    processed[i * j] = 1;
-                }
-            }
-        }
-
-        System.out.println(primes);
-
-        int primesAmnt = primes.size();
-
-        int primeFactorLimit = 3;
-        int dataLen = 25000;
-        int[] data = new int[dataLen];
-
-        int maxValue = -1;
-        for (int i = 0; i < dataLen; i++) {
-            int mults = (int)(primeFactorLimit * Math.random()) + 1;
-            data[i] = 1;
-
-            for (int j = 0; j < mults; j++) {
-                int prm = primes.get((int)(primesAmnt * Math.random()));
-                data[i] *= prm;
-            }
-
-            if (data[i] > maxValue) {
-                maxValue = data[i];
-            }
-        }
+        List<Integer> primes = PrimesGenerator.generate(PRIMES_LIMIT);
+        int[] data = SequenceUtils.generate(primes, DATA_LEN, PRIME_FACTOR_LIMIT, true);
+        int maxValue = SequenceUtils.maxVal(data);
 
         Date start = new Date();
 
-        //Map<Integer, Integer> dynMap = new HashMap<>();
         int[] dynMap = new int[maxValue + 1];
         long resPairs = 0;
-        fillMultsCombinations(dynMap, data[0]);
+        int[] fact = new int[PRIME_FACTOR_LIMIT];
+        int size = NumberUtils.factor(data[0], fact);
+        addMultsCombinations(dynMap, data[0], fact, size);
 
-        for (int i = 1; i < dataLen; i++) {
-            List<Integer> fact = factor(data[i]);
+        for (int i = 1; i < DATA_LEN; i++) {
+            resPairs = addNumberToSequence(data[i], dynMap, resPairs, i);
+        }
 
-            if (fact.size() == 1) {
-                resPairs += (i - dynMap[data[i]]);
-            } else if (fact.size() == 2) {
-                int a = fact.get(0);
-                int b = fact.get(1);
+        System.out.println(resPairs);
 
-                resPairs += (i - (dynMap[a] + dynMap[b] - 2 * dynMap[a*b]));
-            } else if (fact.size() == 3) {
-                int a = fact.get(0);
-                int b = fact.get(1);
-                int c = fact.get(2);
-
-                int common = dynMap[a] + dynMap[b] + dynMap[c] -
-                        (dynMap[a * b] + dynMap[b * c] + dynMap[a * c]) -
-                        5 * dynMap[a * b * c];
-
-                resPairs += (i - common);
-            }
-
-            fillMultsCombinations(dynMap, data[i]);
+        int seqLen = DATA_LEN;
+        for (int i = 0; i < DATA_LEN; i++) {
+            resPairs = removeNumberFromSequence(data[i], dynMap, resPairs, seqLen);
+            seqLen--;
         }
 
         Date end = new Date();
@@ -86,44 +38,85 @@ public class LinearVersionSimple {
         System.out.println(end.getTime() - start.getTime() + "ms");
     }
 
-    private static void fillMultsCombinations(int[] dynMap, int n) {
-        List<Integer> fact = factor(n);
+    private static long addNumberToSequence(int num, int[] dynMap, long pairs, int sequenceLen) {
+        int[] fact = new int[PRIME_FACTOR_LIMIT];
+        int size = NumberUtils.factor(num, fact);
+        long resPairs = pairs;
 
-        if (fact.size() == 1) {
-            dynMap[n]++;
-        } else if (fact.size() == 2) {
-            dynMap[n]++;
-            dynMap[fact.get(0)]++;
-            dynMap[fact.get(1)]++;
-        } else if (fact.size() == 3) {
-            dynMap[n]++;
+        int common = getCommonMults(num, dynMap, fact, size);
+        resPairs += (sequenceLen - common);
 
-            dynMap[fact.get(0) * fact.get(1)]++;
-            dynMap[fact.get(0) * fact.get(2)]++;
-            dynMap[fact.get(1) * fact.get(2)]++;
+        addMultsCombinations(dynMap, num, fact, size);
 
-            dynMap[fact.get(0)]++;
-            dynMap[fact.get(1)]++;
-            dynMap[fact.get(2)]++;
-        }
-
+        return resPairs;
     }
 
-    private static List<Integer> factor(int n) {
-        List<Integer> result = new ArrayList<>();
+    private static long removeNumberFromSequence(int num, int[] dynMap, long pairs, int sequenceLen) {
+        int[] fact = new int[PRIME_FACTOR_LIMIT];
+        int size = NumberUtils.factor(num, fact);
+        long resPairs = pairs;
 
-        int n_ = n;
-        for (int i = 2; i * i <= n; i++) {
-            while (n_ % i == 0) {
-                result.add(i);
-                n_ /= i;
-            }
+       removeMultsCombinations(dynMap, num, fact, size);
+
+        int common = getCommonMults(num, dynMap, fact, size);
+        resPairs -= (sequenceLen - common);
+
+        return resPairs;
+    }
+
+    private static int getCommonMults(final int num, final int[] dynMap, final int[] fact, final int size) {
+        int common = 0;
+
+        if (size == 1) {
+            common = dynMap[num];
+        } else if (size == 2) {
+            int a = fact[0];
+            int b = fact[1];
+
+            common = (dynMap[a] + dynMap[b] - 2 * dynMap[a*b]);
+        } else if (size == 3) {
+            int a = fact[0];
+            int b = fact[1];
+            int c = fact[2];
+
+            common = dynMap[a] + dynMap[b] + dynMap[c] -
+                    (dynMap[a * b] + dynMap[b * c] + dynMap[a * c]) -
+                    5 * dynMap[a * b * c];
         }
+        return common;
+    }
 
-        if (n_ != 1) {
-            result.add(n_);
+    private static void addMultsCombinations(int[] dynMap, int n, int[] fact, int size){
+        int[] factUnique = new int[PRIME_FACTOR_LIMIT];
+        int sizeUnique = NumberUtils.getUniqueValues(fact, size, factUnique);
+
+        manageMultsCombinations(dynMap, n, factUnique, sizeUnique, 1);
+    }
+
+    private static void removeMultsCombinations(int[] dynMap, int n, int[] fact, int size){
+        int[] factUnique = new int[PRIME_FACTOR_LIMIT];
+        int sizeUnique = NumberUtils.getUniqueValues(fact, size, factUnique);
+
+        manageMultsCombinations(dynMap, n, factUnique, sizeUnique, -1);
+    }
+
+    private static void manageMultsCombinations(int[] dynMap, int n, int[] fact, int size, int inc) {
+        if (size == 1) {
+            dynMap[n] += inc;
+        } else if (size == 2) {
+            dynMap[n] += inc;
+            dynMap[fact[0]] += inc;
+            dynMap[fact[1]] += inc;
+        } else if (size == 3) {
+            dynMap[n]++;
+
+            dynMap[fact[0] * fact[1]] += inc;
+            dynMap[fact[0] * fact[2]] += inc;
+            dynMap[fact[1] * fact[2]] += inc;
+
+            dynMap[fact[0]] += inc;
+            dynMap[fact[1]] += inc;
+            dynMap[fact[2]] += inc;
         }
-
-        return result;
     }
 }
