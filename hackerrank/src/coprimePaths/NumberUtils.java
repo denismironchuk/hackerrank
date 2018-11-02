@@ -1,5 +1,8 @@
 package coprimePaths;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Denis_Mironchuk on 10/26/2018.
  */
@@ -9,9 +12,11 @@ public class NumberUtils {
 
         int n_ = n;
         for (int i = 2; i * i <= n; i++) {
-            while (n_ % i == 0) {
+            if (n_ % i == 0) {
                 res[size] = i;
                 size++;
+            }
+            while (n_ % i == 0) {
                 n_ /= i;
             }
         }
@@ -24,23 +29,53 @@ public class NumberUtils {
         return size;
     }
 
-    public static int getUniqueValues(int[] fact, int size, int[] res) {
-        int newSize = 0;
+    public static int factor(int n, int[] res, int[] primes) {
+        int size = 0;
 
-        for (int i = 0; i < size; i++) {
-            int f = fact[i];
-            boolean isUnique = true;
-
-            for (int j = i + 1; isUnique && j < size; j++) {
-                isUnique = (f != fact[j]);
+        for (int prime : primes) {
+            if (n % prime == 0) {
+                res[size] = prime;
+                size++;
             }
 
-            if (isUnique) {
-                res[newSize] = f;
-                newSize++;
+            while (n % prime == 0) {
+                n /= prime;
+            }
+
+            if (n == 1) {
+                break;
             }
         }
 
-        return newSize;
+        if (n != 1) {
+            res[size] = n;
+            size++;
+        }
+
+        return size;
+    }
+
+    public static List<Integer> factorWithPrimes(int n, int[] primes) {
+        List<Integer> factor = new ArrayList<>();
+
+        for (int prime : primes) {
+            if (n % prime == 0) {
+                factor.add(prime);
+            }
+
+            while (n % prime == 0) {
+                n /= prime;
+            }
+
+            if (n == 1) {
+                break;
+            }
+        }
+
+        if (n != 1) {
+            factor.add(n);
+        }
+
+        return factor;
     }
 }
