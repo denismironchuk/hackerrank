@@ -1,55 +1,158 @@
 package coprimePaths;
 
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
 
 public class LinearVersionSimple {
     public static final int PRIMES_LIMIT = 100;
     public static final int PRIME_FACTOR_LIMIT = 3;
-    public static final int DATA_LEN = 25000;
+    public static final int DATA_LEN = 100;
+
+    public static class Range {
+        private int start;
+        private int end;
+
+        public Range(final int start, final int end) {
+            this.start = start;
+            this.end = end;
+        }
+
+        public int getStart() {
+            return start;
+        }
+
+        public void setStart(final int start) {
+            this.start = start;
+        }
+
+        public int getEnd() {
+            return end;
+        }
+
+        public void setEnd(final int end) {
+            this.end = end;
+        }
+    }
 
     public static void main(String[] args) {
-        List<Integer> primes = PrimesGenerator.generate(PRIMES_LIMIT);
-        int[] data = SequenceUtils.generate(primes, DATA_LEN, PRIME_FACTOR_LIMIT, false);
-        int maxValue = SequenceUtils.maxVal(data);
-        List<Integer> primesForFactor = PrimesGenerator.generate(1 + (int) Math.sqrt(maxValue));
-        int[] primesArray = new int[primesForFactor.size()];
-        int index = 0;
-        for (int prime : primesForFactor) {
-            primesArray[index] = prime;
-            index++;
+        while (true) {
+            List<Integer> primes = PrimesGenerator.generate(PRIMES_LIMIT);
+            int[] data = SequenceUtils.generate(primes, DATA_LEN, PRIME_FACTOR_LIMIT, false);
+            int maxValue = SequenceUtils.maxVal(data);
+            List<Integer> primesForFactor = PrimesGenerator.generate(1 + (int) Math.sqrt(maxValue));
+            int[] primesArray = new int[primesForFactor.size()];
+            int index = 0;
+            for (int prime : primesForFactor) {
+                primesArray[index] = prime;
+                index++;
+            }
+
+            int[][] factorizations = new int[DATA_LEN][PRIME_FACTOR_LIMIT];
+            int[] factorSizes = new int[DATA_LEN];
+
+            for (int i = 0; i < DATA_LEN; i++) {
+                int[] fact = new int[PRIME_FACTOR_LIMIT];
+                factorSizes[i] = NumberUtils.factor(data[i], fact, primesArray);
+                factorizations[i] = fact;
+            }
+
+            List<Range> ranges = new ArrayList<>();
+
+            for (int i = 0; i < DATA_LEN; i++) {
+                int start = 0;
+                int end = 0;
+
+                while (start >= end) {
+                    start = (int) (DATA_LEN * Math.random());
+                    end = (int) (DATA_LEN * Math.random());
+                }
+
+                ranges.add(new Range(start, end));
+            }
+
+            List<Long> optResult = countRanges(factorizations, factorSizes, ranges, new int[maxValue + 1]);
+            List<Long> optTrivial = countRangesTrivial(factorizations, factorSizes, ranges);
+
+            for (int i = 0; i < optResult.size(); i++) {
+                if (!optResult.get(i).equals(optTrivial.get(i))) {
+                    System.out.println(optResult);
+                    System.out.println(optTrivial);
+                    throw new RuntimeException();
+                }
+            }
         }
+    }
 
-        int[][] factorizations = new int[DATA_LEN][PRIME_FACTOR_LIMIT];
-        int[] factorSizes = new int[DATA_LEN];
+    private static List<Long> countRanges(int[][] factorizations, int[] factorSizes, List<Range> ranges, int[] dynMap) {
+        List<Long> result = new ArrayList<>();
 
-        for (int i = 0; i < DATA_LEN; i++) {
-            int[] fact = new int[PRIME_FACTOR_LIMIT];
-            factorSizes[i] = NumberUtils.factor(data[i], fact, primesArray);
-            factorizations[i] = fact;
-        }
+        int startPos = 0;
+        int endPos = 0;
 
-        Date start = new Date();
-
-        int[] dynMap = new int[maxValue + 1];
         long resPairs = 0;
         addMultsCombinations(dynMap, factorizations[0], factorSizes[0]);
 
-        for (int i = 1; i < DATA_LEN; i++) {
-            resPairs = addNumberToSequence(factorizations[i], factorSizes[i], dynMap, resPairs, i, primesArray);
+        for (Range range : ranges) {
+            while (range.getStart() < startPos) {
+                startPos--;
+                resPairs = addNumberToSequence(factorizations[startPos], factorSizes[startPos], dynMap, resPairs, endPos - startPos);
+            }
+
+            while (range.getEnd() < endPos) {
+                resPairs = removeNumberFromSequence(factorizations[endPos], factorSizes[endPos], dynMap, resPairs, endPos - startPos + 1);
+                endPos--;
+            }
+
+            while (range.getEnd() > endPos) {
+                endPos++;
+                resPairs = addNumberToSequence(factorizations[endPos], factorSizes[endPos], dynMap, resPairs, endPos - startPos);
+            }
+
+            while (range.getStart() > startPos) {
+                resPairs = removeNumberFromSequence(factorizations[startPos], factorSizes[startPos], dynMap, resPairs, endPos - startPos + 1);
+                startPos++;
+            }
+
+            result.add(resPairs);
         }
 
-        System.out.println(resPairs);
+        return result;
+    }
 
-        int seqLen = DATA_LEN;
-        for (int i = 0; i < DATA_LEN; i++) {
-            resPairs = removeNumberFromSequence(factorizations[i], factorSizes[i], dynMap, resPairs, seqLen, primesArray);
-            seqLen--;
+    private static List<Long> countRangesTrivial(int[][] factorizations, int[] factorSizes, List<Range> ranges) {
+        List<Long> result = new ArrayList<>();
+
+        for (Range range : ranges) {
+            result.add(countPairsTrivial(factorizations, factorSizes, range));
         }
 
-        Date end = new Date();
-        System.out.println(resPairs);
-        System.out.println(end.getTime() - start.getTime() + "ms");
+        return result;
+    }
+
+    private static long countPairsTrivial(int[][] factorizations, int[] factorSizes, Range range) {
+        long res = 0;
+        for (int i = range.getStart(); i <= range.getEnd(); i++) {
+            int[] factor1 = factorizations[i];
+            int size1 = factorSizes[i];
+
+            for (int j = i+1; j <= range.getEnd(); j++) {
+                int[] factor2 = factorizations[j];
+                int size2 = factorSizes[j];
+                boolean coPrime = true;
+                for (int k = 0; coPrime && k < size1; k++) {
+                    for (int l = 0; coPrime && l < size2; l++) {
+                        if (factor1[k] == factor2[l]) {
+                            coPrime = false;
+                        }
+                    }
+                }
+                if (coPrime) {
+                    res++;
+                }
+            }
+        }
+
+        return res;
     }
 
     private static long countPairsTrivial(int[] data) {
@@ -77,7 +180,7 @@ public class LinearVersionSimple {
         return res;
     }
 
-    private static long addNumberToSequence(int[] factor, int factorSize, int[] dynMap, long pairs, int sequenceLen, int[] primes) {
+    private static long addNumberToSequence(int[] factor, int factorSize, int[] dynMap, long pairs, int sequenceLen) {
         long resPairs = pairs;
 
         int common = getCommonMults(dynMap, factor, factorSize);
@@ -88,7 +191,8 @@ public class LinearVersionSimple {
         return resPairs;
     }
 
-    private static long removeNumberFromSequence(int[] factor, int factorSize, int[] dynMap, long pairs, int sequenceLen, int[] primes) {
+    //sequenceLen with removedElement
+    private static long removeNumberFromSequence(int[] factor, int factorSize, int[] dynMap, long pairs, int sequenceLen) {
         long resPairs = pairs;
 
         removeMultsCombinations(dynMap, factor, factorSize);
