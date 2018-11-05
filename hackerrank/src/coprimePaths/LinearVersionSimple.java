@@ -1,12 +1,14 @@
 package coprimePaths;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 public class LinearVersionSimple {
     public static final int PRIMES_LIMIT = 100;
     public static final int PRIME_FACTOR_LIMIT = 3;
-    public static final int DATA_LEN = 100;
+    public static final int DATA_LEN = 1000;
 
     public static class Range {
         private int start;
@@ -70,8 +72,33 @@ public class LinearVersionSimple {
                 ranges.add(new Range(start, end));
             }
 
+            double groupLen = Math.sqrt(DATA_LEN);
+
+            ranges.sort(new Comparator<Range>() {
+                @Override
+                public int compare(final Range o1, final Range o2) {
+                    int group1 = (int)((double)o1.getStart() / groupLen);
+                    int group2 = (int)((double)o2.getStart() / groupLen);
+
+                    if (group1 == group2) {
+                        return Integer.compare(o1.getEnd(), o2.getEnd());
+                    } else {
+                        return Integer.compare(o1.getStart(), o2.getStart());
+                    }
+                }
+            });
+
+            Date start = new Date();
             List<Long> optResult = countRanges(factorizations, factorSizes, ranges, new int[maxValue + 1]);
+            Date end = new Date();
+
+            System.out.println(end.getTime() - start.getTime() + "ms");
+
+            Date start2 = new Date();
             List<Long> optTrivial = countRangesTrivial(factorizations, factorSizes, ranges);
+            Date end2 = new Date();
+
+            System.out.println(end2.getTime() - start2.getTime() + "ms");
 
             for (int i = 0; i < optResult.size(); i++) {
                 if (!optResult.get(i).equals(optTrivial.get(i))) {
@@ -92,25 +119,31 @@ public class LinearVersionSimple {
         long resPairs = 0;
         addMultsCombinations(dynMap, factorizations[0], factorSizes[0]);
 
+        int len = 1;
+
         for (Range range : ranges) {
             while (range.getStart() < startPos) {
                 startPos--;
-                resPairs = addNumberToSequence(factorizations[startPos], factorSizes[startPos], dynMap, resPairs, endPos - startPos);
+                resPairs += addNumberToSequence(factorizations[startPos], factorSizes[startPos], dynMap, len);
+                len++;
             }
 
             while (range.getEnd() < endPos) {
-                resPairs = removeNumberFromSequence(factorizations[endPos], factorSizes[endPos], dynMap, resPairs, endPos - startPos + 1);
+                resPairs -= removeNumberFromSequence(factorizations[endPos], factorSizes[endPos], dynMap, len);
                 endPos--;
+                len--;
             }
 
             while (range.getEnd() > endPos) {
                 endPos++;
-                resPairs = addNumberToSequence(factorizations[endPos], factorSizes[endPos], dynMap, resPairs, endPos - startPos);
+                resPairs += addNumberToSequence(factorizations[endPos], factorSizes[endPos], dynMap, len);
+                len++;
             }
 
             while (range.getStart() > startPos) {
-                resPairs = removeNumberFromSequence(factorizations[startPos], factorSizes[startPos], dynMap, resPairs, endPos - startPos + 1);
+                resPairs -= removeNumberFromSequence(factorizations[startPos], factorSizes[startPos], dynMap, len);
                 startPos++;
+                len--;
             }
 
             result.add(resPairs);
@@ -180,27 +213,19 @@ public class LinearVersionSimple {
         return res;
     }
 
-    private static long addNumberToSequence(int[] factor, int factorSize, int[] dynMap, long pairs, int sequenceLen) {
-        long resPairs = pairs;
-
+    private static long addNumberToSequence(int[] factor, int factorSize, int[] dynMap, int sequenceLen) {
         int common = getCommonMults(dynMap, factor, factorSize);
-        resPairs += (sequenceLen - common);
-
         addMultsCombinations(dynMap, factor, factorSize);
 
-        return resPairs;
+        return (sequenceLen - common);
     }
 
-    //sequenceLen with removedElement
-    private static long removeNumberFromSequence(int[] factor, int factorSize, int[] dynMap, long pairs, int sequenceLen) {
-        long resPairs = pairs;
-
+    //sequenceLen - includes removedElement
+    private static long removeNumberFromSequence(int[] factor, int factorSize, int[] dynMap, int sequenceLen) {
         removeMultsCombinations(dynMap, factor, factorSize);
-
         int common = getCommonMults(dynMap, factor, factorSize);
-        resPairs -= (sequenceLen - common - 1);
 
-        return resPairs;
+        return (sequenceLen - common - 1);
     }
 
     private static int getCommonMults(final int[] dynMap, final int[] fact, final int size) {
