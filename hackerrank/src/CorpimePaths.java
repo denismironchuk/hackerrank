@@ -309,6 +309,11 @@ public class CorpimePaths {
 
         countRanges(sequence, ranges, new int[maxVal + 1]);
 
+        ranges.sort(Comparator.comparingInt(Range::getOrder));
+
+        for (Range range : ranges) {
+            System.out.println(range.getRes());
+        }
     }
 
     private static void countRanges(Node[] sequence, List<Range> ranges, int[] dynMap) {
@@ -344,9 +349,8 @@ public class CorpimePaths {
                     resPairs += addNumberToSequence(sequence[endPos].getFactor(), sequence[endPos].getFactSize(), dynMap, len, true);
                     len++;
                 }
-
-                endPos--;
                 sequence[endPos].cnt--;
+                endPos--;
             }
 
             while (range.getEnd() > endPos) {
@@ -369,16 +373,18 @@ public class CorpimePaths {
                     resPairs += addNumberToSequence(sequence[startPos].getFactor(), sequence[startPos].getFactSize(), dynMap, len, true);
                     len++;
                 }
-                startPos++;
+
                 sequence[startPos].cnt--;
+                startPos++;
             }
 
             if (range.getLca() != null) {
                 Node lca = range.getLca();
-                resPairs += addNumberToSequence(lca.getFactor(), lca.getFactSize(), dynMap, len, false);
+                long addPairs = addNumberToSequence(lca.getFactor(), lca.getFactSize(), dynMap, len, false);
+                range.setRes(resPairs + addPairs);
+            } else {
+                range.setRes(resPairs);
             }
-
-            range.setRes(resPairs);
         }
     }
 
