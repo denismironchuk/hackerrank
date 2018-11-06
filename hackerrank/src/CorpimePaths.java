@@ -268,36 +268,44 @@ public class CorpimePaths {
             Node v2 = nodes[num2];
 
             NodesPair np1 = new NodesPair(v1, v2, i);
-            NodesPair np2 = new NodesPair(v2, v1, i);
 
             List<NodesPair> numPairs1 = pairsMap.get(num1);
             if (null == numPairs1) {
                 numPairs1 = new ArrayList<>();
             }
 
-            List<NodesPair> numPairs2 = pairsMap.get(num2);
-            if (null == numPairs2) {
-                numPairs2 = new ArrayList<>();
-            }
-
             numPairs1.add(np1);
-            numPairs2.add(np2);
-
             pairsMap.put(num1, numPairs1);
-            pairsMap.put(num2, numPairs2);
+
+            if (v1 != v2) {
+                NodesPair np2 = new NodesPair(v2, v1, i);
+                List<NodesPair> numPairs2 = pairsMap.get(num2);
+                if (null == numPairs2) {
+                    numPairs2 = new ArrayList<>();
+                }
+
+                numPairs2.add(np2);
+                pairsMap.put(num2, numPairs2);
+            }
         }
+
 
         int sequenceLen = 2 * n;
         Node[] sequence = new Node[sequenceLen];
         DisjointSet dSet = new DisjointSet(n);
         buildSequence(sequence, nodes[0], new int[n], 0, dSet, new int[n], new int[n], pairsMap, nodes);
+
+
         List<Range> ranges = generateRanges(pairsMap);
+
+
+        double groupLen = Math.sqrt(sequenceLen);
 
         ranges.sort(new Comparator<Range>() {
             @Override
             public int compare(final Range o1, final Range o2) {
-                int group1 = (int)((double)o1.getStart() / sequenceLen);
-                int group2 = (int)((double)o2.getStart() / sequenceLen);
+                int group1 = (int)((double)o1.getStart() / groupLen);
+                int group2 = (int)((double)o2.getStart() / groupLen);
 
                 if (group1 == group2) {
                     return Integer.compare(o1.getEnd(), o2.getEnd());
@@ -311,9 +319,13 @@ public class CorpimePaths {
 
         ranges.sort(Comparator.comparingInt(Range::getOrder));
 
+        StringBuilder res = new StringBuilder();
+
         for (Range range : ranges) {
-            System.out.println(range.getRes());
+            res.append(range.getRes()).append("\n");
         }
+
+        System.out.println(res.toString());
     }
 
     private static void countRanges(Node[] sequence, List<Range> ranges, int[] dynMap) {
