@@ -181,7 +181,7 @@ public class TollCostDigits {
         for (int i = 0; i < n; i++) {
             if (processed[i] == 0) {
                 deepSearchNoRecur(graph, tree, graph[i], processed);
-                countPairsInTreeNoRecur(tree[i], tree, procForCountPairs);
+                countPairsInTreeNoRecur(tree[i], procForCountPairs);
                 getCyclesNoRecur(tree[i], procForCycles, ancestors, black,
                         dSet, graph, tree);
 
@@ -307,7 +307,7 @@ public class TollCostDigits {
         }
     }
 
-    private static void countPairsInTreeNoRecur(Node nd, Node[] tree, int[] processed) {
+    private static void countPairsInTreeNoRecur(Node nd, int[] processed) {
         Stack<Node> stack = new Stack<>();
         stack.push(nd);
 
