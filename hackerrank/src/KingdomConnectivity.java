@@ -11,6 +11,7 @@ public class KingdomConnectivity {
         private Set<Node> outgoings = new HashSet<>();
         private long paths;
         private boolean isFinal = false;
+        private boolean inCycle = false;
 
         public Node(final int num) {
             this.num = num;
@@ -43,6 +44,14 @@ public class KingdomConnectivity {
         public void setFinal(final boolean aFinal) {
             isFinal = aFinal;
         }
+
+        public boolean isInCycle() {
+            return inCycle;
+        }
+
+        public void setInCycle(final boolean inCycle) {
+            this.inCycle = inCycle;
+        }
     }
 
     public static void main(String[] args) throws IOException {
@@ -58,6 +67,7 @@ public class KingdomConnectivity {
         }
 
         nodes[n - 1].setFinal(true);
+        nodes[n - 1].setPaths(1);
 
         for (int i = 0; i < m; i++) {
             StringTokenizer edgeTkn = new StringTokenizer(br.readLine());
@@ -67,26 +77,29 @@ public class KingdomConnectivity {
             nodes[out].addOutgoiong(nodes[in]);
         }
 
-        System.out.println();
+        countPaths(nodes[0], new int[n], new HashSet<>());
+
+        System.out.println(nodes[0].getPaths());
     }
 
-    public long countPaths(Node nd, int[] processed, Set<Node> path) {
+    public static void countPaths(Node nd, int[] processed, Set<Node> path) {
+        if (nd.isFinal()) {
+            return;
+        }
+
         processed[nd.getNum()] = 1;
-        long paths = nd.isFinal() ? 1 : 0;
+        long paths = 0;
         path.add(nd);
 
         for (Node out : nd.getOutgoings()) {
-            if (processed[out.getNum()] == 1) {
-                paths += out.getPaths();
-            } else {
-                path.add(nd);
-                paths += countPaths(out, processed, path);
-                path.remove(nd);
+            if (processed[out.getNum()] == 0) {
+                countPaths(out, processed, path);
             }
+
+            paths += out.getPaths();
         }
 
         nd.setPaths(paths);
-
-        return paths;
+        path.remove(nd);
     }
 }
