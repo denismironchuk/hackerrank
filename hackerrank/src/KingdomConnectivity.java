@@ -1,4 +1,5 @@
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashSet;
@@ -88,10 +89,19 @@ public class KingdomConnectivity {
         public Node getIn() {
             return in;
         }
+
+        @Override
+        public String toString() {
+            return "Edge{" +
+                    "out=" + out +
+                    ", in=" + in +
+                    '}';
+        }
     }
 
     public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader br = new BufferedReader(new FileReader("D:/kingdomCon.txt"));
         StringTokenizer line1Tkn = new StringTokenizer(br.readLine());
         int n = Integer.parseInt(line1Tkn.nextToken());
         int m = Integer.parseInt(line1Tkn.nextToken());
@@ -117,6 +127,8 @@ public class KingdomConnectivity {
         }
 
         countPaths(nodes[0], new int[n]);
+
+        boolean tempCycle = hasCycle(nodes[0], nodes[0], new int[n]);
 
         if (nodes[0].getPaths() == 0) {
             System.out.println(0);
@@ -145,6 +157,7 @@ public class KingdomConnectivity {
 
                 for (Edge ed : nd.getIngoings()) {
                     if (!initialEdges.contains(ed)) {
+                        System.out.println(ed);
                         Node out = ed.getOut();
 
                         if (out.isReachable()) {
@@ -161,6 +174,31 @@ public class KingdomConnectivity {
 
             System.out.println(hasCycle ? "INFINITE PATHS" : nodes[0].getPaths());
         }
+    }
+
+    public static boolean hasCycle(Node nd, Node start, int[] processed) {
+        processed[nd.getNum()] = 1;
+
+        boolean res = false;
+
+        for (Edge out : nd.getOutgoings()) {
+            Node next = out.getIn();
+
+            if (next == start) {
+                return true;
+            }
+
+            if (processed[next.getNum()] == 0) {
+                res = res | hasCycle(next, start, processed);
+            }
+
+            if (res) {
+                System.out.println(next);
+                break;
+            }
+        }
+
+        return res;
     }
 
     public static void generateList(Node nd, int[] processed, Set<Edge> edges) {
