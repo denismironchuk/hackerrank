@@ -1,29 +1,67 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import java.util.StringTokenizer;
 
 public class RecordingEpisodes {
     private static class Node {
         private int num;
-        private Set<Node> neighbours = new HashSet<>();
+        private Set<Node> outgoings = new HashSet<>();
         private Set<Node> ingoings = new HashSet<>();
-        private int outNum;
-        private int comp;
+        private int outTime;
+        private int conComp;
 
         public Node(final int num) {
             this.num = num;
         }
 
-        public void addNeighbour(Node neigh) {
-            neighbours.add(neigh);
+        public void addOutgoing(Node neigh) {
+            outgoings.add(neigh);
             neigh.addIngoing(this);
         }
 
         public void addIngoing(Node nd) {
             ingoings.add(nd);
+        }
+
+        public Set<Node> getOutgoings() {
+            return outgoings;
+        }
+
+        public Set<Node> getIngoings() {
+            return ingoings;
+        }
+
+        public int getOutTime() {
+            return outTime;
+        }
+
+        public void setOutTime(final int outTime) {
+            this.outTime = outTime;
+        }
+
+        public int getConComp() {
+            return conComp;
+        }
+
+        public void setConComp(final int conComp) {
+            this.conComp = conComp;
+        }
+
+        public int getNum() {
+            return num;
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(num);
         }
     }
 
@@ -68,101 +106,187 @@ public class RecordingEpisodes {
                 episodes[i].negAirNode = new Node(i * 4 + 2);
                 episodes[i].negRepeatNode = new Node(i * 4 + 3);
 
-                episodes[i].airNode.addNeighbour(episodes[i].negRepeatNode);
-                episodes[i].repeatNode.addNeighbour(episodes[i].negAirNode);
-                episodes[i].negAirNode.addNeighbour(episodes[i].repeatNode);
-                episodes[i].negRepeatNode.addNeighbour(episodes[i].airNode);
+                episodes[i].airNode.addOutgoing(episodes[i].negRepeatNode);
+                episodes[i].repeatNode.addOutgoing(episodes[i].negAirNode);
+                episodes[i].negAirNode.addOutgoing(episodes[i].repeatNode);
+                episodes[i].negRepeatNode.addOutgoing(episodes[i].airNode);
             }
 
             int point1 = 0;
-            int point2 = point1 + 1;
+            int point2 = 0;
+
+            int resStart = 1;
+            int resEnd = 1;
+
+            List<Node> nodes = new LinkedList<>();
+            addEpisode(nodes, point1, point2, episodes);
 
             while (point2 < n) {
-                buildGraph(point1, point2, episodes);
+                if (point2 < n && isValid(nodes, point1, point2, episodes)) {
+                    if (point2 - point1 > resEnd - resStart) {
+                        resEnd = point2 + 1;
+                        resStart = point1 + 1;
+                    }
 
-                if (isValid(point1, point2, episodes)) {
                     point2++;
+
+                    addEpisode(nodes, point1, point2, episodes);
                 } else {
-                    removeEpisode(episodes[point1]);
+                    if (point2 == n - 1) {
+                        break;
+                    }
+
+                    removeEpisode(nodes, episodes[point1]);
 
                     point1++;
-                    point2 = Math.max(point2, point1 + 1);
                 }
             }
+
+            System.out.println(resStart + " " + resEnd);
         }
     }
 
-    private static boolean isValid(int point1, int point2, Episode[] episodes){
-        /*for (int i = point1; i <= point2; i++) {
-            episodes[i].airNode.comp = -1;
-            episodes[i].airNode.order = -1;
+    private static boolean addEpisode(List<Node> nodes, int point1, int point2, Episode[] episodes) {
+        if (point2 == episodes.length) {
+            return false;
+        }
 
-            episodes[i].negAirNode.comp = -1;
-            episodes[i].negAirNode.order = -1;
+        Episode ep2 = episodes[point2];
 
-            episodes[i].repeatNode.comp = -1;
-            episodes[i].repeatNode.order = -1;
+        nodes.add(ep2.airNode);
+        nodes.add(ep2.negAirNode);
+        nodes.add(ep2.repeatNode);
+        nodes.add(ep2.negRepeatNode);
 
-            episodes[i].negRepeatNode.comp = -1;
-            episodes[i].negRepeatNode.order = -1;
-        }*/
+        for (int i = point1; i < point2; i++) {
+            Episode ep1 = episodes[i];
 
+            if (overlaps(ep1.airTime, ep2.airTime)) {
+                ep1.airNode.addOutgoing(ep2.negAirNode);
+                ep2.airNode.addOutgoing(ep1.negAirNode);
+            }
 
+            if (overlaps(ep1.airTime, ep2.repeatTime)) {
+                ep1.airNode.addOutgoing(ep2.negRepeatNode);
+                ep2.repeatNode.addOutgoing(ep1.negAirNode);
+            }
+
+            if (overlaps(ep1.repeatTime, ep2.airTime)) {
+                ep1.repeatNode.addOutgoing(ep2.negAirNode);
+                ep2.airNode.addOutgoing(ep1.negRepeatNode);
+            }
+
+            if (overlaps(ep1.repeatTime, ep2.repeatTime)) {
+                ep1.repeatNode.addOutgoing(ep2.negRepeatNode);
+                ep2.repeatNode.addOutgoing(ep1.negRepeatNode);
+            }
+        }
 
         return true;
     }
 
-    private static int setOutNum(Node nd, int[] processed, int outNum) {
-        processed[nd.num] = 1;
+    private static boolean isValid(List<Node> nodes, int point1, int point2, Episode[] episodes){
+        int[] processed = new int[episodes.length * 4];
 
-        for (Node neigh : nd.neighbours) {
-            if (processed[neigh.num] == 0) {
-                outNum += setOutNum(neigh, processed, outNum);
+        int lastOut = 0;
+
+        List<Node> forSort = new ArrayList<>();
+
+        for (Node nd : nodes) {
+            if (processed[nd.getNum()] == 0) {
+                lastOut = topoSort(nd, processed, lastOut);
+            }
+            forSort.add(nd);
+        }
+
+        forSort.sort(Comparator.comparingInt(Node::getOutTime).reversed());
+
+        processed = new int[episodes.length * 4];
+        Queue<Node> q = new LinkedList<>();
+        int compNum = 0;
+
+        for (Node nd : forSort) {
+            if (processed[nd.getNum()] == 0) {
+                compNum++;
+                q.add(nd);
+
+                while (!q.isEmpty()) {
+                    Node currNode = q.poll();
+                    processed[currNode.getNum()] = 1;
+                    currNode.setConComp(compNum);
+
+                    for (Node ingNode : currNode.getIngoings()) {
+                        if (processed[ingNode.getNum()] == 0) {
+                            q.add(ingNode);
+                        }
+                    }
+                }
             }
         }
 
-        outNum++;
-        nd.outNum = outNum;
+        boolean isValid = true;
 
-        return outNum;
+        for (int i = point1; isValid && i <= point2; i++) {
+            Episode ep = episodes[i];
+            isValid = !(ep.airNode.getConComp() == ep.negAirNode.getConComp() || ep.repeatNode.getConComp() == ep.negRepeatNode.getConComp());
+        }
+
+        return isValid;
     }
 
-    private static void buildGraph(int point1, int point2, Episode[] episodes) {
-        for (int i = point1; i < point2; i++) {
-            for (int j = i + 1; j < point2; j++) {
-                Episode ep1 = episodes[i];
-                Episode ep2 = episodes[j];
+    private static int topoSort(Node nd, int[] processed, int lastOut) {
+        processed[nd.getNum()] = 1;
 
-                if (overlaps(ep1.airTime, ep2.airTime)) {
-                    ep1.airNode.addNeighbour(ep2.negAirNode);
-                    ep2.airNode.addNeighbour(ep1.negAirNode);
-                }
-
-                if (overlaps(ep1.airTime, ep2.repeatTime)) {
-                    ep1.airNode.addNeighbour(ep2.negRepeatNode);
-                    ep2.repeatNode.addNeighbour(ep1.negAirNode);
-                }
-
-                if (overlaps(ep1.repeatTime, ep2.airTime)) {
-                    ep1.repeatNode.addNeighbour(ep2.negAirNode);
-                    ep2.airNode.addNeighbour(ep1.negRepeatNode);
-                }
-
-                if (overlaps(ep1.repeatTime, ep2.repeatTime)) {
-                    ep1.repeatNode.addNeighbour(ep2.negRepeatNode);
-                    ep2.repeatNode.addNeighbour(ep1.negRepeatNode);
-                }
+        for (Node next : nd.getOutgoings()) {
+            if (processed[next.getNum()] == 0) {
+                lastOut = topoSort(next, processed, lastOut);
             }
         }
+
+        nd.setOutTime(lastOut + 1);
+        return nd.getOutTime();
     }
 
-    private static void removeEpisode(Episode ep) {
+    private static void removeEpisode(List<Node> nodes, Episode ep) {
         for (Node ing : ep.airNode.ingoings) {
-            ing.neighbours.remove(ep);
+            ing.outgoings.remove(ep.airNode);
         }
+
+        for (Node out : ep.airNode.outgoings) {
+            out.ingoings.remove(ep.airNode);
+        }
+
+        for (Node ing : ep.repeatNode.ingoings) {
+            ing.outgoings.remove(ep.repeatNode);
+        }
+
+        for (Node out : ep.repeatNode.outgoings) {
+            out.ingoings.remove(ep.repeatNode);
+        }
+
+        for (Node ing : ep.negAirNode.ingoings) {
+            ing.outgoings.remove(ep.negAirNode);
+        }
+
+        for (Node out : ep.negAirNode.outgoings) {
+            out.ingoings.remove(ep.negAirNode);
+        }
+
+        for (Node ing : ep.negRepeatNode.ingoings) {
+            ing.outgoings.remove(ep.negRepeatNode);
+        }
+
+        for (Node ing : ep.negRepeatNode.ingoings) {
+            ing.outgoings.remove(ep.negRepeatNode);
+        }
+
+        nodes.remove(0);
+        nodes.remove(0);
+        nodes.remove(0);
+        nodes.remove(0);
     }
 
     private static boolean overlaps(int[] intr1, int[] intr2) {
-        return intr1[2] > intr2[1] && intr2[2] > intr1[1];
+        return intr1[1] >= intr2[0] && intr2[1] >= intr1[0];
     }
 }
