@@ -124,7 +124,8 @@ public class KthAncestor {
         for (int t = 0; t < T; t++) {
             int p = Integer.parseInt(br.readLine());
             Node root = null;
-            Map<Integer, List<Node>> nodes = new HashMap<>();
+            //Map<Integer, List<Node>> nodes = new HashMap<>();
+            List[] nodes = new List[100001];
 
             for (int i = 0; i < p; i++) {
                 StringTokenizer pair = new StringTokenizer(br.readLine());
@@ -132,10 +133,10 @@ public class KthAncestor {
                 int y = Integer.parseInt(pair.nextToken());
 
 
-                List<Node> currentNodes = nodes.get(x);
+                List<Node> currentNodes = nodes[x];
                 if (null == currentNodes) {
                     currentNodes = new ArrayList<>();
-                    nodes.put(x, currentNodes);
+                    nodes[x] = currentNodes;
                     currentNodes.add(new Node(x));
                 }
                 Node nd = currentNodes.get(currentNodes.size() - 1);
@@ -143,11 +144,11 @@ public class KthAncestor {
                 if (y == 0) {
                     root = nd;
                 } else {
-                    List<Node> parentList = nodes.get(y);
+                    List<Node> parentList = nodes[y];
                     if (parentList == null) {
                         parentList = new ArrayList<>();
                         parentList.add(new Node(y));
-                        nodes.put(y, parentList);
+                        nodes[y] = parentList;
                     }
                     Node parent = parentList.get(parentList.size() - 1);
                     parent.addChild(nd);
@@ -166,19 +167,19 @@ public class KthAncestor {
                     int y = Integer.parseInt(queryTkn.nextToken());
                     int x = Integer.parseInt(queryTkn.nextToken());
 
-                    List<Node> parentsList = nodes.get(y);
+                    List<Node> parentsList = nodes[y];
                     Node parent = parentsList.get(parentsList.size() - 1);
-                    List<Node> childrenList = nodes.get(x);
+                    List<Node> childrenList = nodes[x];
                     if (null == childrenList) {
                         childrenList = new ArrayList<>();
-                        nodes.put(x, childrenList);
+                        nodes[x] = childrenList;
                     }
                     Node child = new Node(x);
                     parent.addChild(child);
                     childrenList.add(child);
                 } else if (queryType == 1) {
                     int x = Integer.parseInt(queryTkn.nextToken());
-                    List<Node> nodesList = nodes.get(x);
+                    List<Node> nodesList = nodes[x];
                     if (null != nodesList) {
                         nodesList.get(nodesList.size() - 1).setDeleted(true);
                     }
@@ -186,7 +187,7 @@ public class KthAncestor {
                     int x = Integer.parseInt(queryTkn.nextToken());
                     int k = Integer.parseInt(queryTkn.nextToken());
 
-                    List<Node> nodesList = nodes.get(x);
+                    List<Node> nodesList = nodes[x];
                     if (nodesList == null) {
                         queries.add(new Query());
                     } else {
@@ -201,16 +202,9 @@ public class KthAncestor {
             }
 
             countSubtreeSize(root);
-
-            for (List<Node> ndList : nodes.values()) {
-                for (Node nd : ndList) {
-                    nd.initHeavyEdge();
-                }
-            }
+            initHeavyEdges(root);
 
             initPaths(root, new ArrayList<>());
-
-
 
             for (Query query : queries) {
                 Node nd = query.node;
@@ -228,10 +222,16 @@ public class KthAncestor {
                     res.append(0).append("\n");
                 }
             }
-
-
         }
         System.out.print(res.toString());
+    }
+
+    private static void initHeavyEdges(Node node) {
+        node.initHeavyEdge();
+
+        for (Node child : node.getChildren()) {
+            initHeavyEdges(child);
+        }
     }
 
     private static void countSubtreeSize(Node node) {
