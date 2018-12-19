@@ -19,6 +19,7 @@ public class KthAncestor {
         private int subtreeSize = 0;
         private List<Node> path;
         private int numInPath;
+        private boolean deleted;
 
         public Node(final int num) {
             this.num = num;
@@ -38,6 +39,7 @@ public class KthAncestor {
 
         public void addChild(Node child) {
             children.add(child);
+            child.setParent(this);
         }
 
         public Set<Node> getChildren() {
@@ -83,14 +85,32 @@ public class KthAncestor {
         public Node getHeavy() {
             return heavy;
         }
+
+        public boolean isDeleted() {
+            return deleted;
+        }
+
+        public void setDeleted(final boolean deleted) {
+            this.deleted = deleted;
+        }
+
+        @Override
+        public String toString() {
+            return "Node{" +
+                    "num=" + num +
+                    '}';
+        }
     }
 
     private static class Query {
-        private int nodeNum;
+        private Node node;
         private int k;
 
-        public Query(final int nodeNum, final int k) {
-            this.nodeNum = nodeNum;
+        public Query() {
+        }
+
+        public Query(final Node node, final int k) {
+            this.node = node;
             this.k = k;
         }
     }
@@ -99,23 +119,37 @@ public class KthAncestor {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         int T = Integer.parseInt(br.readLine());
 
+        StringBuilder res = new StringBuilder();
+
         for (int t = 0; t < T; t++) {
             int p = Integer.parseInt(br.readLine());
             Node root = null;
-            Map<Integer, Node> nodes = new HashMap<>();
+            Map<Integer, List<Node>> nodes = new HashMap<>();
 
             for (int i = 0; i < p; i++) {
                 StringTokenizer pair = new StringTokenizer(br.readLine());
                 int x = Integer.parseInt(pair.nextToken());
                 int y = Integer.parseInt(pair.nextToken());
 
-                Node nd = new Node(x);
-                nodes.put(x, nd);
+
+                List<Node> currentNodes = nodes.get(x);
+                if (null == currentNodes) {
+                    currentNodes = new ArrayList<>();
+                    nodes.put(x, currentNodes);
+                    currentNodes.add(new Node(x));
+                }
+                Node nd = currentNodes.get(currentNodes.size() - 1);
 
                 if (y == 0) {
                     root = nd;
                 } else {
-                    Node parent = nodes.get(y);
+                    List<Node> parentList = nodes.get(y);
+                    if (parentList == null) {
+                        parentList = new ArrayList<>();
+                        parentList.add(new Node(y));
+                        nodes.put(y, parentList);
+                    }
+                    Node parent = parentList.get(parentList.size() - 1);
                     parent.addChild(nd);
                 }
             }
@@ -129,36 +163,75 @@ public class KthAncestor {
                 int queryType = Integer.parseInt(queryTkn.nextToken());
 
                 if (queryType == 0) {
-                    int x = Integer.parseInt(queryTkn.nextToken());
                     int y = Integer.parseInt(queryTkn.nextToken());
+                    int x = Integer.parseInt(queryTkn.nextToken());
 
-                    Node parent = nodes.get(y);
-                    Node child = nodes.get(x);
+                    List<Node> parentsList = nodes.get(y);
+                    Node parent = parentsList.get(parentsList.size() - 1);
+                    List<Node> childrenList = nodes.get(x);
+                    if (null == childrenList) {
+                        childrenList = new ArrayList<>();
+                        nodes.put(x, childrenList);
+                    }
+                    Node child = new Node(x);
                     parent.addChild(child);
+                    childrenList.add(child);
+                } else if (queryType == 1) {
+                    int x = Integer.parseInt(queryTkn.nextToken());
+                    List<Node> nodesList = nodes.get(x);
+                    if (null != nodesList) {
+                        nodesList.get(nodesList.size() - 1).setDeleted(true);
+                    }
                 } else if (queryType == 2) {
                     int x = Integer.parseInt(queryTkn.nextToken());
                     int k = Integer.parseInt(queryTkn.nextToken());
 
-                    queries.add(new Query(x, k));
+                    List<Node> nodesList = nodes.get(x);
+                    if (nodesList == null) {
+                        queries.add(new Query());
+                    } else {
+                        Node node = nodesList.get(nodesList.size() - 1);
+                        if (node.isDeleted()) {
+                            queries.add(new Query());
+                        } else {
+                            queries.add(new Query(node, k));
+                        }
+                    }
                 }
             }
 
             countSubtreeSize(root);
 
-            for (Node nd : nodes.values()) {
-                nd.initHeavyEdge();
+            for (List<Node> ndList : nodes.values()) {
+                for (Node nd : ndList) {
+                    nd.initHeavyEdge();
+                }
             }
 
             initPaths(root, new ArrayList<>());
 
-            StringBuilder res = new StringBuilder();
+
 
             for (Query query : queries) {
-                Node nd = nodes.get(query.nodeNum);
+                Node nd = query.node;
                 int k = query.k;
 
+                while (null != nd && k > nd.getNumInPath()) {
+                    k -= nd.getNumInPath() + 1;
+                    nd = nd.getPath().get(0).getParent();
+                }
+
+                if (nd != null) {
+                    nd = nd.getPath().get(nd.getNumInPath() - k);
+                    res.append(nd.getNum()).append("\n");
+                } else {
+                    res.append(0).append("\n");
+                }
             }
+
+
         }
+        System.out.print(res.toString());
     }
 
     private static void countSubtreeSize(Node node) {
