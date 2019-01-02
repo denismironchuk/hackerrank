@@ -1,86 +1,10 @@
 package findPath;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 public class FindPath {
-    static class Node {
-        private int nodeWeight;
-        private int row;
-        private int col;
-        private int index;
-        private Map<Node, Integer> edges = new HashMap<>();
-
-        public Node(final int row, final int col, final int nodeWeight) {
-            this.row = row;
-            this.col = col;
-            this.nodeWeight = nodeWeight;
-        }
-
-        public void addNeigh(Node neigh, int dist) {
-            edges.put(neigh, dist);
-        }
-
-        public int getNodeWeight() {
-            return nodeWeight;
-        }
-
-        public Map<Node, Integer> getEdges() {
-            return edges;
-        }
-
-        public int getRow() {
-            return row;
-        }
-
-        public int getCol() {
-            return col;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public void setIndex(final int index) {
-            this.index = index;
-        }
-    }
-
-    private static Node[][] convertToGraph(int[][] rect, int rows, int cols) {
-        Node[][] nodesTable = new Node[rows][cols];
-
-        for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < cols; col++) {
-                nodesTable[row][col] = new Node(row, col, rect[row][col]);;
-            }
-        }
-
-        for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < cols; col++) {
-                Node nd = nodesTable[row][col];
-                if (row > 0) {
-                    nd.addNeigh(nodesTable[row - 1][col], rect[row - 1][col]);
-                }
-
-                if (row < rows - 1) {
-                    nd.addNeigh(nodesTable[row + 1][col], rect[row + 1][col]);
-                }
-
-                if (col > 0) {
-                    nd.addNeigh(nodesTable[row][col - 1], rect[row][col - 1]);
-                }
-
-                if (col < cols - 1) {
-                    nd.addNeigh(nodesTable[row][col + 1], rect[row][col + 1]);
-                }
-            }
-        }
-
-        return nodesTable;
-    }
-
-    public static void main(String[] args) {
+        public static void main(String[] args) {
         while(true) {
             int rows = 4;
             int cols = 2;
@@ -133,7 +57,7 @@ public class FindPath {
 
             //System.out.println((end.getTime() - start.getTime()) + "ms");
 
-            Node[][] nodesTable = convertToGraph(rect, rows, cols);
+            Node[][] nodesTable = Converter.convertToGraph(rect, rows, cols);
             Node[] nodes = new Node[rows * cols];
 
             int nodesCnt = 0;
