@@ -1,11 +1,12 @@
 package findPath;
 
+import java.util.Date;
+
 public class FindPath2 {
     public static void main(String[] args) {
-        while (true) {
-            System.out.println("Iteration started");
+        while(true) {
             int rows = 7;
-            int cols = 100;
+            int cols = 70;
 
             int[][] rect = new int[rows][cols];
 
@@ -15,14 +16,46 @@ public class FindPath2 {
                 }
             }
 
+            Date start = new Date();
             long[][][] distsToLeft = calcDistsToLeft(rect, rows, cols);
             int[][] flippedRect = flipRect(rect, rows, cols);
             long[][][] distsToRight = calcDistsToLeft(flippedRect, rows, cols);
             long[][][] dists = combineDists(distsToLeft, distsToRight, rows, cols);
 
-            if (!DistanceChecker.checkDists(rows, cols, rect, dists)) {
-                throw new RuntimeException("Mismatch!!!");
+            int col1 = 0;
+            int col2 = cols - 1;
+
+            long[][] rightNeighDist = new long[rows][rows];
+
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < rows; j++) {
+                    rightNeighDist[i][j] = dists[col1][i][j];
+                }
             }
+
+            for (int col = col1 + 1; col <= col2; col++) {
+                long[][] rightNeighDistNext = new long[rows][rows];
+                for (int i = 0; i < rows; i++) {
+                    for (int j = 0; j < rows; j++) {
+                        rightNeighDistNext[i][j] = Integer.MAX_VALUE;
+                    }
+                }
+
+                for (int row1 = 0; row1 < rows; row1++) {
+                    for (int row2 = 0; row2 < rows; row2++) {
+                        for (int k = 0; k < rows; k++) {
+                            long newDist = rightNeighDist[row1][k] + rect[k][col] + dists[col][k][row2];
+                            rightNeighDistNext[row1][row2] = Math.min(rightNeighDistNext[row1][row2], newDist);
+                        }
+                    }
+                }
+
+                rightNeighDist = rightNeighDistNext;
+            }
+
+            Date end = new Date();
+            System.out.println(end.getTime() - start.getTime());
+            DistanceChecker.checkTwoColumnsDists(rows, cols, rect, rightNeighDist, col1, col2);
         }
     }
 

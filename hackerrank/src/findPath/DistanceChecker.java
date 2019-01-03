@@ -6,7 +6,69 @@ import java.util.Map;
  * Created by Denis_Mironchuk on 1/2/2019.
  */
 public class DistanceChecker {
-    public static boolean checkDists(int rows, int cols, int[][] rect, long[][][] dists) {
+    public static boolean checkDistsInOneColumn(int rows, int cols, int[][] rect, long[][][] dists) {
+        long[][] floydWarshlDists = new long[rows * cols][rows * cols];
+        Node[][] nodesTable = buildFloydWarshalDists(rows, cols, rect, floydWarshlDists);
+
+        for (int col = 0; col < cols; col++) {
+            for (int r1 = 0; r1 < rows; r1++) {
+                for (int r2 = 0; r2 < rows; r2++) {
+                    long dynDist = dists[col][r1][r2];
+                    Node nd1 = nodesTable[r1][col];
+                    Node nd2 = nodesTable[r2][col];
+                    int fwDist = (int) floydWarshlDists[nd1.getIndex()][nd2.getIndex()];
+
+                    if (dynDist != fwDist) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public static boolean checkNeighbourColumnsDists(int rows, int cols, int[][] rect, long[][] dists, int col) {
+        long[][] floydWarshlDists = new long[rows * cols][rows * cols];
+        Node[][] nodesTable = buildFloydWarshalDists(rows, cols, rect, floydWarshlDists);
+
+        for (int row1 = 0; row1 < rows; row1++) {
+            for (int row2 = 0; row2 < rows; row2++) {
+                long dynDist = dists[row1][row2];
+                Node nd1 = nodesTable[row1][col];
+                Node nd2 = nodesTable[row2][col];
+                int fwDist = (int) floydWarshlDists[nd1.getIndex()][nd2.getIndex()];
+
+                if (dynDist != fwDist) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public static boolean checkTwoColumnsDists(int rows, int cols, int[][] rect, long[][] dists, int col1, int col2) {
+        long[][] floydWarshlDists = new long[rows * cols][rows * cols];
+        Node[][] nodesTable = buildFloydWarshalDists(rows, cols, rect, floydWarshlDists);
+
+        for (int row1 = 0; row1 < rows; row1++) {
+            for (int row2 = 0; row2 < rows; row2++) {
+                long dynDist = dists[row1][row2];
+                Node nd1 = nodesTable[row1][col1];
+                Node nd2 = nodesTable[row2][col2];
+                int fwDist = (int) floydWarshlDists[nd1.getIndex()][nd2.getIndex()];
+
+                if (dynDist != fwDist) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public static Node[][] buildFloydWarshalDists(int rows, int cols, int[][] rect, long[][] floydWarshlDists) {
         Node[][] nodesTable = Converter.convertToGraph(rect, rows, cols);
         Node[] nodes = new Node[rows * cols];
 
@@ -19,8 +81,6 @@ public class DistanceChecker {
                 nodesCnt++;
             }
         }
-
-        long[][] floydWarshlDists = new long[nodesCnt][nodesCnt];
 
         for (int row = 0; row < nodesCnt; row++) {
             for (int col = 0; col < nodesCnt; col++) {
@@ -47,23 +107,6 @@ public class DistanceChecker {
             }
         }
 
-        for (int col = 0; col < cols; col++) {
-            for (int r1 = 0; r1 < rows; r1++) {
-                for (int r2 = 0; r2 < rows; r2++) {
-                    long dynDist = dists[col][r1][r2];
-                    Node nd1 = nodesTable[r1][col];
-                    Node nd2 = nodesTable[r2][col];
-                    int fwDist = (int) floydWarshlDists[nd1.getIndex()][nd2.getIndex()];
-
-                    if (dynDist != fwDist) {
-                        return false;
-                    }
-                }
-            }
-        }
-
-
-
-        return true;
+        return nodesTable;
     }
 }
