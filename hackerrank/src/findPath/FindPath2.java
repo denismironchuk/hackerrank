@@ -25,38 +25,44 @@ public class FindPath2 {
             int col1 = 0;
             int col2 = cols - 1;
 
-            long[][] rightNeighDist = new long[rows][rows];
-
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < rows; j++) {
-                    rightNeighDist[i][j] = dists[col1][i][j];
-                }
-            }
-
-            for (int col = col1 + 1; col <= col2; col++) {
-                long[][] rightNeighDistNext = new long[rows][rows];
-                for (int i = 0; i < rows; i++) {
-                    for (int j = 0; j < rows; j++) {
-                        rightNeighDistNext[i][j] = Integer.MAX_VALUE;
-                    }
-                }
-
-                for (int row1 = 0; row1 < rows; row1++) {
-                    for (int row2 = 0; row2 < rows; row2++) {
-                        for (int k = 0; k < rows; k++) {
-                            long newDist = rightNeighDist[row1][k] + rect[k][col] + dists[col][k][row2];
-                            rightNeighDistNext[row1][row2] = Math.min(rightNeighDistNext[row1][row2], newDist);
-                        }
-                    }
-                }
-
-                rightNeighDist = rightNeighDistNext;
-            }
+            long[][] rightNeighDist = findDistsBetweenTwoColumns(rows, rect, dists, col1, col2);
 
             Date end = new Date();
             System.out.println(end.getTime() - start.getTime());
             DistanceChecker.checkTwoColumnsDists(rows, cols, rect, rightNeighDist, col1, col2);
         }
+    }
+
+    private static long[][] findDistsBetweenTwoColumns(int rows, int[][] rect, long[][][] dists, int col1, int col2) {
+        long[][] rightNeighDist = new long[rows][rows];
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < rows; j++) {
+                rightNeighDist[i][j] = dists[col1][i][j];
+            }
+        }
+
+        for (int col = col1 + 1; col <= col2; col++) {
+            long[][] rightNeighDistNext = new long[rows][rows];
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < rows; j++) {
+                    rightNeighDistNext[i][j] = Integer.MAX_VALUE;
+                }
+            }
+
+            for (int row1 = 0; row1 < rows; row1++) {
+                for (int row2 = 0; row2 < rows; row2++) {
+                    for (int k = 0; k < rows; k++) {
+                        long newDist = rightNeighDist[row1][k] + rect[k][col] + dists[col][k][row2];
+                        rightNeighDistNext[row1][row2] = Math.min(rightNeighDistNext[row1][row2], newDist);
+                    }
+                }
+            }
+
+            rightNeighDist = rightNeighDistNext;
+        }
+
+        return rightNeighDist;
     }
 
     private static long[][][] combineDists(long[][][] distsToLeft, long[][][] distsToRight, int rows, int cols) {
