@@ -6,7 +6,7 @@ public class FindPath2 {
     public static void main(String[] args) {
         while(true) {
             int rows = 7;
-            int cols = 70;
+            int cols = 10;
 
             int[][] rect = new int[rows][cols];
 
@@ -22,47 +22,58 @@ public class FindPath2 {
             long[][][] distsToRight = calcDistsToLeft(flippedRect, rows, cols);
             long[][][] dists = combineDists(distsToLeft, distsToRight, rows, cols);
 
-            int col1 = 0;
-            int col2 = cols - 1;
-
-            long[][] rightNeighDist = findDistsBetweenTwoColumns(rows, rect, dists, col1, col2);
-
+            long[][][] tree = buildSegmentTree(rows, cols, dists, rect);
             Date end = new Date();
-            System.out.println(end.getTime() - start.getTime());
-            DistanceChecker.checkTwoColumnsDists(rows, cols, rect, rightNeighDist, col1, col2);
+            System.out.println(end.getTime() - start.getTime() + "ms");
+
+            if (!DistanceChecker.checkSegmentTreeDists(rows, cols, rect, tree)) {
+                throw new RuntimeException("!!!!!!!!!!!!");
+            }
         }
     }
 
-    private static long[][] findDistsBetweenTwoColumns(int rows, int[][] rect, long[][][] dists, int col1, int col2) {
-        long[][] rightNeighDist = new long[rows][rows];
-
-        for (int i = 0; i < rows; i++) {
+    private static long[][][] buildSegmentTree(int rows, int cols, long[][][] dists, int[][] rect) {
+        long[][][] tree = new long[cols * 4][rows][rows];
+        for (int i = 0; i < cols * 4; i++) {
             for (int j = 0; j < rows; j++) {
-                rightNeighDist[i][j] = dists[col1][i][j];
+                for (int k = 0; k < rows; k++) {
+                    tree[i][j][k] = Integer.MAX_VALUE;
+                }
             }
         }
 
-        for (int col = col1 + 1; col <= col2; col++) {
-            long[][] rightNeighDistNext = new long[rows][rows];
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < rows; j++) {
-                    rightNeighDistNext[i][j] = Integer.MAX_VALUE;
+        treeProcess(rows, dists, rect, tree, 0, cols - 1, 1);
+
+        return tree;
+    }
+
+    private static void treeProcess(int rows, long[][][] dists, int[][] rect, long[][][] tree, int colStart, int colEnd, int v) {
+        if (colStart + 1 == colEnd) {
+            for (int row1 = 0; row1 < rows; row1++) {
+                for (int row2 = 0; row2 < rows; row2++) {
+                    for (int k = 0; k < rows; k++) {
+                        long newDist = dists[colStart][row1][k] + rect[k][colEnd] + dists[colEnd][k][row2];
+                        tree[v][row1][row2] = Math.min(tree[v][row1][row2], newDist);
+                    }
                 }
             }
+        } else {
+            int middle = (colStart + colEnd) / 2;
+            treeProcess(rows, dists, rect, tree, colStart, middle, 2 * v);
+            treeProcess(rows, dists, rect, tree, middle, colEnd, (2 * v) + 1);
+
+            long[][] dst1 = tree[2 * v];
+            long[][] dst2 = tree[(2 * v) + 1];
 
             for (int row1 = 0; row1 < rows; row1++) {
                 for (int row2 = 0; row2 < rows; row2++) {
                     for (int k = 0; k < rows; k++) {
-                        long newDist = rightNeighDist[row1][k] + rect[k][col] + dists[col][k][row2];
-                        rightNeighDistNext[row1][row2] = Math.min(rightNeighDistNext[row1][row2], newDist);
+                        long newDist = dst1[row1][k] + dst2[k][row2];
+                        tree[v][row1][row2] = Math.min(tree[v][row1][row2], newDist);
                     }
                 }
             }
-
-            rightNeighDist = rightNeighDistNext;
         }
-
-        return rightNeighDist;
     }
 
     private static long[][][] combineDists(long[][][] distsToLeft, long[][][] distsToRight, int rows, int cols) {
@@ -132,17 +143,6 @@ public class FindPath2 {
         }
 
         return distsToLeft;
-    }
-
-    private static void printRectangle(int rows, int cols, int[][] rect) {
-        System.out.println("Rectangle");
-
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                System.out.printf("%2d", rect[i][j]);
-            }
-            System.out.println();
-        }
     }
 
     private static void floydWarshal(long[][] dists) {

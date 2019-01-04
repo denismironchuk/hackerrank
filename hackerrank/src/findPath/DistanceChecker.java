@@ -2,10 +2,42 @@ package findPath;
 
 import java.util.Map;
 
-/**
- * Created by Denis_Mironchuk on 1/2/2019.
- */
 public class DistanceChecker {
+    public static boolean checkSegmentTreeDists(int rows, int cols, int[][] rect, long[][][] segmentTree) {
+        long[][] floydWarshlDists = new long[rows * cols][rows * cols];
+        Node[][] nodesTable = buildFloydWarshalDists(rows, cols, rect, floydWarshlDists);
+
+        return checkTree(1, 0, cols - 1, floydWarshlDists, nodesTable, segmentTree, rows);
+    }
+
+    public static boolean checkTree(int v, int startCol, int endCol, long[][] floydWarshlDists, Node[][] nodesTable, long[][][] segmentTree, int rows) {
+        System.out.println(startCol + " " + endCol);
+
+        if (startCol == endCol) {
+            return true;
+        }
+
+        for (int row1 = 0; row1 < rows; row1++) {
+            for (int row2 = 0; row2 < rows; row2++) {
+                long dynDist = segmentTree[v][row1][row2];
+                Node nd1 = nodesTable[row1][startCol];
+                Node nd2 = nodesTable[row2][endCol];
+                int fwDist = (int) floydWarshlDists[nd1.getIndex()][nd2.getIndex()];
+
+                if (dynDist != fwDist) {
+                    return false;
+                }
+            }
+        }
+
+        int middle = (startCol + endCol) / 2;
+
+        boolean res = checkTree(2 * v, startCol, middle, floydWarshlDists, nodesTable, segmentTree, rows);
+        res = res && ((startCol + 1 == endCol) || checkTree((2 * v) + 1, middle, endCol, floydWarshlDists, nodesTable, segmentTree, rows));
+
+        return res ;
+    }
+
     public static boolean checkDistsInOneColumn(int rows, int cols, int[][] rect, long[][][] dists) {
         long[][] floydWarshlDists = new long[rows * cols][rows * cols];
         Node[][] nodesTable = buildFloydWarshalDists(rows, cols, rect, floydWarshlDists);
