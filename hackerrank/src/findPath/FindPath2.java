@@ -4,32 +4,89 @@ import java.util.Date;
 
 public class FindPath2 {
     public static void main(String[] args) {
-        while(true) {
-            int rows = 7;
-            int cols = 10;
+        int rows = 7;
+        int cols = 5000;
 
-            int[][] rect = new int[rows][cols];
+        int[][] rect = new int[rows][cols];
 
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < cols; j++) {
-                    rect[i][j] = (int) (10 * Math.random());
-                }
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                rect[i][j] = (int) (10 * Math.random());
+            }
+        }
+
+        Date prepStart = new Date();
+        long[][][] distsToLeft = calcDistsToLeft(rect, rows, cols);
+        int[][] flippedRect = flipRect(rect, rows, cols);
+        long[][][] distsToRight = calcDistsToLeft(flippedRect, rows, cols);
+        long[][][] dists = combineDists(distsToLeft, distsToRight, rows, cols);
+
+        long[][][] tree = buildSegmentTree(rows, cols, dists, rect);
+
+        Date prepEnd = new Date();
+
+        long time = prepEnd.getTime() - prepStart.getTime();
+
+        for (int i = 0; i < 30000; i++) {
+            int col1 = 0;
+            int col2 = 0;
+
+            while (col1 >= col2) {
+                col1 = (int)(cols * Math.random());
+                col2 = (int)(cols * Math.random());
             }
 
             Date start = new Date();
-            long[][][] distsToLeft = calcDistsToLeft(rect, rows, cols);
-            int[][] flippedRect = flipRect(rect, rows, cols);
-            long[][][] distsToRight = calcDistsToLeft(flippedRect, rows, cols);
-            long[][][] dists = combineDists(distsToLeft, distsToRight, rows, cols);
-
-            long[][][] tree = buildSegmentTree(rows, cols, dists, rect);
+            long[][] columnDist = countColumnsShortestsDists(col1, col2, 0, cols - 1, tree, 1, rows);
             Date end = new Date();
-            System.out.println(end.getTime() - start.getTime() + "ms");
 
-            if (!DistanceChecker.checkSegmentTreeDists(rows, cols, rect, tree)) {
-                throw new RuntimeException("!!!!!!!!!!!!");
+            time+=end.getTime() - start.getTime();
+        }
+
+        System.out.println(time + "ms");
+    }
+
+    private static long[][] countColumnsShortestsDists(int col1, int col2, int leftLim, int rightLim, long[][][] tree, int v, int rows) {
+        if (col2 <= col1) {
+            return null;
+        }
+
+        long[][] res;
+
+        if (col1 == leftLim && col2 == rightLim) {
+            res = tree[v];
+        } else {
+            int middle = (leftLim + rightLim) / 2;
+            long[][] dists1 = countColumnsShortestsDists(col1, Math.min(col2, middle), leftLim, middle, tree, 2 * v, rows);
+            long[][] dists2 = countColumnsShortestsDists(Math.max(middle, col1), Math.max(col2, middle), middle, rightLim, tree, 2 * v + 1, rows);
+
+            if (dists1 == null) {
+                res = dists2;
+            } else if (dists2 == null) {
+                res = dists1;
+            } else {
+                long[][] dist = new long[rows][rows];
+
+                for (int i = 0; i < rows; i++) {
+                    for (int j = 0; j < rows; j++) {
+                        dist[i][j] = Integer.MAX_VALUE;
+                    }
+                }
+
+                for (int row1 = 0; row1 < rows; row1++) {
+                    for (int row2 = 0; row2 < rows; row2++) {
+                        for (int k = 0; k < rows; k++) {
+                            long newDist = dists1[row1][k] + dists2[k][row2];
+                            dist[row1][row2] = Math.min(dist[row1][row2], newDist);
+                        }
+                    }
+                }
+
+                res = dist;
             }
         }
+
+        return res;
     }
 
     private static long[][][] buildSegmentTree(int rows, int cols, long[][][] dists, int[][] rect) {

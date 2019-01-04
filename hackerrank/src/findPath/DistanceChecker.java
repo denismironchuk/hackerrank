@@ -80,10 +80,7 @@ public class DistanceChecker {
         return true;
     }
 
-    public static boolean checkTwoColumnsDists(int rows, int cols, int[][] rect, long[][] dists, int col1, int col2) {
-        long[][] floydWarshlDists = new long[rows * cols][rows * cols];
-        Node[][] nodesTable = buildFloydWarshalDists(rows, cols, rect, floydWarshlDists);
-
+    public static boolean checkTwoColumnsDists(int rows, long[][] dists, int col1, int col2, long[][] floydWarshlDists, Node[][] nodesTable) {
         for (int row1 = 0; row1 < rows; row1++) {
             for (int row2 = 0; row2 < rows; row2++) {
                 long dynDist = dists[row1][row2];
@@ -98,6 +95,13 @@ public class DistanceChecker {
         }
 
         return true;
+    }
+
+    public static boolean checkTwoColumnsDists(int rows, int cols, int[][] rect, long[][] dists, int col1, int col2) {
+        long[][] floydWarshlDists = new long[rows * cols][rows * cols];
+        Node[][] nodesTable = buildFloydWarshalDists(rows, cols, rect, floydWarshlDists);
+
+        return checkTwoColumnsDists(rows, dists, col1, col2, floydWarshlDists, nodesTable);
     }
 
     public static Node[][] buildFloydWarshalDists(int rows, int cols, int[][] rect, long[][] floydWarshlDists) {
