@@ -459,8 +459,8 @@ public class HowManySubstrings3 {
             index++;
         }
 
-        int start = 0;
-        int end = 2;
+        int start = 8;
+        int end = 8;
 
         int[] incArr = new int[s.length()];
         for (int i = 0; i < start; i++) {
@@ -477,7 +477,7 @@ public class HowManySubstrings3 {
 
         int sum2 = 0;
 
-        for (int i = start; i <= end; i++) {
+        for (int i = 0; i <= end; i++) {
             sum2 += incArr[i];
         }
 
