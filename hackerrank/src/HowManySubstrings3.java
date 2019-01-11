@@ -418,7 +418,7 @@ public class HowManySubstrings3 {
     }
 
     public void run() {
-        //String s = generateString(10);
+        //String s = generateString(100);
         String s = "aaabababa" + ENDING;
         SuffixTreeApp suffixApp = new SuffixTreeApp();
         Node root = suffixApp.buildTreeOptimal(s);
@@ -459,7 +459,31 @@ public class HowManySubstrings3 {
             index++;
         }
 
-        System.out.println(root.buildTree());
+        int start = 0;
+        int end = 2;
+
+        int[] incArr = new int[s.length()];
+        for (int i = 0; i < start; i++) {
+            for (int j = 0; j < leafEdgeLen[i]; j++) {
+                incArr[s.length() - 1 - j]++;
+            }
+        }
+
+        int sum1 = 0;
+
+        for (int i = 0; i <= end; i++) {
+            sum1 += phaseLeaveNodes[i];
+        }
+
+        int sum2 = 0;
+
+        for (int i = start; i <= end; i++) {
+            sum2 += incArr[i];
+        }
+
+        int substCnt = sum1 - sum2;
+
+        System.out.println(substCnt);
     }
 
     private void setEdgesLen(Node nd) {
