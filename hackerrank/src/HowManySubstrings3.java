@@ -1,3 +1,8 @@
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class HowManySubstrings3 {
 
     public static final char ENDING = (char) ('z' + 1);
@@ -10,13 +15,13 @@ public class HowManySubstrings3 {
             treeInfo.setRoot(root);
 
             for (int i = 0; i < s.length(); i++) {
-
                 char c = s.charAt(i);
 
                 treeInfo.setPreviousPhaseAddedInnerNode(null);
                 treeInfo.setCurrentPhaseAddedInnerNode(null);
                 treeInfo.setLastVisitedNode(null);
                 treeInfo.setPhaseLastCharIndex(i);
+                treeInfo.setPhaseAddedLeavesCnt(0);
 
                 boolean terminate;
                 boolean finalExtension;
@@ -47,6 +52,7 @@ public class HowManySubstrings3 {
                 } while(!terminate && !finalExtension);
 
                 ap.moveForwardByChar(c, !terminate);
+                treeInfo.increasePhaseAddedLeaveNodes(i);
             }
 
             return root;
@@ -57,10 +63,11 @@ public class HowManySubstrings3 {
         private Node parent;
         private Node suffix = null;
         private SuffixTreeInfo treeInfo;
-        private int strLen = 0;
 
         private int childCnt = 0;
         private Edge[] edgesMap2 = new Edge[27];
+        private Set<Edge> edges = new HashSet<>();
+        private Edge parentEdge = null;
 
         public Node(final SuffixTreeInfo treeInfo, final Node parent) {
             this.treeInfo = treeInfo;
@@ -77,8 +84,14 @@ public class HowManySubstrings3 {
                 Edge newEdge = new Edge(this, child, treeInfo.getPhaseLastCharIndex(),
                         treeInfo.getPhaseLastCharIndex(), treeInfo);
 
+                child.setParentEdge(newEdge);
+
                 edgesMap2[c - 'a'] = newEdge;
+                edges.add(newEdge);
                 childCnt++;
+
+                treeInfo.increasePhaseAddedLeavesCnt();
+                treeInfo.addLeafNode(child);
             } else {
                 terminate = true;
             }
@@ -92,6 +105,7 @@ public class HowManySubstrings3 {
 
         public void addEdge(Edge edge) {
             edgesMap2[treeInfo.getFullString().charAt(edge.getStartIndex()) - 'a'] = edge;
+            edges.add(edge);
             childCnt++;
         }
 
@@ -105,14 +119,6 @@ public class HowManySubstrings3 {
 
         public Edge getEdge(char c) {
             return edgesMap2[c - 'a'];
-        }
-
-        public void setStrLen(int len) {
-            strLen = len;
-        }
-
-        public int getStrLen() {
-            return strLen;
         }
 
         public boolean isRoot() {
@@ -129,6 +135,18 @@ public class HowManySubstrings3 {
 
         public Node getParent() {
             return parent;
+        }
+
+        public Set<Edge> getEdges() {
+            return edges;
+        }
+
+        public Edge getParentEdge() {
+            return parentEdge;
+        }
+
+        public void setParentEdge(final Edge parentEdge) {
+            this.parentEdge = parentEdge;
         }
 
         public String buildTree() {
@@ -160,6 +178,7 @@ public class HowManySubstrings3 {
         private int startIndex;
         private int endIndex;
         private SuffixTreeInfo treeInfo;
+        private int len;
 
         public Edge(final Node parent, final Node child, final int startIndex, int endIndex, SuffixTreeInfo treeInfo) {
             this.parent = parent;
@@ -189,6 +208,14 @@ public class HowManySubstrings3 {
             return parent;
         }
 
+        public void setParent(final Node parent) {
+            this.parent = parent;
+        }
+
+        public void setChild(final Node child) {
+            this.child = child;
+        }
+
         public boolean process(char c, int pos) {
             String fullString = treeInfo.getFullString();
             boolean terminate = false;
@@ -212,10 +239,21 @@ public class HowManySubstrings3 {
             Edge bottomEdge = new Edge(middleVerticle, child, startIndex + pos + 1, getEndIndex(), treeInfo);
             middleVerticle.addEdge(bottomEdge);
 
+            this.child.setParentEdge(bottomEdge);
+
             this.child = middleVerticle;
+            middleVerticle.setParentEdge(this);
             this.endIndex = startIndex + pos;
 
             return middleVerticle.process(c);
+        }
+
+        public int getLen() {
+            return len;
+        }
+
+        public void setLen(final int len) {
+            this.len = len;
         }
     }
 
@@ -226,9 +264,13 @@ public class HowManySubstrings3 {
         private Node previousPhaseAddedInnerNode;
         private int phaseLastCharIndex;
         private Node root;
+        private int[] leafVertsCnt;
+        private int phaseAddedLeavesCnt = 0;
+        private List<Node> leafNodes = new ArrayList<>();
 
         public SuffixTreeInfo(final String fullString) {
             this.fullString = fullString;
+            leafVertsCnt = new int[fullString.length()];
         }
 
         public String getFullString() {
@@ -273,6 +315,30 @@ public class HowManySubstrings3 {
 
         public void setRoot(final Node root) {
             this.root = root;
+        }
+
+        public int[] getLeafVertsCnt() {
+            return leafVertsCnt;
+        }
+
+        public void increasePhaseAddedLeaveNodes(int phase) {
+            leafVertsCnt[phase] += phaseAddedLeavesCnt;
+        }
+
+        public void increasePhaseAddedLeavesCnt() {
+            phaseAddedLeavesCnt++;
+        }
+
+        public void setPhaseAddedLeavesCnt(final int phaseAddedLeavesCnt) {
+            this.phaseAddedLeavesCnt = phaseAddedLeavesCnt;
+        }
+
+        public void addLeafNode(Node nd) {
+            leafNodes.add(nd);
+        }
+
+        public List<Node> getLeafNodes() {
+            return leafNodes;
         }
     }
 
@@ -341,12 +407,78 @@ public class HowManySubstrings3 {
         }
     }
 
-    public void run() {
-        String s = "aaabababa" + ENDING;
+    private String generateString(int len) {
+        StringBuilder build = new StringBuilder();
 
+        for (int i = 0; i < len; i++) {
+            build.append((char) ('a' + (int) (Math.random() * 2)));
+        }
+        build.append(ENDING);
+        return build.toString();
+    }
+
+    public void run() {
+        //String s = generateString(10);
+        String s = "aaabababa" + ENDING;
         SuffixTreeApp suffixApp = new SuffixTreeApp();
         Node root = suffixApp.buildTreeOptimal(s);
+        SuffixTreeInfo treeInfo = root.getTreeInfo();
+
+        int[] phaseAddedLeaveNodes = treeInfo.getLeafVertsCnt();
+        int[] phaseLeaveNodes = new int[s.length()];
+        phaseLeaveNodes[0] = phaseAddedLeaveNodes[0];
+        for (int i = 1; i < s.length(); i++) {
+            phaseLeaveNodes[i] = phaseLeaveNodes[i - 1] + phaseAddedLeaveNodes[i];
+        }
+
+        int uniqueSubstrings = 0;
+
+        for (int i = 0; i < s.length() - 1; i++) {
+            uniqueSubstrings += phaseLeaveNodes[i];
+        }
+
+        setEdgesLen(root);
+
+        int[] leafEdgeLen = new int[s.length()];
+
+        int index = 0;
+        for (Node leave : treeInfo.getLeafNodes()) {
+            Edge leaveEdge = leave.getParentEdge();
+            Node parent = leave.getParent();
+            leafEdgeLen[index] = leaveEdge.getLen();
+            parent.getEdges().remove(leave.getParentEdge());
+
+            if (parent.getEdges().size() == 1 && null != parent.getParentEdge()) {
+                Edge removedEdge = parent.getEdges().iterator().next();
+                Edge increasedEdge = removedEdge.getParent().getParentEdge();
+                increasedEdge.setChild(removedEdge.getChild());
+                increasedEdge.setLen(increasedEdge.getLen() + removedEdge.getLen());
+                removedEdge.getChild().setParentEdge(increasedEdge);
+            }
+
+            index++;
+        }
+
         System.out.println(root.buildTree());
+    }
+
+    private void setEdgesLen(Node nd) {
+        for (Edge edge : nd.getEdges()) {
+            edge.setLen(edge.getEndIndex() - edge.getStartIndex() + 1);
+            setEdgesLen(edge.getChild());
+        }
+    }
+
+    private int countUniqueSubstrings(String s) {
+        Set<String> substrs = new HashSet<>();
+
+        for (int i = 0; i < s.length(); i++) {
+            for (int j = i + 1; j <= s.length(); j++) {
+                substrs.add(s.substring(i, j));
+            }
+        }
+
+        return substrs.size();
     }
 
     public static void main(String[] args) {
