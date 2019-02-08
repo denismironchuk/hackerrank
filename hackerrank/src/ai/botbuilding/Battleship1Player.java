@@ -1,15 +1,20 @@
 package ai.botbuilding;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 public class Battleship1Player {
     private static int SIDE = 10;
 
-    private static int[] POSSIBLE_SHIPS = new int[] {/*1, 1, */2, 2, 3, 4, 5};
+    private static int[] POSSIBLE_SHIPS = new int[] {2, 2, 3, 4, 5};
 
     private static class Point {
         private int row;
@@ -20,16 +25,60 @@ public class Battleship1Player {
             this.col = col;
         }
 
-        public int manhDist(Point p) {
-            return Math.abs(row - p.row) + Math.abs(col - p.col);
-        }
-
         @Override
         public boolean equals(final Object o) {
             Point point = (Point) o;
             if (row != point.row) return false;
             return col == point.col;
         }
+    }
+
+    private static int[][] generateDistribution(char[][] board) {
+        List<Integer> destrShips = getDestroyedShips(board);
+        List<Integer> remainShips = new ArrayList<>();
+
+        for (int ship : POSSIBLE_SHIPS) {
+            if (!destrShips.contains(ship)) {
+                remainShips.add(ship);
+            } else {
+                destrShips.remove(destrShips.indexOf(ship));
+            }
+        }
+
+        int[][] distr = new int[SIDE][SIDE];
+
+        for (int ship : remainShips) {
+            for (int row = 0; row < SIDE; row++) {
+                for (int col = 0; col < SIDE; col++) {
+                    for (int offset = 0; offset < ship; offset++) {
+                        distr[row][col]+=canContainShip(ship, row, col, board, true, offset);
+                        distr[row][col]+=canContainShip(ship, row, col, board, false, offset);
+                    }
+                }
+            }
+        }
+
+        return distr;
+    }
+
+    private static int canContainShip(int ship, int row, int col, char[][] board, boolean isVertical, int offset) {
+        if (isVertical) {
+            int startRow = row - offset;
+            for (int i = 0; i < ship; i++) {
+                if (startRow + i < 0 || startRow + i >= SIDE || board[startRow + i][col] != '-') {
+                    return 0;
+                }
+            }
+        } else {
+            int startCol = col - offset;
+            for (int i = 0; i < ship; i++) {
+                if (startCol + i < 0 || startCol + i >= SIDE || board[row][startCol + i] != '-') {
+                    return 0;
+                }
+            }
+        }
+
+        return 1;
     }
 
     public static void main(String[] args) throws IOException {
@@ -59,82 +108,80 @@ public class Battleship1Player {
             }
         }
 
-        List<Integer> destrShips = getDestroyedShips(board);
-        List<Integer> remainShips = new ArrayList<>();
+        int[][] currentDistr = generateDistribution(board);
+        int maxDistr = -1;
 
-        for (int ship : POSSIBLE_SHIPS) {
-            if (!destrShips.contains(ship)) {
-                remainShips.add(ship);
-            } else {
-                destrShips.remove(destrShips.indexOf(ship));
+        List<Point> candidates = new ArrayList<>();
+
+        for (int i = 0; i < SIDE; i++) {
+            //for (int j = i % 2 == 0 ? 0 : 1; j < SIDE; j += 2) {
+            for (int j = 0; j < SIDE; j++) {
+               if (board[i][j] == '-') {
+                   if (currentDistr[i][j] > maxDistr) {
+                       maxDistr = currentDistr[i][j];
+                       candidates.clear();
+                       candidates.add(new Point(i, j));
+                   } else if (currentDistr[i][j] == maxDistr) {
+                       candidates.add(new Point(i, j));
+                   }
+               }
             }
         }
 
-        int rowToHit = (int)(SIDE * Math.random());
-        int colToHit = (rowToHit % 2 == 0 ) ? 2 * (int)((SIDE / 2) * Math.random()) : 1 + (2 * (int)(((SIDE - 1) / 2) * Math.random()));
+        Point maxPoint = candidates.get((int)(Math.random() * candidates.size()));
 
-        while (board[rowToHit][colToHit] != '-' /*|| !isValidPoint(board, rowToHit, colToHit)*/ || !pointCanContainShips(remainShips, rowToHit, colToHit, board)) {
-            rowToHit = (int)(SIDE * Math.random());
-            colToHit = (rowToHit % 2 == 0 ) ? 2 * (int)((SIDE / 2) * Math.random()) : 1 + (2 * (int)(((SIDE - 1) / 2) * Math.random()));
-        }
-
-        System.out.println(rowToHit + " " + colToHit);
+        System.out.println(maxPoint.row + " " + maxPoint.col);
     }
 
-    private static boolean isValidPoint(char[][] board, int row, int col) {
-        boolean hasNeighbours = false;
-        hasNeighbours = hasNeighbours || (row > 0 && board[row - 1][col] != '-');
-        hasNeighbours = hasNeighbours || (row < SIDE - 1 && board[row + 1][col] != '-');
-        hasNeighbours = hasNeighbours || (col > 0 && board[row][col - 1] != '-');
-        hasNeighbours = hasNeighbours || (col < SIDE - 1 && board[row][col + 1] != '-');
+    private static boolean isClearField(char[][] board) {
+        for (int i = 0; i < SIDE; i++) {
+            for (int j = 0; j < SIDE; j++) {
+                if (board[i][j] != '-') {
+                    return false;
+                }
+            }
+        }
 
-        return !hasNeighbours;
+        return true;
     }
 
-    private static boolean pointCanContainShips(List<Integer> remainShips, int row, int col, char[][] board) {
-        int vert = 1;
+    private static void writeDistrToFile(File f, int[][] distr) throws IOException {
+        BufferedWriter wr = new BufferedWriter(new FileWriter(f));
 
-        int row1 = row + 1;
-        int col1 = col;
+        for (int row = 0; row < SIDE; row++) {
+            StringBuilder line = new StringBuilder();
 
-        while (row1 < SIDE && board[row1][col1] == '-') {
-            vert++;
-            row1++;
+            for (int col = 0; col < SIDE; col++) {
+                line.append(distr[row][col]).append(" ");
+            }
+            wr.write(line.toString());
+            wr.newLine();
+        }
+        wr.flush();
+        wr.close();
+    }
+
+    private static int[][] readDistrFromFile(File f) throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(f));
+        int[][] distr = new int[SIDE][SIDE];
+
+        for (int row = 0; row < SIDE; row++) {
+            StringTokenizer tkn = new StringTokenizer(br.readLine());
+            for (int col = 0; col < SIDE; col++) {
+                distr[row][col] = Integer.parseInt(tkn.nextToken());
+            }
         }
 
-        row1 = row - 1;
-        col1 = col;
+        br.close();
+        return distr;
+    }
 
-        while (row1 >= 0 && board[row1][col1] == '-') {
-            vert++;
-            row1--;
+    private static void mergeDistrs(int[][] current, int[][] prev) {
+        for (int i = 0; i < SIDE; i++) {
+            for (int j = 0; j < SIDE; j++) {
+                current[i][j] += prev[i][j];
+            }
         }
-
-        int horiz = 1;
-
-        int row2 = row;
-        int col2 = col + 1;
-
-        while (col2 < SIDE && board[row2][col2] == '-') {
-            horiz++;
-            col2++;
-        }
-
-        row2 = row;
-        col2 = col - 1;
-
-        while (col2 >= 0 && board[row2][col2] == '-') {
-            horiz++;
-            col2--;
-        }
-
-        boolean canContain = false;
-
-        for (int ship : remainShips) {
-            canContain = ship <= vert || ship <= horiz || canContain;
-        }
-
-        return canContain;
     }
 
     private static List<Integer> getDestroyedShips(char[][] board) {
