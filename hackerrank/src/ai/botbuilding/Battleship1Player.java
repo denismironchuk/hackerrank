@@ -5,12 +5,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class Battleship1Player {
     private static int SIDE = 10;
 
-    private static int[] POSSIBLE_SHIPS = new int[] {1, 1, 2, 2, 3, 4, 5};
+    private static int[] POSSIBLE_SHIPS = new int[] {/*1, 1, */2, 2, 3, 4, 5};
 
     private static class Point {
         private int row;
@@ -72,14 +71,24 @@ public class Battleship1Player {
         }
 
         int rowToHit = (int)(SIDE * Math.random());
-        int colToHit = (int)(SIDE * Math.random());
+        int colToHit = (rowToHit % 2 == 0 ) ? 2 * (int)((SIDE / 2) * Math.random()) : 1 + (2 * (int)(((SIDE - 1) / 2) * Math.random()));
 
-        while (board[rowToHit][colToHit] != '-' || !pointCanContainShips(remainShips, rowToHit, colToHit, board)) {
+        while (board[rowToHit][colToHit] != '-' /*|| !isValidPoint(board, rowToHit, colToHit)*/ || !pointCanContainShips(remainShips, rowToHit, colToHit, board)) {
             rowToHit = (int)(SIDE * Math.random());
-            colToHit = (int)(SIDE * Math.random());
+            colToHit = (rowToHit % 2 == 0 ) ? 2 * (int)((SIDE / 2) * Math.random()) : 1 + (2 * (int)(((SIDE - 1) / 2) * Math.random()));
         }
 
         System.out.println(rowToHit + " " + colToHit);
+    }
+
+    private static boolean isValidPoint(char[][] board, int row, int col) {
+        boolean hasNeighbours = false;
+        hasNeighbours = hasNeighbours || (row > 0 && board[row - 1][col] != '-');
+        hasNeighbours = hasNeighbours || (row < SIDE - 1 && board[row + 1][col] != '-');
+        hasNeighbours = hasNeighbours || (col > 0 && board[row][col - 1] != '-');
+        hasNeighbours = hasNeighbours || (col < SIDE - 1 && board[row][col + 1] != '-');
+
+        return !hasNeighbours;
     }
 
     private static boolean pointCanContainShips(List<Integer> remainShips, int row, int col, char[][] board) {
