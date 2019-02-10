@@ -3,15 +3,48 @@ package ai.botbuilding;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 public class ClickOMania {
-    private static final int MAX_DESC = 1000;
+    private static final int MAX_DESC = 200;
     private static int rows;
     private static int cols;
+
+    private static class GameResult {
+        private int[] point;
+        private char[][] board;
+        private int result;
+
+        public GameResult(int[] point, char[][] board, int result) {
+            this.point = point;
+            this.board = board;
+            this.result = result;
+        }
+
+        public int getResult() {
+            return result;
+        }
+
+        public int[] getPoint() {
+            return point;
+        }
+
+        public char[][] getBoard() {
+            return board;
+        }
+
+        private int hash = 0;
+
+        @Override
+        public int hashCode() {
+            if (hash == 0) {
+                for (char[] row : board) {
+                    hash = 31 * hash + Arrays.hashCode(row);
+                }
+            }
+            return hash;
+        }
+    }
 
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -27,11 +60,50 @@ public class ClickOMania {
             board[row] = line.toCharArray();
         }
 
-        int[] point = getNextPoint(board);
+        Set<Integer> processedBoards = new HashSet<>();
+        List<GameResult> results = getNextPoints(board, null, processedBoards);
+        List<GameResult> finalStates = new ArrayList<>();
+
+        while (true) {
+            List<GameResult> nextResults = new ArrayList<>();
+
+            for (GameResult res : results) {
+                List<GameResult> nextStates = getNextPoints(res.getBoard(), res.getPoint(), processedBoards);
+                if (nextStates.isEmpty()) {
+                    finalStates.add(res);
+                } else {
+                    nextResults.addAll(nextStates);
+                }
+            }
+
+            if (nextResults.isEmpty()) {
+                break;
+            } else {
+                nextResults.sort(Comparator.comparingInt(GameResult::getResult));
+                results = new ArrayList<>();
+                int cnt = 0;
+                for (int i = 0;  i < nextResults.size() && cnt < MAX_DESC; i++) {
+                    if (Math.random() > 0.05) {
+                        results.add(nextResults.get(i));
+                        cnt++;
+                    }
+                }
+            }
+        }
+
+        finalStates.sort(Comparator.comparingInt(GameResult::getResult));
+        int[] point = finalStates.get(0).getPoint();
         System.out.println(point[0] + " " + point[1]);
     }
 
-    private static int[] getNextPoint(char[][] board) {
+    private static void printBoard(char[][] board) {
+        for (int row = 0; row < rows; row++) {
+            System.out.println(new String(board[row]));
+        }
+        System.out.println("=============");
+    }
+
+    private static List<GameResult> getNextPoints(char[][] board, int[] initPoint, Set<Integer> processedBoards) {
         int[][] isles = new int[rows][cols];
         char[] islesColor = new char[rows * cols];
         int[] islesSize = new int[rows * cols];
@@ -39,24 +111,23 @@ public class ClickOMania {
 
         int islesNumber = convertToIsles(board, islesColor, isles, islePoint,islesSize);
 
-        int minNumber = Integer.MAX_VALUE;
-        List<int[]> pointsCandidates = new ArrayList<>();
+        List<GameResult> gamesResults = new ArrayList<>();
         for (int isle = 0; isle < islesNumber; isle++) {
             if (islesSize[isle] > 1) {
-                int newNumbers = convertToIsles(convertToColors(removeIsle(isle, isles), islesColor),
+                char[][] nextBoard = convertToColors(removeIsle(isle, isles), islesColor);
+                int newNumbers = convertToIsles(nextBoard,
                         new char[rows * cols], new int[rows][cols], new int[rows * cols][2], new int[rows * cols]);
 
-                if (newNumbers < minNumber) {
-                    pointsCandidates.clear();
-                    minNumber = newNumbers;
-                    pointsCandidates.add(islePoint[isle]);
-                } else if (newNumbers == minNumber) {
-                    pointsCandidates.add(islePoint[isle]);
+                int[] pointToSet = initPoint == null ? islePoint[isle] : initPoint;
+                GameResult grNew = new GameResult(pointToSet, nextBoard, newNumbers);
+                if (!processedBoards.contains(grNew.hashCode())) {
+                    gamesResults.add(grNew);
+                    processedBoards.add(grNew.hashCode());
                 }
             }
         }
 
-        return pointsCandidates.get((int)(Math.random() * pointsCandidates.size()));
+        return gamesResults;
     }
 
     private static int[][] removeIsle(int color, int[][] isles) {
