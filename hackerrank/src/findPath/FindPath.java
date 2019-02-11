@@ -6,8 +6,8 @@ import java.util.Map;
 public class FindPath {
         public static void main(String[] args) {
         while(true) {
-            int rows = 4;
-            int cols = 2;
+            int rows = 5;
+            int cols = 100;
 
             int[][] rect = new int[rows][cols];
 
@@ -17,45 +17,63 @@ public class FindPath {
                 }
             }
 
-            int[][][] dists = new int[cols][rows][rows];
+            long[][][] dists = new long[cols][rows * 2][rows * 2];
 
             for (int i = 0; i < rows; i++) {
-                dists[0][i][i] = rect[i][0];
+                dists[0][i][i] = 0;
                 for (int j = i + 1; j < rows; j++) {
-                    dists[0][i][j] = dists[0][i][j - 1] + rect[j][0];
-                    dists[0][j][i] = dists[0][i][j];
+                    dists[0][i][j] = Integer.MAX_VALUE;
+                    dists[0][j][i] = Integer.MAX_VALUE;
                 }
+            }
+
+            for (int i = 0; i < rows - 1; i++) {
+                dists[0][i][i + 1] = rect[i + 1][0];
+                dists[0][i + 1][i] = rect[i][0];
             }
 
             Date start = new Date();
 
+            floydWarshal(dists[0], rows);
+
             for (int col = 1; col < cols; col++) {
-                for (int rowStart = 0; rowStart < rows; rowStart++) {
-                    dists[col][rowStart][rowStart] = rect[rowStart][col];
-
-                    for (int rowEnd = rowStart + 1; rowEnd < rows; rowEnd++) {
-                        dists[col][rowStart][rowEnd] = rect[rowEnd][col];
-
-                        if (rowStart == 0) {
-                            dists[col][rowStart][rowEnd] += Math.min(rect[rowStart][col] + dists[col - 1][rowStart][rowEnd], dists[col][rowStart][rowEnd - 1]);
-                        } else {
-                            dists[col][rowStart][rowEnd] += Math.min(Math.min(rect[rowStart][col] + dists[col - 1][rowStart][rowEnd], dists[col][rowStart][rowEnd - 1]),
-                                    rect[rowStart][col] + dists[col][rowStart - 1][rowEnd]);
-                        }
-                    }
-
-                    dists[col][rows - 1][rowStart] = dists[col][rowStart][rows - 1];
-
-                    for (int rowEnd = rows - 2; rowEnd > rowStart; rowEnd--) {
-                        dists[col][rowStart][rowEnd] = Math.min(dists[col][rowStart][rowEnd + 1] + rect[rowEnd][col], dists[col][rowStart][rowEnd]);
-                        dists[col][rowEnd][rowStart] = dists[col][rowStart][rowEnd];
+                for (int i = 0; i < rows; i++) {
+                    dists[col][i][i] = 0;
+                    for (int j = i + 1; j < rows; j++) {
+                        dists[col][i][j] = Integer.MAX_VALUE;
+                        dists[col][j][i] = Integer.MAX_VALUE;
                     }
                 }
+
+                for (int i = 0; i < rows - 1; i++) {
+                    dists[col][i][i + 1] = rect[i + 1][col];
+                    dists[col][i + 1][i] = rect[i][col];
+                }
+
+                for (int i = rows; i < rows * 2; i++) {
+                    for (int j = rows; j < rows * 2; j++) {
+                        dists[col][i][j] = dists[col - 1][i - rows][j - rows];
+                    }
+                }
+
+                for (int i = 0; i < rows; i++) {
+                    for (int j = rows; j < rows * 2; j++) {
+                        dists[col][i][j] = Integer.MAX_VALUE;
+                        dists[col][j][i] = Integer.MAX_VALUE;
+                    }
+                }
+
+                for (int i = 0; i < rows; i++) {
+                    dists[col][i][i + rows] = rect[i][col - 1];
+                    dists[col][i + rows][i] = rect[i][col];
+                }
+
+                floydWarshal(dists[col], rows * 2);
             }
 
             Date end = new Date();
 
-            //System.out.println((end.getTime() - start.getTime()) + "ms");
+            System.out.println((end.getTime() - start.getTime()) + "ms");
 
             Node[][] nodesTable = Converter.convertToGraph(rect, rows, cols);
             Node[] nodes = new Node[rows * cols];
@@ -89,7 +107,7 @@ public class FindPath {
                 }
             }
 
-            //System.out.println("Floyd-Warshal calculation started");
+            System.out.println("Floyd-Warshal calculation started");
 
             for (int k = 0; k < nodesCnt; k++) {
                 for (int i = 0; i < nodesCnt; i++) {
@@ -99,14 +117,14 @@ public class FindPath {
                 }
             }
 
-            //System.out.println("Floyd-Warshal calculation finished");
+            System.out.println("Floyd-Warshal calculation finished");
 
             for (int r1 = 0; r1 < rows; r1++) {
                 for (int r2 = 0; r2 < rows; r2++) {
-                    int dynDist = dists[cols - 1][r1][r2];
+                    long dynDist = dists[cols - 1][r1][r2];
                     Node nd1 = nodesTable[r1][cols - 1];
                     Node nd2 = nodesTable[r2][cols - 1];
-                    int fwDist = (int) floydWarshlDists[nd1.getIndex()][nd2.getIndex()] + nd1.getNodeWeight();
+                    long fwDist = floydWarshlDists[nd1.getIndex()][nd2.getIndex()];
 
                     if (dynDist != fwDist) {
                         System.out.println(dynDist);
@@ -118,6 +136,16 @@ public class FindPath {
 
                         throw new RuntimeException();
                     }
+                }
+            }
+        }
+    }
+
+    private static void floydWarshal(long[][] dists, int n) {
+        for (int k = 0; k < n; k++) {
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    dists[i][j] = Math.min(dists[i][k] + dists[k][j], dists[i][j]);
                 }
             }
         }
@@ -145,7 +173,7 @@ public class FindPath {
         }
     }
 
-    private static void printDists(int rows, int cols, int[][][] dists) {
+    private static void printDists(int rows, int cols, long[][][] dists) {
         System.out.println("Dynamic dists");
 
         for (int col = 0; col < cols; col++) {

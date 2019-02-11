@@ -7,9 +7,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 public class Battleship1Player {
     private static int SIDE = 10;
@@ -30,6 +28,11 @@ public class Battleship1Player {
             Point point = (Point) o;
             if (row != point.row) return false;
             return col == point.col;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(row, col);
         }
     }
 
@@ -65,14 +68,14 @@ public class Battleship1Player {
         if (isVertical) {
             int startRow = row - offset;
             for (int i = 0; i < ship; i++) {
-                if (startRow + i < 0 || startRow + i >= SIDE || board[startRow + i][col] != '-') {
+                if (startRow + i < 0 || startRow + i >= SIDE || (board[startRow + i][col] != '-' && board[startRow + i][col] != 'h')) {
                     return 0;
                 }
             }
         } else {
             int startCol = col - offset;
             for (int i = 0; i < ship; i++) {
-                if (startCol + i < 0 || startCol + i >= SIDE || board[row][startCol + i] != '-') {
+                if (startCol + i < 0 || startCol + i >= SIDE || (board[row][startCol + i] != '-' && board[row][startCol + i] != 'h')) {
                     return 0;
                 }
             }
@@ -98,90 +101,69 @@ public class Battleship1Player {
             }
         }
 
-        for (Point p : hitPoints) {
-            if (countHitNeighbours(p, board) < 2) {
-                Point toHit = getPointToHit(p, board);
-                if (toHit != null) {
-                    System.out.println(toHit.row + " " + toHit.col);
-                    return;
+        int[][] currentDistr = generateDistribution(board);
+        List<Point> candidates = new ArrayList<>();
+
+        if (!hitPoints.isEmpty()) {
+            Set<Point> hitCandidates = new HashSet<>();
+            for (Point p : hitPoints) {
+                hitCandidates.addAll(getFreeNeighbours(p, board));
+            }
+
+            int maxDistr = -1;
+
+            for (Point p : hitCandidates) {
+                if (currentDistr[p.row][p.col] > maxDistr) {
+                    maxDistr = currentDistr[p.row][p.col];
+                    candidates.clear();
+                    candidates.add(p);
+                } else if (currentDistr[p.row][p.col] == maxDistr) {
+                    candidates.add(p);
+                }
+            }
+
+        } else {
+            int maxDistr = -1;
+
+            for (int i = 0; i < SIDE; i++) {
+                for (int j = 0; j < SIDE; j++) {
+                    if (board[i][j] == '-') {
+                        if (currentDistr[i][j] > maxDistr) {
+                            maxDistr = currentDistr[i][j];
+                            candidates.clear();
+                            candidates.add(new Point(i, j));
+                        } else if (currentDistr[i][j] == maxDistr) {
+                            candidates.add(new Point(i, j));
+                        }
+                    }
                 }
             }
         }
 
-        int[][] currentDistr = generateDistribution(board);
-        int maxDistr = -1;
-
-        List<Point> candidates = new ArrayList<>();
-
-        for (int i = 0; i < SIDE; i++) {
-            //for (int j = i % 2 == 0 ? 0 : 1; j < SIDE; j += 2) {
-            for (int j = 0; j < SIDE; j++) {
-               if (board[i][j] == '-') {
-                   if (currentDistr[i][j] > maxDistr) {
-                       maxDistr = currentDistr[i][j];
-                       candidates.clear();
-                       candidates.add(new Point(i, j));
-                   } else if (currentDistr[i][j] == maxDistr) {
-                       candidates.add(new Point(i, j));
-                   }
-               }
-            }
-        }
-
-        Point maxPoint = candidates.get((int)(Math.random() * candidates.size()));
-
+        Point maxPoint = candidates.get((int) (Math.random() * candidates.size()));
         System.out.println(maxPoint.row + " " + maxPoint.col);
     }
 
-    private static boolean isClearField(char[][] board) {
-        for (int i = 0; i < SIDE; i++) {
-            for (int j = 0; j < SIDE; j++) {
-                if (board[i][j] != '-') {
-                    return false;
-                }
-            }
+    private static Set<Point> getFreeNeighbours(Point p, char[][] board) {
+        Set<Point> neighs = new HashSet<>();
+
+        if (p.row > 0 && board[p.row - 1][p.col] == '-') {
+            neighs.add(new Point(p.row - 1, p.col));
         }
 
-        return true;
-    }
-
-    private static void writeDistrToFile(File f, int[][] distr) throws IOException {
-        BufferedWriter wr = new BufferedWriter(new FileWriter(f));
-
-        for (int row = 0; row < SIDE; row++) {
-            StringBuilder line = new StringBuilder();
-
-            for (int col = 0; col < SIDE; col++) {
-                line.append(distr[row][col]).append(" ");
-            }
-            wr.write(line.toString());
-            wr.newLine();
-        }
-        wr.flush();
-        wr.close();
-    }
-
-    private static int[][] readDistrFromFile(File f) throws IOException {
-        BufferedReader br = new BufferedReader(new FileReader(f));
-        int[][] distr = new int[SIDE][SIDE];
-
-        for (int row = 0; row < SIDE; row++) {
-            StringTokenizer tkn = new StringTokenizer(br.readLine());
-            for (int col = 0; col < SIDE; col++) {
-                distr[row][col] = Integer.parseInt(tkn.nextToken());
-            }
+        if (p.row < SIDE - 1 && board[p.row + 1][p.col] == '-') {
+            neighs.add(new Point(p.row + 1, p.col));
         }
 
-        br.close();
-        return distr;
-    }
-
-    private static void mergeDistrs(int[][] current, int[][] prev) {
-        for (int i = 0; i < SIDE; i++) {
-            for (int j = 0; j < SIDE; j++) {
-                current[i][j] += prev[i][j];
-            }
+        if (p.col > 0 && board[p.row][p.col - 1] == '-') {
+            neighs.add(new Point(p.row, p.col - 1));
         }
+
+        if (p.col < SIDE - 1 && board[p.row][p.col + 1] == '-') {
+            neighs.add(new Point(p.row, p.col + 1));
+        }
+
+        return neighs;
     }
 
     private static List<Integer> getDestroyedShips(char[][] board) {
@@ -233,87 +215,5 @@ public class Battleship1Player {
         }
 
         return len;
-    }
-
-    private static Point getPointToHit(Point p, char[][] board) {
-        Point neighbour = getPointNeighbour(p, board);
-
-        if (null == neighbour) {
-            if (p.row > 0 && board[p.row - 1][p.col] == '-') {
-                return new Point(p.row - 1, p.col);
-            }
-
-            if (p.row < SIDE - 1 && board[p.row + 1][p.col] == '-') {
-                return new Point(p.row + 1, p.col);
-            }
-
-            if (p.col > 0 && board[p.row][p.col - 1] == '-') {
-                return new Point(p.row, p.col - 1);
-            }
-
-            if (p.col < SIDE - 1 && board[p.row][p.col + 1] == '-') {
-                return new Point(p.row, p.col + 1);
-            }
-        } else if (neighbour.row == p.row) {
-            if (p.col > 0 && board[p.row][p.col - 1] == '-') {
-                return new Point(p.row, p.col - 1);
-            }
-
-            if (p.col < SIDE - 1 && board[p.row][p.col + 1] == '-') {
-                return new Point(p.row, p.col + 1);
-            }
-        } else {
-            if (p.row > 0 && board[p.row - 1][p.col] == '-') {
-                return new Point(p.row - 1, p.col);
-            }
-
-            if (p.row < SIDE - 1 && board[p.row + 1][p.col] == '-') {
-                return new Point(p.row + 1, p.col);
-            }
-        }
-
-        return null;
-    }
-
-    private static Point getPointNeighbour(Point p, char[][] board) {
-        if (p.row > 0 && board[p.row - 1][p.col] == 'h') {
-            return new Point(p.row - 1, p.col);
-        }
-
-        if (p.row < SIDE - 1 && board[p.row + 1][p.col] == 'h') {
-            return new Point(p.row + 1, p.col);
-        }
-
-        if (p.col > 0 && board[p.row][p.col - 1] == 'h') {
-            return new Point(p.row, p.col - 1);
-        }
-
-        if (p.col < SIDE - 1 && board[p.row][p.col + 1] == 'h') {
-            return new Point(p.row, p.col + 1);
-        }
-
-        return null;
-    }
-
-    private static int countHitNeighbours(Point p, char[][] board) {
-        int res = 0;
-
-        if (p.row > 0 && board[p.row - 1][p.col] == 'h') {
-            res++;
-        }
-
-        if (p.row < SIDE - 1 && board[p.row + 1][p.col] == 'h') {
-            res++;
-        }
-
-        if (p.col > 0 && board[p.row][p.col - 1] == 'h') {
-            res++;
-        }
-
-        if (p.col < SIDE - 1 && board[p.row][p.col + 1] == 'h') {
-            res++;
-        }
-
-        return res;
     }
 }
