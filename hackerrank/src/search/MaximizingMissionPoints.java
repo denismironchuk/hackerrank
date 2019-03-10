@@ -1,18 +1,17 @@
 package search;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 public class MaximizingMissionPoints {
-    public static final int DISP = 100;
+    public static final int DISP = 1000000000;
     private static int dLat;
     private static int dLong;
     private static TreapNode[] treapSegments;
+    private static int cloneCnt = 0;
 
     public static class TreapNode {
         private int x;
@@ -39,6 +38,7 @@ public class MaximizingMissionPoints {
         }
 
         public TreapNode clone() {
+            cloneCnt++;
             TreapNode clone = new TreapNode(x, y, city);
             if (left != null) {
                 clone.setLeft(left.clone());
@@ -168,7 +168,19 @@ public class MaximizingMissionPoints {
     }
 
     public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        List<TreapNode> test = new ArrayList<>();
+        Date testStart = new Date();
+        City testCity = new City(1,2,3,4);
+        for (int i = 0; i < 4000000; i++) {
+            test.add(new TreapNode(2, 2, testCity));
+        }
+        Date testEnd = new Date();
+
+        System.out.println("Test took " + (testEnd.getTime() - testStart.getTime()) + "ms");
+
+        Date d1 = new Date();
+        //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader br = new BufferedReader(new FileReader("D:\\maxMisPoints.txt"));
         StringTokenizer tkn1 = new StringTokenizer(br.readLine());
         int n = Integer.parseInt(tkn1.nextToken());
         dLat = Integer.parseInt(tkn1.nextToken());
@@ -189,15 +201,28 @@ public class MaximizingMissionPoints {
             }
         }
 
+        Date d2 = new Date();
+
         TreapNode[] treaps = new TreapNode[maxLat + 1];
         for (City city : cities) {
             treaps[city.latitude] = new TreapNode(city);
         }
 
+        Date d3 = new Date();
         treapSegments = new TreapNode[(maxLat + 1) * 4];
         buildSegmentTree(treaps, 1, 0, maxLat);
 
+
+        int insts = 0;
+        for (City c : cities) {
+            insts += c.treaps.size();
+        }
+
+        System.out.println("Treap insts = " + insts);
+
+        Date d4 = new Date();
         cities.sort(Comparator.comparingInt(City::getHeight).reversed());
+        Date d5 = new Date();
         for (City city : cities) {
             int l = Math.max(1, city.latitude - dLat);
             int r = Math.min(maxLat, city.latitude + dLat);
@@ -207,7 +232,14 @@ public class MaximizingMissionPoints {
                 node.updateMaxPoint(maxPoint);
             }
         }
-
+        Date d6 = new Date();
+        System.out.println(d2.getTime() - d1.getTime() + "ms");
+        System.out.println(d3.getTime() - d2.getTime() + "ms");
+        System.out.println(d4.getTime() - d3.getTime() + "ms");
+        System.out.println(d5.getTime() - d4.getTime() + "ms");
+        System.out.println(d6.getTime() - d5.getTime() + "ms");
+        System.out.println("Total time " + (d6.getTime() - d1.getTime()) + "ms");
+        System.out.println("CLone cnt = " + cloneCnt);
         System.out.println(treapSegments[1].maxPoints);
     }
 
@@ -241,6 +273,7 @@ public class MaximizingMissionPoints {
             TreapNode nd1 = treapSegments[v*2];
             TreapNode nd2 = treapSegments[v*2 + 1];
             treapSegments[v] = union(null == nd1 ? null : nd1.clone(), null == nd2 ? null : nd2.clone());
+            //treapSegments[v] = union(nd1, nd2);
         }
     }
 }
