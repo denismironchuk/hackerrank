@@ -17,10 +17,10 @@ public class MaximizingMissionPoints2 {
         private int latitude;
         private int longitude;
         private int height;
-        private int points;
+        private long points;
         private List<LatSegm> segments = new ArrayList<>();
 
-        public City(final int latitude, final int longitude, final int height, final int points) {
+        public City(final int latitude, final int longitude, final int height, final long points) {
             this.latitude = latitude;
             this.longitude = longitude;
             this.height = height;
@@ -66,7 +66,7 @@ public class MaximizingMissionPoints2 {
             int latitude = Integer.parseInt(cityTkn.nextToken());
             int longitude = Integer.parseInt(cityTkn.nextToken());
             int height = Integer.parseInt(cityTkn.nextToken());
-            int points = Integer.parseInt(cityTkn.nextToken());
+            long points = Long.parseLong(cityTkn.nextToken());
             cities.add(new City(latitude, longitude, height, points));
         }
         cities.sort(Comparator.comparingInt(City::getLatitude));
@@ -93,6 +93,8 @@ public class MaximizingMissionPoints2 {
             } else {
                 newPoints += city.points;
             }
+
+            System.out.println(newPoints);
 
             updateTrees(city, newPoints);
         }
