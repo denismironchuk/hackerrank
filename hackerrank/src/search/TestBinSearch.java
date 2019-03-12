@@ -41,10 +41,12 @@ public class TestBinSearch {
     }
 
     public static void main(String[] args) {
-        int[] arr = new int[] {1,4,7,9,13,24,24,24,25,26,46,46,57,57,57,678,4443};
+        /*int[] arr = new int[] {1,4,7,9,13,24,24,24,25,26,46,46,57,57,57,678,4443};
         System.out.println(getLatLowIndex(arr, 0, arr.length - 1, -90));
         System.out.println(getLatUpperIndex(arr, 0, arr.length - 1, 57999));
         int[] arr2 = new int[] {1,4,7,9,13,24,25,26,46,57,678,4443};
-        System.out.println(findCityPos(arr2, 0, arr2.length - 1, 4));
+        System.out.println(findCityPos(arr2, 0, arr2.length - 1, 4));*/
+        int[] arr3 = new int[] {2,3,6,8,10};
+        System.out.println(getLatUpperIndex(arr3, 0, arr3.length - 1, 7));
     }
 }
