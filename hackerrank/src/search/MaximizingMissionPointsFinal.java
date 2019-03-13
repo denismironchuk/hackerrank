@@ -1,12 +1,15 @@
 package search;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.StringTokenizer;
 
-public class MaximizingMissionPoints2 {
+public class MaximizingMissionPointsFinal {
     private static int dLat;
     private static int dLong;
     private static City[] latCities;
@@ -19,7 +22,6 @@ public class MaximizingMissionPoints2 {
         private int height;
         private long points;
         private List<LatSegm> segments = new ArrayList<>();
-        private long accumulatedPoints = Long.MIN_VALUE;
 
         public City(final int latitude, final int longitude, final int height, final long points) {
             this.latitude = latitude;
@@ -34,16 +36,6 @@ public class MaximizingMissionPoints2 {
 
         public int getLatitude() {
             return latitude;
-        }
-
-        @Override
-        public String toString() {
-            return "City{" +
-                    "latitude=" + latitude +
-                    ", longitude=" + longitude +
-                    ", height=" + height +
-                    ", points=" + points +
-                    '}';
         }
     }
 
@@ -107,11 +99,6 @@ public class MaximizingMissionPoints2 {
             cities.add(new City(latitude, longitude, height, points));
         }
 
-        /*int n = 5;
-        dLat = 5;
-        dLong = 5;
-        List<City> cities = generateCities(n, 10, 10, 10);*/
-
         cities.sort(Comparator.comparingInt(City::getLatitude));
         latCities = new City[n];
         for (int i = 0; i < n; i++) {
@@ -137,49 +124,11 @@ public class MaximizingMissionPoints2 {
                 newPoints += city.points;
             }
 
-            //System.out.println(newPoints);
 
             updateTrees(city, newPoints);
         }
 
-        //Date end = new Date();
-
-        //System.out.println(end.getTime() - start.getTime() + "ms");
-        System.out.println(cities);
         System.out.println(latSegments[1].segmentTree[1]);
-        System.out.println(calcTrivial(cities));
-    }
-
-    private static long calcTrivial(List<City> cities) {
-        cities.sort(Comparator.comparingInt(City::getHeight).reversed());
-        long result = Long.MIN_VALUE;
-        for (City city : cities) {
-            int latLowerBound = city.latitude - dLat;
-            int latUpperBound = city.latitude + dLat;
-
-            int longLowerBound = city.longitude - dLong;
-            int longUpperBound = city.longitude + dLong;
-
-            long max = Long.MIN_VALUE;
-            for (City c2 : cities) {
-                if (!c2.equals(city) && c2.latitude >= latLowerBound
-                        && c2.latitude <= latUpperBound && c2.longitude >= longLowerBound && c2.longitude <= longUpperBound) {
-                    max = Math.max(max, c2.accumulatedPoints);
-                }
-            }
-
-            if (max == Long.MIN_VALUE) {
-                city.accumulatedPoints = city.points;
-            } else {
-                city.accumulatedPoints = max + city.points;
-            }
-
-            if (city.accumulatedPoints > result) {
-                result = city.accumulatedPoints;
-            }
-        }
-
-        return result;
     }
 
     private static void updateTrees(City city, long newPoints) {
@@ -215,7 +164,7 @@ public class MaximizingMissionPoints2 {
             int lowIndex = getLongLowIndex(latSegmentLevels[latSegments[v].level], latSegments[v].tl, latSegments[v].tr, lowerBound);
             int upperIndex = getLongUpperIndex(latSegmentLevels[latSegments[v].level], latSegments[v].tl, latSegments[v].tr, upperBound);
 
-            return processLong(latSegments[v], 1, latSegments[v].tl, latSegments[v].tr, lowIndex, upperIndex);
+            return lowIndex == -1 || upperIndex == -1 ? Long.MIN_VALUE : processLong(latSegments[v], 1, latSegments[v].tl, latSegments[v].tr, lowIndex, upperIndex);
         } else {
             int tm = (tl + tr) / 2;
             return Math.max(processLat(city, 2 * v, tl, tm, l, Math.min(r, tm)),
@@ -252,8 +201,6 @@ public class MaximizingMissionPoints2 {
             int ptr2 = tm + 1;
             int index = tl;
 
-            //System.out.println("level = " + level);
-
             for (; ptr1 < tm + 1 && ptr2 < tr + 1; index++) {
                 if (latSegmentLevels[level + 1][ptr1].longitude < latSegmentLevels[level + 1][ptr2].longitude) {
                     latSegmentLevels[level][index] = latSegmentLevels[level + 1][ptr1];
@@ -263,23 +210,19 @@ public class MaximizingMissionPoints2 {
                     ptr2++;
                 }
                 latSegmentLevels[level][index].segments.add(latSegments[v]);
-                //System.out.print(latSegmentLevels[level][index].longitude + " ");
             }
 
             for (; ptr1 < tm + 1; index++) {
                 latSegmentLevels[level][index] = latSegmentLevels[level + 1][ptr1];
                 latSegmentLevels[level][index].segments.add(latSegments[v]);
                 ptr1++;
-                //System.out.print(latSegmentLevels[level][index].longitude + " ");
             }
 
             for (; ptr2 < tr + 1; index++) {
                 latSegmentLevels[level][index] = latSegmentLevels[level + 1][ptr2];
                 latSegmentLevels[level][index].segments.add(latSegments[v]);
                 ptr2++;
-                //System.out.print(latSegmentLevels[level][index].longitude + " ");
             }
-            //System.out.println();
         }
     }
 
@@ -301,10 +244,10 @@ public class MaximizingMissionPoints2 {
             return tr;
         } else {
             int tm = (tr + tl) / 2;
-            if (arr[tm].latitude >= lowerBound) {
-                return getLatLowIndex(arr, tl, tm, lowerBound);
-            } else {
+            if (arr[tm].latitude < lowerBound) {
                 return getLatLowIndex(arr,tm + 1, tr, lowerBound);
+            } else {
+                return getLatLowIndex(arr,tl, tm, lowerBound);
             }
         }
     }
@@ -313,37 +256,37 @@ public class MaximizingMissionPoints2 {
         if (tr == tl) {
             return tr;
         } else {
-            int tm = (tr + tl) / 2;
-            if (arr[tm].latitude < upperBound) {
-                return getLatUpperIndex(arr, tm + 1, tr, upperBound);
+            int tm = 1 + (tr + tl) / 2;
+            if (arr[tm].latitude > upperBound) {
+                return getLatUpperIndex(arr, tl, tm - 1, upperBound);
             } else {
-                return getLatUpperIndex(arr, tl, tm, upperBound);
+                return getLatUpperIndex(arr, tm, tr, upperBound);
             }
         }
     }
 
     private static int getLongLowIndex(City[] arr, int tl, int tr, int lowerBound) {
         if (tr == tl) {
-            return tr;
+            return arr[tr].longitude < lowerBound ? -1 : tr;
         } else {
             int tm = (tr + tl) / 2;
-            if (arr[tm].longitude >= lowerBound) {
-                return getLongLowIndex(arr, tl, tm, lowerBound);
-            } else {
+            if (arr[tm].longitude < lowerBound) {
                 return getLongLowIndex(arr,tm + 1, tr, lowerBound);
+            } else {
+                return getLongLowIndex(arr,tl, tm, lowerBound);
             }
         }
     }
 
     private static int getLongUpperIndex(City[] arr, int tl, int tr, int upperBound) {
         if (tr == tl) {
-            return tr;
+            return arr[tr].longitude > upperBound ? -1 : tr;
         } else {
-            int tm = (tr + tl) / 2;
-            if (arr[tm].longitude < upperBound) {
-                return getLongUpperIndex(arr, tm + 1, tr, upperBound);
+            int tm = 1 + (tr + tl) / 2;
+            if (arr[tm].longitude > upperBound) {
+                return getLongUpperIndex(arr, tl, tm - 1, upperBound);
             } else {
-                return getLongUpperIndex(arr, tl, tm, upperBound);
+                return getLongUpperIndex(arr, tm, tr, upperBound);
             }
         }
     }
