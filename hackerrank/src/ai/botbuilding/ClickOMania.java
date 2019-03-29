@@ -6,7 +6,10 @@ import java.io.InputStreamReader;
 import java.util.*;
 
 public class ClickOMania {
-    private static final int MAX_DESC = 200;
+    private static final int MAX_DESC = 500;
+    private static final int DEPTH_LIMIT = 20;
+    private static final int MAX_ISLE_TO_PROCESS = 20;
+
     private static int rows;
     private static int cols;
 
@@ -60,11 +63,15 @@ public class ClickOMania {
             board[row] = line.toCharArray();
         }
 
+        Date start = new Date();
         Set<Integer> processedBoards = new HashSet<>();
         List<GameResult> results = getNextPoints(board, null, processedBoards);
         List<GameResult> finalStates = new ArrayList<>();
 
-        while (true) {
+        int depth = 0;
+        while (depth < DEPTH_LIMIT) {
+            depth++;
+
             List<GameResult> nextResults = new ArrayList<>();
 
             for (GameResult res : results) {
@@ -83,17 +90,18 @@ public class ClickOMania {
                 results = new ArrayList<>();
                 int cnt = 0;
                 for (int i = 0;  i < nextResults.size() && cnt < MAX_DESC; i++) {
-                    if (Math.random() > 0.05) {
-                        results.add(nextResults.get(i));
-                        cnt++;
-                    }
+                    results.add(nextResults.get(i));
+                    cnt++;
                 }
             }
         }
 
+        finalStates.addAll(results);
         finalStates.sort(Comparator.comparingInt(GameResult::getResult));
         int[] point = finalStates.get(0).getPoint();
+        Date end = new Date();
         System.out.println(point[0] + " " + point[1]);
+        //System.out.println(end.getTime() - start.getTime() + "ms");
     }
 
     private static void printBoard(char[][] board) {
@@ -112,7 +120,13 @@ public class ClickOMania {
         int islesNumber = convertToIsles(board, islesColor, isles, islePoint,islesSize);
 
         List<GameResult> gamesResults = new ArrayList<>();
+        int processedIsles = 0;
+
         for (int isle = 0; isle < islesNumber; isle++) {
+            if (processedIsles > MAX_ISLE_TO_PROCESS) {
+                break;
+            }
+
             if (islesSize[isle] > 1) {
                 char[][] nextBoard = convertToColors(removeIsle(isle, isles), islesColor);
                 int newNumbers = convertToIsles(nextBoard,
@@ -124,6 +138,7 @@ public class ClickOMania {
                     gamesResults.add(grNew);
                     processedBoards.add(grNew.hashCode());
                 }
+                processedIsles++;
             }
         }
 

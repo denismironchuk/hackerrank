@@ -54,34 +54,6 @@ public class MaximizingMissionPointsFinal {
         }
     }
 
-    private static List<City> generateCities(int n, int maxLat, int maxLong, int maxHeight) {
-        int[] availableLats = new int[maxLat + 2];
-        int[] availableLongs = new int[maxLong + 2];
-        int[] availableHeights = new int[maxHeight + 2];
-
-        List<City> cities = new ArrayList<>();
-
-        for (int i = 0; i < n; i++) {
-            int lat = (int)(Math.random() * maxLat) + 1;
-            int longit = (int)(Math.random() * maxLong) + 1;
-            int height = (int)(Math.random() * maxHeight) + 1;
-
-            while (availableLats[lat] == 1 || availableLongs[longit] == 1 || availableHeights[height] == 1) {
-                lat = (int)(Math.random() * maxLat) + 1;
-                longit = (int)(Math.random() * maxLong) + 1;
-                height = (int)(Math.random() * maxHeight) + 1;
-            }
-
-            availableLats[lat] = 1;
-            availableLongs[longit] = 1;
-            availableHeights[height] = 1;
-
-            cities.add(new City(lat, longit, height, (int)(Math.random() * 20)));
-        }
-
-        return cities;
-    }
-
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer tkn1 = new StringTokenizer(br.readLine());
@@ -123,7 +95,6 @@ public class MaximizingMissionPointsFinal {
             } else {
                 newPoints += city.points;
             }
-
 
             updateTrees(city, newPoints);
         }
