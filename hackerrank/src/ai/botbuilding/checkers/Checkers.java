@@ -156,52 +156,52 @@ public class Checkers {
 
             if (checker.color == BLACK) {
                 if (canCaptureRightDown(board, WHITE)) {
-                    CheckerPosition toRemove = moveChecker(board, 1, 1);
+                    CheckerPosition toRemove = makeCaptureMove(board, 1, 1);
                     moves.addAll(generateCaptureMoves(board, true, positions));
                     restoreChecker(board, toRemove, 1, 1);
                 }
 
                 if (canCaptureLeftDown(board, WHITE)) {
-                    CheckerPosition toRemove = moveChecker(board, 1, -1);
+                    CheckerPosition toRemove = makeCaptureMove(board, 1, -1);
                     moves.addAll(generateCaptureMoves(board, true, positions));
                     restoreChecker(board, toRemove, 1, -1);
                 }
 
                 if (checker.type == KING || canCaptureBack) {
                     if (canCaptureRightUp(board, WHITE)) {
-                        CheckerPosition toRemove = moveChecker(board, -1, 1);
+                        CheckerPosition toRemove = makeCaptureMove(board, -1, 1);
                         moves.addAll(generateCaptureMoves(board, true, positions));
                         restoreChecker(board, toRemove, -1, 1);
                     }
 
                     if (canCaptureLeftUp(board, WHITE)) {
-                        CheckerPosition toRemove = moveChecker(board, -1, -1);
+                        CheckerPosition toRemove = makeCaptureMove(board, -1, -1);
                         moves.addAll(generateCaptureMoves(board, true, positions));
                         restoreChecker(board, toRemove, -1, -1);
                     }
                 }
             } else {
                 if (canCaptureRightUp(board, BLACK)) {
-                    CheckerPosition toRemove = moveChecker(board, -1, 1);
+                    CheckerPosition toRemove = makeCaptureMove(board, -1, 1);
                     moves.addAll(generateCaptureMoves(board, true, positions));
                     restoreChecker(board, toRemove, -1, 1);
                 }
 
                 if (canCaptureLeftUp(board, BLACK)) {
-                    CheckerPosition toRemove = moveChecker(board, -1, -1);
+                    CheckerPosition toRemove = makeCaptureMove(board, -1, -1);
                     moves.addAll(generateCaptureMoves(board, true, positions));
                     restoreChecker(board, toRemove, -1, -1);
                 }
 
                 if (checker.type == KING || canCaptureBack) {
                     if (canCaptureRightDown(board, BLACK)) {
-                        CheckerPosition toRemove = moveChecker(board, 1, 1);
+                        CheckerPosition toRemove = makeCaptureMove(board, 1, 1);
                         moves.addAll(generateCaptureMoves(board, true, positions));
                         restoreChecker(board, toRemove, 1, 1);
                     }
 
                     if (canCaptureLeftDown(board, BLACK)) {
-                        CheckerPosition toRemove = moveChecker(board, 1, -1);
+                        CheckerPosition toRemove = makeCaptureMove(board, 1, -1);
                         moves.addAll(generateCaptureMoves(board, true, positions));
                         restoreChecker(board, toRemove, 1, -1);
                     }
@@ -233,7 +233,7 @@ public class Checkers {
 
         //colDir = -1 left
         //colDir = 1 right
-        private CheckerPosition moveChecker(Board board, int rowDir, int colDir) {
+        private CheckerPosition makeCaptureMove(Board board, int rowDir, int colDir) {
             CheckerPosition toRemove = board.board[cell.row + rowDir * 1][cell.col + colDir * 1];
             board.whites.remove(toRemove);
             board.board[cell.row][cell.col] = null;
@@ -252,6 +252,27 @@ public class Checkers {
             board.board[cell.row + rowDir * 1][cell.col + colDir * 1] = removed;
             board.board[cell.row + rowDir * 2][cell.col + colDir * 2] = null;
             board.whites.add(removed);
+        }
+
+        public void move(Board board, Move move) {
+            if (move.moveType == NON_CAPTURE) {
+                board.board[cell.row][cell.col] = null;
+                BoardCell target = move.targetPositions.get(0);
+                cell.row = target.row;
+                cell.col = target.col;
+                board.board[target.row][target.col] = this;
+            } else {
+                BoardCell currentState = move.initialPosition;
+                for (BoardCell nextPos : move.targetPositions) {
+                    int[] dir = getDirection(currentState, nextPos);
+                    makeCaptureMove(board, dir[0], dir[1]);
+                    currentState = nextPos;
+                }
+            }
+        }
+
+        private int[] getDirection(BoardCell initCell, BoardCell targetCell) {
+            return new int[] {Integer.compare(targetCell.row, initCell.row), Integer.compare(targetCell.col, initCell.col)};
         }
 
         private boolean canMoveRightDown(final Board board) {
@@ -304,6 +325,18 @@ public class Checkers {
                     && board.board[cell.row - 1][cell.col - 1].checker.color == colorToCapture
                     && cell.row - 2 >= 0 && cell.col - 2 >= 0
                     && null == board.board[cell.row - 2][cell.col - 2];
+        }
+
+        public char generateChar() {
+            if (checker.color == BLACK && checker.type == REG) {
+                return 'b';
+            } else if (checker.color == WHITE && checker.type == REG) {
+                return 'w';
+            } else if (checker.color == BLACK && checker.type == KING) {
+                return 'B';
+            } else {
+                return 'W';
+            }
         }
     }
 
@@ -370,6 +403,23 @@ public class Checkers {
 
             return moves;
         }
+
+        public void makeMove(Move move) {
+            board[move.initialPosition.row][move.initialPosition.col].move(this, move);
+        }
+
+        public void print() {
+            for (int row = 0; row < side; row++) {
+                for (int col = 0; col < side; col++) {
+                    if (null == board[row][col]) {
+                        System.out.print("_");
+                    } else {
+                        System.out.print(board[row][col].generateChar());
+                    }
+                }
+                System.out.println();
+            }
+        }
     }
 
     public static void main(String[] args) throws IOException {
@@ -393,6 +443,10 @@ public class Checkers {
            System.out.println("===============");
         }
 
-        System.out.println();
+        //System.out.printf("%s %s\n", moves.get(0).row, moves.get(0).col);
+        board.makeMove(moves.get(0));
+
+        board.print();
+        //System.out.println();
     }
 }
