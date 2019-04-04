@@ -16,6 +16,11 @@ import static ai.botbuilding.checkers.Checkers.Types.KING;
 import static ai.botbuilding.checkers.Checkers.Types.REG;
 
 public class Checkers {
+    public static final int KING_VALUE = 10;
+    public static final int MOVE_VALUE = 1;
+    public static final int ATTAK_VALUE = 1;
+    public static final int DEFEND_VALUE = 1;
+
     public enum Types {
         REG, KING
     }
@@ -69,6 +74,25 @@ public class Checkers {
 
         public Move(final MoveType moveType) {
             this.moveType = moveType;
+        }
+
+        public Set<Integer> getPositionsToCapture(int boardSide) {
+            BoardCell curPos = initialPosition;
+            Set<Integer> result = new HashSet<>();
+
+            for (BoardCell nextPos : targetPositions) {
+                int[] dir = getDirection(curPos, nextPos);
+                int captureRow = curPos.row + dir[0];
+                int captureCol = curPos.col + dir[1];
+                result.add(captureRow * boardSide + captureCol);
+            }
+
+            return result;
+        }
+
+        private int[] getDirection(BoardCell initPos, BoardCell target) {
+            return new int[] {Integer.compare(target.row, initPos.row),
+                    Integer.compare(target.col, initPos.col)};
         }
     }
 
@@ -419,6 +443,81 @@ public class Checkers {
                 }
                 System.out.println();
             }
+        }
+
+        public int getHash() {
+            int res = 0;
+
+            for (int row = 0; row < side; row++) {
+                for (int col = 0; col < side; col++) {
+                    int pos = 0;
+                    if (board[row][col] != null) {
+                        if (board[row][col].checker.color == WHITE) {
+                            if (board[row][col].checker.type == REG) {
+                                pos = 1;
+                            } else {
+                                pos = 2;
+                            }
+                        } else {
+                            if (board[row][col].checker.type == REG) {
+                                pos = 3;
+                            } else {
+                                pos = 4;
+                            }
+                        }
+                    }
+                    res = res * 31 + pos;
+                }
+            }
+            return res;
+        }
+
+        public int positionVal(Colors playerToEval, Colors move) {
+            int val = playerToEval == move ? MOVE_VALUE : 0;
+            int blackPos = 0;
+            for (CheckerPosition black : blacks) {
+                blackPos += black.checker.type == KING ? KING_VALUE : black.cell.row;
+            }
+            int whitePos = 0;
+            for (CheckerPosition white : whites) {
+                whitePos += white.checker.type == KING ? KING_VALUE : side - white.cell.row;
+            }
+
+            if (playerToEval == BLACK) {
+                val += blackPos - whitePos;
+            } else {
+                val += whitePos - blackPos;
+            }
+
+            Set<CheckerPosition> checkersToAnalyze = playerToEval == BLACK ? blacks : whites;
+            Set<Integer> positionsToCapture = new HashSet<>();
+
+            for (CheckerPosition pos : checkersToAnalyze) {
+                if (pos.canCapture(this)) {
+                    List<Move> captureMoves = pos.generateCaptureMoves(this);
+                    for (Move captureMove : captureMoves) {
+                        positionsToCapture.addAll(captureMove.getPositionsToCapture(side));
+                    }
+                }
+            }
+
+            val += ATTAK_VALUE * positionsToCapture.size();
+
+            checkersToAnalyze = playerToEval == BLACK ? whites : blacks;
+            Set<Integer> attackedPositions = new HashSet<>();
+
+            for (CheckerPosition pos : checkersToAnalyze) {
+                if (pos.canCapture(this)) {
+                    List<Move> captureMoves = pos.generateCaptureMoves(this);
+                    for (Move captureMove : captureMoves) {
+                        attackedPositions.addAll(captureMove.getPositionsToCapture(side));
+                    }
+                }
+            }
+
+            val -= DEFEND_VALUE * attackedPositions.size();
+
+            return val;
         }
     }
 
