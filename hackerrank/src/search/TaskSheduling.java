@@ -44,66 +44,40 @@ public class TaskSheduling {
         }
 
         int[] tree = new int[4 * (maxDeadline + 1)];
+        int[] updates = new int[4 * (maxDeadline + 1)];
+
         buildSegTree(delays, tree, 1, 0, maxDeadline);
-        printTree(tree, 1, 0, maxDeadline);
 
         for (int i = 0; i < t; i++) {
-            updateInterval(tree, 1, 0, maxDeadline, shed[i].deadline, maxDeadline, shed[i].duration);
-            System.out.println(tree[1]);
-            printTree(tree, 1, 0, maxDeadline);
-        }
-    }
-
-    private static void printTree(int[] tree, int v, int left, int right) {
-        if (left == right) {
-            System.out.println("[" + left + " - " + right + "] = " + tree[v]);
-        } else {
-            int mid = (left + right) / 2;
-            printTree(tree, 2 * v, left, mid);
-            printTree(tree, 2 * v + 1, mid + 1, right);
-            System.out.println("[" + left + " - " + right + "] = " + tree[v]);
+            updateInterval(tree,  updates, 1, 0, maxDeadline, shed[i].deadline, maxDeadline, shed[i].duration);
+            System.out.println(Math.max(0, tree[1]));
         }
     }
 
     private static void buildSegTree(int[] delays, int[] tree, int v, int left, int right) {
         if (left == right) {
             tree[v] = delays[left];
-            //System.out.println("[" + left + " - " + right + "] = " + tree[v]);
         } else {
             int mid = (left + right) / 2;
             buildSegTree(delays, tree, 2 * v, left, mid);
             buildSegTree(delays, tree, 2 * v + 1, mid + 1, right);
             tree[v] = Math.max(tree[2 * v], tree[2 * v + 1]);
-            //System.out.println("[" + left + " - " + right + "] = " + tree[v]);
         }
     }
 
-    private static void updateInterval(int[] tree, int v, int l, int r, int intL, int intR, int incr) {
+    private static void updateInterval(int[] tree, int[] updates, int v, int l, int r, int intL, int intR, int incr) {
         if (intL > intR) {
             return;
         }
 
         if (l == intL && r == intR) {
             tree[v] += incr;
+            updates[v] += incr;
         } else {
             int mid = (l + r) / 2;
-            updateInterval(tree, v * 2,        l,       mid, intL,                    Math.min(mid, intR), incr);
-            updateInterval(tree, v * 2 + 1, mid + 1, r,   Math.max(mid + 1, intL), intR,                incr);
-            tree[v] = Math.max(tree[2 * v], tree[2 * v + 1]);
-        }
-    }
-
-    private static int getMaxValue(int[] tree, int v, int l, int r, int intL, int intR) {
-        if (intL > intR) {
-            return Integer.MIN_VALUE;
-        }
-
-        if (l == intL && r == intR) {
-            return tree[v];
-        } else {
-            int mid = (l + r) / 2;
-            return Math.max(getMaxValue(tree, 2 * v, l, mid, intL, Math.min(mid, intR)),
-                    getMaxValue(tree, 2 * v + 1, mid + 1, r, Math.max(mid + 1, intL), intR));
+            updateInterval(tree, updates, v * 2,        l,       mid, intL,                    Math.min(mid, intR), incr);
+            updateInterval(tree, updates, v * 2 + 1, mid + 1, r,   Math.max(mid + 1, intL), intR,                incr);
+            tree[v] = Math.max(tree[2 * v], tree[2 * v + 1]) + updates[v];
         }
     }
 }
