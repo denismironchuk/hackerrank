@@ -28,6 +28,21 @@ public class FairFight {
         }
     }
 
+    private static int getMaxIntervalLeft(int[] segTree, int maxVal, int reqL, int reqR, int dataLen) {
+        if (reqL == reqR) {
+            return reqL;
+        }
+
+        int mid = (reqL + reqR) / 2;
+        int max = getMax(segTree, 1, 0, dataLen - 1, mid, reqR);
+
+        if (max < maxVal) {
+            return getMaxIntervalLeft(segTree, maxVal, reqL, mid - 1, dataLen);
+        } else {
+            return getMaxIntervalLeft(segTree, maxVal, mid, reqR, dataLen);
+        }
+    }
+
     private static void buildSegTree(int[] tree, int[] data, int v, int l, int r) {
         if (l == r) {
             tree[v] = data[l];
