@@ -3,10 +3,27 @@ package codejam;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
 public class FairFight {
+    public static int n = 100000;
+    public static int k = 20;
+
+    public static void fillRandomArray(int[] array) {
+        for (int i = 0; i < n; i++) {
+            array[i] = (int)(Math.random() * 100);
+        }
+    }
+
+    public static void fillArrayFromStdIn(int[] array, BufferedReader br) throws IOException {
+        StringTokenizer tkn = new StringTokenizer(br.readLine());
+
+        for (int i = 0; i < n; i++) {
+            array[i] = Integer.parseInt(tkn.nextToken());
+        }
+    }
 
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -14,18 +31,16 @@ public class FairFight {
 
         for (int t = 1; t <= T; t++) {
             StringTokenizer tkn1 = new StringTokenizer(br.readLine());
-            int n = Integer.parseInt(tkn1.nextToken());
-            int k = Integer.parseInt(tkn1.nextToken());
+            n = Integer.parseInt(tkn1.nextToken());
+            k = Integer.parseInt(tkn1.nextToken());
 
-            StringTokenizer cTkn = new StringTokenizer(br.readLine());
-            StringTokenizer dTkn = new StringTokenizer(br.readLine());
             int[] c = new int[n];
             int[] d = new int[n];
 
-            for (int i = 0; i < n; i++) {
-                c[i] = Integer.parseInt(cTkn.nextToken());
-                d[i] = Integer.parseInt(dTkn.nextToken());
-            }
+            //fillRandomArray(c);
+            //fillRandomArray(d);
+            fillArrayFromStdIn(c, br);
+            fillArrayFromStdIn(d, br);
 
             int[] cSegTree = new int[n * 4];
             int[] dSegTree = new int[n * 4];
@@ -35,10 +50,15 @@ public class FairFight {
 
             long intervals = 0;
 
+            Map<Integer, Integer> lastElemsPositions = new HashMap<>();
+
             for (int searchPos = 0; searchPos < n; searchPos++) {
                 int maxVal = c[searchPos];
-                int cMaxIntervalLeft = getMaxIntervalLeft(cSegTree, searchPos, maxVal, 0, searchPos, n);
+                int lastPosition = lastElemsPositions.getOrDefault(maxVal, -1);
+                int cMaxIntervalLeft = Math.max(lastPosition + 1, getMaxIntervalLeft(cSegTree, searchPos, maxVal, 0, searchPos, n));
                 int cMaxIntervalRight = getMaxIntervalRight(cSegTree, searchPos, maxVal, searchPos, n - 1, n);
+
+                lastElemsPositions.put(maxVal, searchPos);
 
                 int upLimit = c[searchPos] + k;
                 int downLimit = c[searchPos] - k - 1;
@@ -58,72 +78,40 @@ public class FairFight {
                 }
             }
 
+            /*long intrsTriv = countIntervalsTrivial(c, d);
+            if (intervals != intrsTriv) {
+                throw new RuntimeException("my excp!!!");
+            }*/
             System.out.printf("Case #%s: %s\n", t, intervals);
         }
     }
 
-    /*public static void main(String[] args) {
-        int n = 100;
+    private static long countIntervalsTrivial(int[] c, int[] d) {
+        long intrs = 0;
 
-        while (true) {
-            int[] c = new int[n];
-
-            for (int i = 0; i < n; i++) {
-                c[i] = (int) (Math.random() * 100);
-                System.out.printf("%s ", c[i]);
-            }
-
-            System.out.println();
-
-            int[] cSegTree = new int[n * 4];
-            buildSegTree(cSegTree, c, 1, 0, n - 1);
-
-            for (int searchPos = 0; searchPos < n; searchPos++) {
-                int maxVal = c[searchPos];
-                System.out.printf("Pos = %s; val = %s\n", searchPos, maxVal);
-                System.out.println("Left");
-                System.out.println(getMaxIntervalLeft(cSegTree, searchPos, maxVal, 0, searchPos, n));
-                System.out.println(getMaxIntervalLeftTrivial(c, searchPos));
-
-                System.out.println("Right");
-                System.out.println(getMaxIntervalRight(cSegTree, searchPos, maxVal, searchPos, n - 1, n));
-                System.out.println(getMaxIntervalRightTrivial(c, searchPos));
-
-                int leftBound = getMaxIntervalLeft(cSegTree, searchPos, maxVal, 0, searchPos, n);
-                int leftBoundTriv = getMaxIntervalLeftTrivial(c, searchPos);
-
-                int rightBound =  getMaxIntervalRight(cSegTree, searchPos, maxVal, searchPos, n - 1, n);
-                int rightBoundTriv = getMaxIntervalRightTrivial(c, searchPos);
-
-                if (leftBound != leftBoundTriv) {
-                    throw new RuntimeException("My excp!!!");
-                }
-
-                if (rightBound != rightBoundTriv) {
-                    throw new RuntimeException("My excp!!!");
+        for (int i = 0; i < n; i++) {
+            for (int j = i; j < n; j++) {
+                int maxC = countMaxValOnInterval(c, i, j);
+                int maxD = countMaxValOnInterval(d, i, j);
+                if (Math.abs(maxC - maxD) <= k) {
+                    intrs++;
                 }
             }
         }
-    }*/
 
-    private static int getMaxIntervalLeftTrivial(int[] data, int pos) {
-        int max = data[pos];
-
-        while(pos >= 0 && data[pos] <= max) {
-            pos--;
-        }
-
-        return pos + 1;
+        return intrs;
     }
 
-    private static int getMaxIntervalRightTrivial(int[] data, int pos) {
-        int max = data[pos];
+    private static int countMaxValOnInterval(int[] arr, int intrStart, int intrEnd) {
+        int max = arr[intrStart];
 
-        while(pos < data.length && data[pos] <= max) {
-            pos++;
+        for (int i = intrStart; i <= intrEnd; i++) {
+            if (arr[i] > max) {
+                max = arr[i];
+            }
         }
 
-        return pos - 1;
+        return max;
     }
 
     private static int getMaxIntervalLeft(int[] segTree, int pos, int maxVal, int reqL, int reqR, int dataLen) {
