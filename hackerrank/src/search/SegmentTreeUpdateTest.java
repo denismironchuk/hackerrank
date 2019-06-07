@@ -5,8 +5,8 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 
 public class SegmentTreeUpdateTest {
-    /*public static void main(String[] args) {
-        int n = 10;
+    public static void main(String[] args) {
+        int n = 40;
         int[] a = new int[n];
 
         for (int i = 0; i < n; i++) {
@@ -68,40 +68,6 @@ public class SegmentTreeUpdateTest {
                 }
             }
         }
-    }*/
-
-    public static void main(String[] args) {
-        int n = 10;
-        int[] a = new int[]{1, 1, 0, 1, 1, 1, 0, 1, 0, 1};
-        int[] segTree = new int[4 * n];
-        int[] setValues = new int[4 * n];
-        buildTree(segTree, a, 1, 0, n - 1);
-        Arrays.fill(setValues, -1);
-
-        int start = 0;
-        int end = 2;
-        int valToSet = 0;
-
-        setValToInterval(segTree, 1, 0, n - 1, start, end, valToSet, setValues);
-        int[] updated = getUpdatedTree(segTree, setValues, n);
-        updateIntervalTrivial(start, end, valToSet, a);
-
-        start = 1;
-        end = 3;
-        valToSet = 0;
-
-        setValToInterval(segTree, 1, 0, n - 1, start, end, valToSet, setValues);
-        updated = getUpdatedTree(segTree, setValues, n);
-        updateIntervalTrivial(start, end, valToSet, a);
-
-        start = 0;
-        end = 9;
-
-        int onesOpt = countOnes(segTree, setValues, 1, 0, n - 1, start, end, -1);
-        int onesTrivial = countOnesTrivial(start, end, a);
-
-        System.out.println(onesOpt);
-        System.out.println(onesTrivial);
     }
 
     private static int countOnesTrivial(int start, int end, int[] a) {
@@ -163,8 +129,8 @@ public class SegmentTreeUpdateTest {
             setValues[v] = setVal;
             segTree[v] = (r - l + 1) * setVal;
         } else {
-            push(v, setValues);
             int mid = (l + r) / 2;
+            push(v, setValues, segTree, l, mid, r);
 
             setValToInterval(segTree, 2 * v, l, mid, updL, Math.min(mid, updR), setVal, setValues);
             setValToInterval(segTree, 2 * v + 1, mid + 1, r, Math.max(updL, mid + 1), updR, setVal, setValues);
@@ -173,10 +139,14 @@ public class SegmentTreeUpdateTest {
         }
     }
 
-    private static void push(int v, int[] setValues) {
+    private static void push(int v, int[] setValues, int[] segTree, int l, int mid, int r) {
         if (setValues[v] != -1) {
             setValues[2 * v] = setValues[v];
+            segTree[2 * v] = (mid - l + 1) * setValues[v];
+
             setValues[2 * v + 1] = setValues[v];
+            segTree[2 * v + 1] = (r - mid) * setValues[v];
+
             setValues[v] = -1;
         }
     }
