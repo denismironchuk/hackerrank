@@ -1,13 +1,13 @@
-package search;
+package search.matrixRotate;
 
 public class MatrixRotate {
     public static void main(String[] args) {
-        int n = 10;
+        int n = 20;
         int row = (int)(n * Math.random());
         int col = (int)(n * Math.random());
 
         int layer = getPointLayer(row, col, n);
-        int[] rotated1 = rotate180Clockwise(row, col, n);
+        int[] rotated1 = rotate270Clockwise(row, col, n);
 
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
@@ -23,20 +23,6 @@ public class MatrixRotate {
             }
             System.out.println();
         }
-
-        System.out.println(layer);
-
-        if (row == layer) {
-            System.out.println("Up");
-        } else if (col == n - layer - 1) {
-            System.out.println("Right");
-        } else if (row == n - layer - 1) {
-            System.out.println("Down");
-        } else {
-            System.out.println("Left");
-        }
-
-
     }
 
     private static int[] rotate90Clockwise(int row, int col, int n) {
