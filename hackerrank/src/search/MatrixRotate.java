@@ -7,7 +7,7 @@ public class MatrixRotate {
         int col = (int)(n * Math.random());
 
         int layer = getPointLayer(row, col, n);
-        int[] rotated1 = rotate90ConterClockwise(row, col, layer, n);
+        int[] rotated1 = rotate180Clockwise(row, col, n);
 
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
@@ -39,44 +39,16 @@ public class MatrixRotate {
 
     }
 
-    private static int[] rotate90Clockwise(int row, int col, int layer, int n) {
-        if (row == layer) {
-            //Up
-            int rightLimit = n - layer - 1;
-            return new int[]{row + (col - layer), rightLimit};
-        } else if (col == n - layer - 1) {
-            //Right
-            int downLimit = n - layer - 1;
-            return new int[]{downLimit, col - (row - layer)};
-        } else if (row == n - layer - 1) {
-            //Down
-            int rightLimit = n - layer - 1;
-            return new int[]{row - (rightLimit - col), layer};
-        } else {
-            //Left
-            int downLimit = n - layer - 1;
-            return new int[]{layer, col + (downLimit - row)};
-        }
+    private static int[] rotate90Clockwise(int row, int col, int n) {
+        return new int[]{col, n - 1 - row};
     }
 
-    private static int[] rotate90ConterClockwise(int row, int col, int layer, int n) {
-        if (row == layer) {
-            //Up
-            int rightLimit = n - layer - 1;
-            return new int[]{row + (rightLimit - col), layer};
-        } else if (col == n - layer - 1) {
-            //Right
-            int rightLimit = n - layer - 1;
-            return new int[]{layer, rightLimit - (row - layer)};
-        } else if (row == n - layer - 1) {
-            //Down
-            int rightLimit = n - layer - 1;
-            return new int[]{row - (col - layer), rightLimit};
-        } else {
-            //Left
-            int downLimit = n - layer - 1;
-            return new int[]{downLimit, row};
-        }
+    private static int[] rotate180Clockwise(int row, int col, int n) {
+        return new int[]{n - 1 - row, n - 1 - col};
+    }
+
+    private static int[] rotate270Clockwise(int row, int col, int n) {
+        return new int[]{n - 1 - col, row};
     }
 
     private static int getPointLayer(int row, int col, int n) {
