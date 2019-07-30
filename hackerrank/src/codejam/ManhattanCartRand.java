@@ -67,6 +67,14 @@ public class ManhattanCartRand {
             }
         }
 
+        public int getStartX() {
+            return start.x;
+        }
+
+        public int getStartY() {
+            return start.y;
+        }
+
         public boolean isHorizontal(Point start, Point end) {
             return start.y == end.y;
         }
@@ -102,17 +110,15 @@ public class ManhattanCartRand {
         public List<Line> getVerticalLines() {
             return Arrays.asList(new Line(leftUp, leftDown), new Line(rightUp, rightDown));
         }
-
-        public boolean isPointInRect(Point p) {
-            return p.x >= leftUp.x && p.x <= rightUp.x && p.y >= leftDown.y && p.y <= leftUp.y;
-        }
     }
 
     public static void main(String[] args) {
         int T = 100;
 
-        Date start = new Date();
+        int time = 0;
+
         for (int t = 1; t <= T; t++) {
+            Date start = new Date();
             int p = 500;
             int q = 100000;
 
@@ -163,17 +169,27 @@ public class ManhattanCartRand {
                 c++;
             }
 
+            verticals.sort(Comparator.comparingInt(Line::getStartX));
+            horizontals.sort(Comparator.comparingInt(Line::getStartX));
+
+            int cnt = 0;
             Set<Point> processedPoints = new HashSet<>();
             for (Line vert : verticals) {
                 List<Point> vertPoints = poinPositions[cordPos[vert.start.x]];
                 for (Line hor : horizontals) {
+                    if (vert.getStartX() < hor.getStartX()) {
+                        break;
+                    }
                     Point intersectionPoint = Line.intersectVertHor(vert, hor);
+                    cnt++;
                     if (null != intersectionPoint && !processedPoints.contains(intersectionPoint)) {
                         vertPoints.add(intersectionPoint);
                         processedPoints.add(intersectionPoint);
                     }
                 }
             }
+
+            System.out.println(cnt);
 
             List<int[]> updates = new ArrayList<>();
             for (int i = 0; i < verticalLinesCnt; i++) {
@@ -233,9 +249,12 @@ public class ManhattanCartRand {
             candidates2.sort(Comparator.comparing(Point::getY));
             Point minYPoint = candidates2.get(0);
             System.out.printf("Case #%s: %s %s\n", t, minYPoint.getX(), minYPoint.getY());
+
+            Date end = new Date();
+            time += end.getTime() - start.getTime();
         }
-        Date end = new Date();
-        System.out.println(end.getTime() - start.getTime() + "ms");
+
+        System.out.println(time + "ms");
     }
 
     private static int findNearestGreaterEq(List<Point> points, int y, int startPos, int endPos) {
