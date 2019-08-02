@@ -5,13 +5,18 @@ import java.util.List;
 
 public class ContinuedFraction {
     public static void main(String[] args) {
-        long chisl = (long)(Long.MAX_VALUE * Math.random());
-        long znam = (long)(Long.MAX_VALUE * Math.random());
+        long chisl = 2;//(long)(100 * Math.random());
+        long znam = (long)(100 * Math.random());
+        /*long chisl = 1;
+        long znam = 217;*/
         long gcd = gcd(chisl, znam);
         chisl /= gcd;
         znam /= gcd;
 
-        System.out.printf("%d/%d\n", chisl, znam);
+        double val = (double)chisl/(double)znam;
+
+        System.out.printf("%d/%d - ", chisl, znam);
+        System.out.printf("%.15f\n", val);
 
         List<Long> A = new ArrayList<>();
         while (znam != 1) {
@@ -34,10 +39,20 @@ public class ContinuedFraction {
 
         int i = 2;
         for (long a : A) {
+            for (int s = 0; s < a; s++) {
+                long semiChist = s * H[i - 1] + H[i - 2];
+                long semiZnam = s * K[i - 1] + K[i - 2];
+                System.out.printf("%d/%d - ", semiChist, semiZnam);
+                System.out.printf("%.15f - ", (double)semiChist/(double)semiZnam);
+                System.out.printf("%.15f\n", Math.abs(val - (double)semiChist/(double)semiZnam));
+            }
             H[i] = a * H[i - 1] + H[i - 2];
             K[i] = a * K[i - 1] + K[i - 2];
-            System.out.printf("%d/%d\n", H[i], K[i]);
+            System.out.printf("%d/%d - ", H[i], K[i]);
+            System.out.printf("%.15f - ", (double)H[i]/(double)K[i]);
+            System.out.printf("%.15f\n", Math.abs(val - (double)H[i]/(double)K[i]));
             i++;
+            System.out.println("============");
         }
     }
 
