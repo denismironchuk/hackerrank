@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RationalsIntervalTest {
-    private static final int MAX_VAL = 500;
+    private static final int MAX_VAL = 50000;
+    private static final Rational ONE = new Rational(1,1);
+
     private static class Rational implements Comparable<Rational> {
         private int chisl;
         private int znam;
@@ -61,7 +63,7 @@ public class RationalsIntervalTest {
         Rational r1 = new Rational(1, 1);
         Rational r2 = new Rational(1, 1);
 
-        while (r1.compareTo(r2) == 0) {
+        while (r1.compareTo(r2) == 0 || r1.chisl >= r1.znam || r2.chisl >= r2.znam) {
             r1 = new Rational(1 + (int) (MAX_VAL * Math.random()), 1 + (int) (MAX_VAL * Math.random()));
             r2 = new Rational(1 + (int) (MAX_VAL * Math.random()), 1 + (int) (MAX_VAL * Math.random()));
         }
@@ -76,19 +78,25 @@ public class RationalsIntervalTest {
     }
 
     public static void main(String[] args) {
-        Rational[] intervalBorders = generateInterval();
-        Rational r1 = intervalBorders[0];
-        Rational r2 = intervalBorders[1];
+        while(true) {
+            Rational[] intervalBorders = generateInterval();
+            Rational r1 = intervalBorders[0];
+            Rational r2 = intervalBorders[1];
 
-        System.out.println(r1);
-        System.out.println(r2);
+            //System.out.printf("%s %s\n", r1, r2);
 
-        System.out.println();
+            Rational res = getInnerTrivial(r1, r2);
+            int smallestZnam = getSmallestZnamOptimal(r1, r2);
+            int smallestChisl = 1 + (r1.chisl * smallestZnam) / r1.znam;
+            Rational resOpt = new Rational(smallestChisl, smallestZnam);
 
-        Rational res = getInnerTrivial(r1, r2);
-        getInnerOptimal(r1, r2);
-        System.out.println();
-        System.out.println(res);
+            System.out.println(resOpt);
+
+            if (res.compareTo(resOpt) != 0) {
+                throw new RuntimeException("!!!!!!!!");
+            }
+
+        }
     }
 
     private static Rational getInnerTrivial(Rational r1, Rational r2) {
@@ -108,7 +116,9 @@ public class RationalsIntervalTest {
         return res;
     }
 
-    private static Rational getInnerOptimal(Rational r1, Rational r2) {
+    private static int getSmallestZnamOptimal(Rational r1, Rational r2) {
+        int res = Integer.MAX_VALUE;
+
         int chisl = r1.chisl + r2.chisl;
         int znam = r1.znam + r2.znam;
 
@@ -136,18 +146,64 @@ public class RationalsIntervalTest {
             i++;
         }
 
+        boolean foundInInterval = false;
         for (i = 2; i < A.size() + 2; i += 2) {
             Rational r = new Rational(H[i], K[i], false);
-            System.out.printf("%s ", r.toString());
+            if (r.compareTo(r1) == 1) {
+                foundInInterval = true;
+                break;
+            }
         }
 
-        System.out.println();
+        if (foundInInterval) {
+            int a = findIncreasing(r1, H[i - 1], H[i - 2], K[i - 1], K[i - 2], 0, A.get(i - 2));
+            res = Math.min(res, a * K[i - 1] + K[i - 2]);
+        }
 
+        foundInInterval = false;
         for (i = 3; i < A.size() + 2; i += 2) {
             Rational r = new Rational(H[i], K[i], false);
-            System.out.printf("%s ", r.toString());
+            if (r.compareTo(r2) == -1) {
+                foundInInterval = true;
+                break;
+            }
         }
-        System.out.println();
-        return null;
+
+        if (foundInInterval) {
+            int a = findDecreasing(r2, H[i - 1], H[i - 2], K[i - 1], K[i - 2], 0, A.get(i - 2));
+            res = Math.min(res, a * K[i - 1] + K[i - 2]);
+        }
+
+        return res;
+    }
+
+    private static int findIncreasing(Rational limit, int H1, int H2, int K1, int K2, int start, int end) {
+        if (start == end) {
+            return start;
+        }
+
+        int mid = (start + end) / 2;
+        Rational r = new Rational(mid * H1 + H2, mid * K1 + K2, false);
+
+        if (r.compareTo(limit) != 1) {
+            return findIncreasing(limit, H1, H2, K1, K2, mid + 1, end);
+        } else {
+            return findIncreasing(limit, H1, H2, K1, K2, start, mid);
+        }
+    }
+
+    private static int findDecreasing(Rational limit, int H1, int H2, int K1, int K2, int start, int end) {
+        if (start == end) {
+            return start;
+        }
+
+        int mid = (start + end) / 2;
+        Rational r = new Rational(mid * H1 + H2, mid * K1 + K2, false);
+
+        if (r.compareTo(limit) != -1) {
+            return findDecreasing(limit, H1, H2, K1, K2, mid + 1, end);
+        } else {
+            return findDecreasing(limit, H1, H2, K1, K2, start, mid);
+        }
     }
 }
