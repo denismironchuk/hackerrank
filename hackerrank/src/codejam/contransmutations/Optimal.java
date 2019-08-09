@@ -1,28 +1,9 @@
-package codejam;
+package codejam.contransmutations;
 
-import sun.awt.image.ImageWatched.Link;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.*;
 import java.util.Map.Entry;
 
-/*
-test data
-1
-7
-5 6
-3 1
-4 1
-1 2
-6 7
-7 2
-1 4
-1 1 1 1 1 1 1
- */
-
-public class Contransmutations {
+public class Optimal {
     private static final int MOD = 1000000007;
 
     private static int m;
@@ -62,64 +43,53 @@ public class Contransmutations {
             }
             ins.put(nd, cnt + amnt);
         }
-
-        @Override
-        public String toString() {
-            return "num=" + num;
-        }
     }
 
-    public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        int T = Integer.parseInt(br.readLine());
-        for (int t = 1; t <= T; t++) {
-            m = Integer.parseInt(br.readLine());
-            metals = new Node[m + 1];
-            for (int i = 1; i <= m; i++) {
-                metals[i] = new Node(i);
-            }
+    public static long count(int metAmnt, int[][] metalls, int[] gramms) {
+        m = metAmnt;
+        metals = new Node[m + 1];
+        for (int i = 1; i <= m; i++) {
+            metals[i] = new Node(i);
+        }
 
-            for (int i = 1; i <= m; i++) {
-                StringTokenizer tkn = new StringTokenizer(br.readLine());
-                int r1 = Integer.parseInt(tkn.nextToken());
-                int r2 = Integer.parseInt(tkn.nextToken());
+        for (int i = 1; i <= m; i++) {
+            int r1 = metalls[i][0];
+            int r2 = metalls[i][1];
 
-                metals[i].addOutNode(metals[r1]);
-                metals[i].addOutNode(metals[r2]);
-            }
+            metals[i].addOutNode(metals[r1]);
+            metals[i].addOutNode(metals[r2]);
+        }
 
-            grams = new int[m + 1];
-            StringTokenizer gramTkn = new StringTokenizer(br.readLine());
-            for (int i = 1; i <=m ;i++) {
-                grams[i] = Integer.parseInt(gramTkn.nextToken());
-            }
+        grams = new int[m + 1];
+        for (int i = 1; i <=m ;i++) {
+            grams[i] = gramms[i];
+        }
 
-            removeNonReachingFirst();
-            removeEmptyMetals();
+        removeNonReachingFirst();
+        removeEmptyMetals();
 
-            if (metals[1] == null) {
-                System.out.printf("Case #%s: %s\n", t, 0);
+        if (metals[1] == null) {
+            return 0;
+        } else {
+            Map<Node, Node> cycle = getCycle(metals[1], new int[m + 1], new LinkedList<>());
+            if (cycle == null) {
+                long[] processedWeight = new long[m + 1];
+                Arrays.fill(processedWeight, -1);
+                countMaxWeight(metals[1], processedWeight);
+                return processedWeight[1];
             } else {
-                Map<Node, Node> cycle = getCycle(metals[1], new LinkedList<>());
-                if (cycle == null) {
-                    long[] processedWeight = new long[m + 1];
-                    Arrays.fill(processedWeight, -1);
-                    countMaxWeight(metals[1], processedWeight);
-                    System.out.printf("Case #%s: %s\n", t, processedWeight[1]);
+                if (!cycle.containsKey(metals[1])) {
+                    return -1;
                 } else {
-                    if (!cycle.containsKey(metals[1])) {
-                        System.out.printf("Case #%s: %s\n", t, "UNBOUNDED");
+                    collapseCycle(cycle);
+                    Map<Node, Node> cycle2 = getCycle(metals[1], new int[m + 1], new LinkedList<>());
+                    if (null == cycle2) {
+                        long[] processedWeight = new long[m + 1];
+                        Arrays.fill(processedWeight, -1);
+                        countMaxWeight(metals[1], processedWeight);
+                        return processedWeight[1];
                     } else {
-                        collapseCycle(cycle);
-                        Map<Node, Node> cycle2 = getCycle(metals[1], new LinkedList<>());
-                        if (null == cycle2) {
-                            long[] processedWeight = new long[m + 1];
-                            Arrays.fill(processedWeight, -1);
-                            countMaxWeight(metals[1], processedWeight);
-                            System.out.printf("Case #%s: %s\n", t, processedWeight[1]);
-                        } else {
-                            System.out.printf("Case #%s: %s\n", t, "UNBOUNDED");
-                        }
+                        return -1;
                     }
                 }
             }
@@ -156,6 +126,8 @@ public class Contransmutations {
                 if (in != cycleNode) {
                     Node toProc = cycle.containsKey(in) ? initNode : in;
                     toProc.addOutNode(initNode, amnt);
+                } else if (in == cycleNode && amnt > 1) {
+                    initNode.addOutNode(initNode, amnt - 1);
                 }
             }
 
@@ -166,6 +138,8 @@ public class Contransmutations {
                 if (out != outgoingNode) {
                     Node toProc = cycle.containsKey(out) ? initNode : out;
                     initNode.addOutNode(toProc, amnt);
+                } else if (out == outgoingNode && amnt > 1) {
+                    initNode.addOutNode(initNode, amnt - 1);
                 }
             }
 
@@ -251,19 +225,9 @@ public class Contransmutations {
         }
     }
 
-    private static Map<Node, Node> getCycle(Node nd, LinkedList<Node> path) {
-        int[] processed = new int[m + 1];
-        Map<Node, Node> cycle = null;
-        for (int i = 1; null != cycle && i <= m; i++) {
-            if (null != metals[i] && processed[i] == 0) {
-                cycle = getCycle(metals[i], processed, new LinkedList<>());
-            }
-        }
-        return cycle;
-    }
-
     //returns list or edges represented as outgoing node -> ingoing node
-    private static Map<Node, Node> getCycle(Node nd, int[] processed, LinkedList<Node> path) {
+    private static Map<Node, Node> getCycle(
+            Node nd, int[] processed, LinkedList<Node> path) {
         processed[nd.num] = 1;
         path.add(nd);
 
