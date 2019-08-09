@@ -29,20 +29,36 @@ public class Contransmutations {
 
     private static class Node {
         private int num;
-        private Set<Node> outs = new HashSet<>();
-        private Set<Node> ins = new HashSet<>();
+        private Map<Node, Integer> outs = new HashMap<>();
+        private Map<Node, Integer> ins = new HashMap<>();
 
         public Node(int num) {
             this.num = num;
         }
 
         public void addOutNode(Node nd) {
-            outs.add(nd);
-            nd.addInNode(this);
+            addOutNode(nd, 1);
         }
 
         private void addInNode(Node nd) {
-            ins.add(nd);
+            addInNode(nd, 1);
+        }
+
+        public void addOutNode(Node nd, int amnt) {
+            int cnt = 0;
+            if (outs.containsKey(nd)) {
+                cnt = outs.get(nd);
+            }
+            outs.put(nd, cnt + amnt);
+            nd.addInNode(this, amnt);
+        }
+
+        private void addInNode(Node nd, int amnt) {
+            int cnt = 0;
+            if (ins.containsKey(nd)) {
+                cnt = ins.get(nd);
+            }
+            ins.put(nd, cnt + amnt);
         }
 
         @Override
@@ -84,7 +100,7 @@ public class Contransmutations {
             } else {
                 Map<Node, Node> cycle = getCycle(metals[1], new int[m + 1], new LinkedList<>());
                 if (cycle == null) {
-                    int[] processedWeight = new int[m + 1];
+                    long[] processedWeight = new long[m + 1];
                     Arrays.fill(processedWeight, -1);
                     countMaxWeight(metals[1], processedWeight);
                     System.out.printf("Case #%s: %s\n", t, processedWeight[1]);
@@ -95,7 +111,7 @@ public class Contransmutations {
                         collapseCycle(cycle);
                         Map<Node, Node> cycle2 = getCycle(metals[1], new int[m + 1], new LinkedList<>());
                         if (null == cycle2) {
-                            int[] processedWeight = new int[m + 1];
+                            long[] processedWeight = new long[m + 1];
                             Arrays.fill(processedWeight, -1);
                             countMaxWeight(metals[1], processedWeight);
                             System.out.printf("Case #%s: %s\n", t, processedWeight[1]);
@@ -108,15 +124,18 @@ public class Contransmutations {
         }
     }
 
-    private static void countMaxWeight(Node nd, int[] processedWeight) {
+    private static void countMaxWeight(Node nd, long[] processedWeight) {
         processedWeight[nd.num] = grams[nd.num];
 
-        for (Node in : nd.ins) {
+        for (Entry<Node, Integer> inEntry : nd.ins.entrySet()) {
+            Node in = inEntry.getKey();
+            long amnt = inEntry.getValue();
+
             if (processedWeight[in.num] == -1) {
                 countMaxWeight(in, processedWeight);
             }
 
-            processedWeight[nd.num] = (processedWeight[nd.num] + processedWeight[in.num]) % MOD;
+            processedWeight[nd.num] = (processedWeight[nd.num] + (amnt * processedWeight[in.num]) % MOD ) % MOD;
         }
     }
 
@@ -128,17 +147,23 @@ public class Contransmutations {
             Node cycleNode = entry.getKey();
             Node outgoingNode = entry.getValue();
 
-            for (Node in : outgoingNode.ins) {
+            for (Entry<Node, Integer> inEntry : outgoingNode.ins.entrySet()) {
+                Node in = inEntry.getKey();
+                int amnt = inEntry.getValue();
+
                 if (in != cycleNode) {
                     Node toProc = cycle.containsKey(in) ? initNode : in;
-                    toProc.addOutNode(initNode);
+                    toProc.addOutNode(initNode, amnt);
                 }
             }
 
-            for (Node out : cycleNode.outs) {
+            for (Entry<Node, Integer> outEntry : cycleNode.outs.entrySet()) {
+                Node out = outEntry.getKey();
+                int amnt = outEntry.getValue();
+
                 if (out != outgoingNode) {
                     Node toProc = cycle.containsKey(out) ? initNode : out;
-                    initNode.addOutNode(toProc);
+                    initNode.addOutNode(toProc, amnt);
                 }
             }
 
@@ -148,7 +173,7 @@ public class Contransmutations {
 
         for (Node nd : metals) {
             if (nd != null) {
-                Iterator<Node> insItr = nd.ins.iterator();
+                Iterator<Node> insItr = nd.ins.keySet().iterator();
                 while (insItr.hasNext()) {
                     Node in = insItr.next();
                     if (cycle.containsKey(in)) {
@@ -156,7 +181,7 @@ public class Contransmutations {
                     }
                 }
 
-                Iterator<Node> outsItr = nd.outs.iterator();
+                Iterator<Node> outsItr = nd.outs.keySet().iterator();
                 while (outsItr.hasNext()) {
                     Node out = outsItr.next();
                     if (cycle.containsKey(out)) {
@@ -193,10 +218,10 @@ public class Contransmutations {
         for (int i = 1; i <= m; i++) {
             if (metals[i] != null && processed[i] == 0) {
                 Node nd = metals[i];
-                for (Node in : nd.ins) {
+                for (Node in : nd.ins.keySet()) {
                     in.outs.remove(nd);
                 }
-                for (Node out : nd.outs) {
+                for (Node out : nd.outs.keySet()) {
                     out.ins.remove(nd);
                 }
                 metals[i] = null;
@@ -207,7 +232,7 @@ public class Contransmutations {
     private static void findAllIngoings(Node nd, int[] processed) {
         processed[nd.num] = 1;
 
-        for (Node in : nd.ins) {
+        for (Node in : nd.ins.keySet()) {
             if (processed[in.num] == 0) {
                 findAllIngoings(in, processed);
             }
@@ -217,7 +242,7 @@ public class Contransmutations {
     private static void findAllOutgoings(Node nd, int[] processed) {
         processed[nd.num] = 1;
 
-        for (Node in : nd.outs) {
+        for (Node in : nd.outs.keySet()) {
             if (processed[in.num] == 0) {
                 findAllOutgoings(in, processed);
             }
@@ -229,7 +254,7 @@ public class Contransmutations {
         processed[nd.num] = 1;
         path.add(nd);
 
-        for (Node out : nd.outs) {
+        for (Node out : nd.outs.keySet()) {
             Map<Node, Node> cycle = null;
 
             if (processed[out.num] == 0) {
