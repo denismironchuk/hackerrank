@@ -1,7 +1,5 @@
 package codejam;
 
-import sun.awt.image.ImageWatched.Link;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -156,6 +154,8 @@ public class Contransmutations {
                 if (in != cycleNode) {
                     Node toProc = cycle.containsKey(in) ? initNode : in;
                     toProc.addOutNode(initNode, amnt);
+                } else if (in == cycleNode && amnt > 1) {
+                    initNode.addOutNode(initNode, amnt - 1);
                 }
             }
 
@@ -166,6 +166,8 @@ public class Contransmutations {
                 if (out != outgoingNode) {
                     Node toProc = cycle.containsKey(out) ? initNode : out;
                     initNode.addOutNode(toProc, amnt);
+                } else if (out == outgoingNode && amnt > 1) {
+                    initNode.addOutNode(initNode, amnt - 1);
                 }
             }
 
@@ -254,7 +256,7 @@ public class Contransmutations {
     private static Map<Node, Node> getCycle(Node nd, LinkedList<Node> path) {
         int[] processed = new int[m + 1];
         Map<Node, Node> cycle = null;
-        for (int i = 1; null != cycle && i <= m; i++) {
+        for (int i = 1; null == cycle && i <= m; i++) {
             if (null != metals[i] && processed[i] == 0) {
                 cycle = getCycle(metals[i], processed, new LinkedList<>());
             }

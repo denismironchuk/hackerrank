@@ -71,7 +71,7 @@ public class Optimal {
         if (metals[1] == null) {
             return 0;
         } else {
-            Map<Node, Node> cycle = getCycle(metals[1], new int[m + 1], new LinkedList<>());
+            Map<Node, Node> cycle = getCycle();
             if (cycle == null) {
                 long[] processedWeight = new long[m + 1];
                 Arrays.fill(processedWeight, -1);
@@ -82,7 +82,7 @@ public class Optimal {
                     return -1;
                 } else {
                     collapseCycle(cycle);
-                    Map<Node, Node> cycle2 = getCycle(metals[1], new int[m + 1], new LinkedList<>());
+                    Map<Node, Node> cycle2 = getCycle();
                     if (null == cycle2) {
                         long[] processedWeight = new long[m + 1];
                         Arrays.fill(processedWeight, -1);
@@ -223,6 +223,17 @@ public class Optimal {
                 findAllOutgoings(in, processed);
             }
         }
+    }
+
+    private static Map<Node, Node> getCycle() {
+        int[] processed = new int[m + 1];
+        Map<Node, Node> cycle = null;
+        for (int i = 1; null == cycle && i <= m; i++) {
+            if (null != metals[i] && processed[i] == 0) {
+                cycle = getCycle(metals[i], processed, new LinkedList<>());
+            }
+        }
+        return cycle;
     }
 
     //returns list or edges represented as outgoing node -> ingoing node

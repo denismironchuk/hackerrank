@@ -17,12 +17,12 @@ public class Tester {
             long resSimple = Simple.count(m, metalls, gramms);
             long resOpt = Optimal.count(m, metalls, gramms);
 
-            System.out.println(resSimple);
-            System.out.println(resOpt);
+            //System.out.println(resSimple);
+            //System.out.println(resOpt);
             if (resSimple != resOpt) {
                 throw new RuntimeException("!!!!!");
             }
-            System.out.println("===========");
+            //System.out.println("===========");
         }
     }
 }
