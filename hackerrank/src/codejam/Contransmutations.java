@@ -81,11 +81,13 @@ public class Contransmutations {
 
             if (metals[1] == null) {
                 System.out.printf("Case #%s: %s\n", t, 0);
-                return;
             } else {
                 Map<Node, Node> cycle = getCycle(metals[1], new int[m + 1], new LinkedList<>());
                 if (cycle == null) {
-                    //calculate amount
+                    int[] processedWeight = new int[m + 1];
+                    Arrays.fill(processedWeight, -1);
+                    countMaxWeight(metals[1], processedWeight);
+                    System.out.printf("Case #%s: %s\n", t, processedWeight[1]);
                 } else {
                     if (!cycle.containsKey(metals[1])) {
                         System.out.printf("Case #%s: %s\n", t, "UNBOUNDED");
@@ -93,13 +95,28 @@ public class Contransmutations {
                         collapseCycle(cycle);
                         Map<Node, Node> cycle2 = getCycle(metals[1], new int[m + 1], new LinkedList<>());
                         if (null == cycle2) {
-                            //calculate amount
+                            int[] processedWeight = new int[m + 1];
+                            Arrays.fill(processedWeight, -1);
+                            countMaxWeight(metals[1], processedWeight);
+                            System.out.printf("Case #%s: %s\n", t, processedWeight[1]);
                         } else {
                             System.out.printf("Case #%s: %s\n", t, "UNBOUNDED");
                         }
                     }
                 }
             }
+        }
+    }
+
+    private static void countMaxWeight(Node nd, int[] processedWeight) {
+        processedWeight[nd.num] = grams[nd.num];
+
+        for (Node in : nd.ins) {
+            if (processedWeight[in.num] == -1) {
+                countMaxWeight(in, processedWeight);
+            }
+
+            processedWeight[nd.num] = (processedWeight[nd.num] + processedWeight[in.num]) % MOD;
         }
     }
 
@@ -119,14 +136,14 @@ public class Contransmutations {
             }
 
             for (Node out : cycleNode.outs) {
-                if (out != cycleNode) {
+                if (out != outgoingNode) {
                     Node toProc = cycle.containsKey(out) ? initNode : out;
                     initNode.addOutNode(toProc);
                 }
             }
 
-            metals[outgoingNode.num] = null;
-            weight = (weight + grams[outgoingNode.num]) % MOD;
+            metals[cycleNode.num] = null;
+            weight = (weight + grams[cycleNode.num]) % MOD;
         }
 
         for (Node nd : metals) {
