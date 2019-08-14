@@ -1,13 +1,17 @@
 package codejam.zillionim;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
-public class ZillionimGame {
-    //private static final long INIT_COINTS = 1000000000000l;
-    //private static final long MOVE_COINTS = 10000000000l;
-    private static final long INIT_COINTS = 5000l;
-    private static final long MOVE_COINTS = 50l;
+public class ZillionimFinal {
+    private static final long INIT_COINTS = 1000000000000l;
+    private static final long MOVE_COINTS = 10000000000l;
+    //private static final long INIT_COINTS = 20l;
+    //private static final long MOVE_COINTS = 2l;
 
     private static final long CONTABLE_LEN = 9 * MOVE_COINTS - 3;
 
@@ -29,6 +33,7 @@ public class ZillionimGame {
     private static final int GRAND_INTERVALS_CNT = GRANDY_INTERVALS.length;
 
     public static class Interval {
+
         private long start;
         private long end;
 
@@ -75,7 +80,7 @@ public class ZillionimGame {
         }
 
         public static long getGrandyValue(long len) {
-            for (long[] interval: GRANDY_INTERVALS) {
+            for (long[] interval : GRANDY_INTERVALS) {
                 if (len >= interval[1] && len <= interval[2]) {
                     return interval[0];
                 }
@@ -113,67 +118,19 @@ public class ZillionimGame {
             }
             return -1;
         }
-
-        public long getStart() {
-            return start;
-        }
-
-        public long getEnd() {
-            return end;
-        }
     }
 
-    public static void main(String[] args) {
-        int firstWin = 0;
-        for (int i = 0; i < 500; i++) {
-        //while (true) {
-            List<Interval> gameState = new ArrayList<>();
-            gameState.add(new Interval(1, INIT_COINTS));
-            int player = 0;
-
-            while (hasNextMove(gameState)) {
-                if (player == 0) {
-                    makeRandomMove(gameState);
-                } else {
-                    boolean isCountable = gameState.stream().allMatch(Interval::isCountable);
-                    if (isCountable) {
-                        if (!makeCleverMove(gameState)) {
-                            makeRandomMove(gameState);
-                        }
-                    } else {
-                        makeSplitMove(gameState);
-                    }
-                }
-                player++;
-                player %= 2;
-            }
-
-            if ((player + 1) % 2 == 1) {
-                firstWin++;
-            }
-        }
-        System.out.printf("%s", firstWin);
-    }
-
-    private static boolean hasNextMove(List<Interval> gameState) {
-        return !gameState.isEmpty();
-    }
-
-    private static void makeRandomMove(List<Interval> gameState) {
+    private static long makeRandomMove(List<Interval> gameState) {
         int intervalToSplitIndex = (int)(Math.random() * gameState.size());
         Interval intervalToSplit = gameState.get(intervalToSplitIndex);
         gameState.remove(intervalToSplit);
 
         long posToSplit = intervalToSplit.start + (long)(Math.random() * (intervalToSplit.getIntervalLength() - MOVE_COINTS + 1));
-
-        if (posToSplit < intervalToSplit.start || posToSplit > intervalToSplit.end - MOVE_COINTS + 1) {
-            throw new IllegalStateException();
-        }
-
         gameState.addAll(intervalToSplit.splitInterval(posToSplit));
+        return posToSplit;
     }
 
-    private static void makeSplitMove(List<Interval> gameState) {
+    private static long makeSplitMove(List<Interval> gameState) {
         Interval longest = null;
         long size = -1;
 
@@ -185,19 +142,16 @@ public class ZillionimGame {
         }
 
         gameState.remove(longest);
-        long posToSplit = longest.start + ((size - MOVE_COINTS) / 2);
-
-        if (posToSplit < longest.start || posToSplit > longest.end - MOVE_COINTS + 1) {
-            throw new IllegalStateException();
-        }
+        long posToSplit = longest.start + (size - MOVE_COINTS) / 2;
 
         gameState.addAll(longest.splitInterval(posToSplit));
+        return posToSplit;
     }
 
-    private static boolean makeCleverMove(List<Interval> gameState) {
+    private static long makeCleverMove(List<Interval> gameState) {
         long stateGrand = gameState.stream().map(Interval::getGrandyValue).reduce((a, b) -> a ^ b).orElse(0l);
         if (stateGrand == 0) {
-            return false;
+            return -1;
         }
         Interval toSplit = null;
         long pos = -1;
@@ -210,15 +164,57 @@ public class ZillionimGame {
         }
 
         if (pos != -1) {
-            if (pos < toSplit.start || pos > toSplit.end - MOVE_COINTS + 1) {
-                throw new IllegalStateException();
-            }
-
             gameState.remove(toSplit);
             gameState.addAll(toSplit.splitInterval(pos));
-            return true;
+            return pos;
         } else {
-            return false;
+            return -1;
+        }
+    }
+
+    private static Interval findInterval(List<Interval> gameState, long p) {
+        for (Interval intr : gameState) {
+            if (intr.start <= p && intr.end >= p) {
+                return intr;
+            }
+        }
+        throw new IllegalStateException();
+    }
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer line1Tkn = new StringTokenizer(br.readLine());
+        int T = Integer.parseInt(line1Tkn.nextToken());
+        for (int t = 0; t < T; t++) {
+            List<Interval> gameState = new ArrayList<>();
+            gameState.add(new Interval(1, INIT_COINTS));
+
+            while (true) {
+                long p = Long.parseLong(br.readLine());
+                if (p == -2 || p == -3) {
+                    break;
+                }
+
+                if (p == -1) {
+                    return;
+                }
+
+                Interval toSplit = findInterval(gameState, p);
+                gameState.remove(toSplit);
+                gameState.addAll(toSplit.splitInterval(p));
+
+                long pos = -1;
+                boolean isCountable = gameState.stream().allMatch(Interval::isCountable);
+                if (isCountable) {
+                    pos = makeCleverMove(gameState);
+                    if (pos == -1) {
+                        pos = makeRandomMove(gameState);
+                    }
+                } else {
+                    pos = makeSplitMove(gameState);
+                }
+                System.out.println(pos);
+            }
         }
     }
 }

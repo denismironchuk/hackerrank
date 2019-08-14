@@ -5,13 +5,14 @@ import java.util.TreeSet;
 
 public class Zillionim {
     public static void main(String[] args) {
-        int C_MAX = 50; //coins to take
-        int N_MAX = 5000; //initial coins amount
+        int C_MIN = 2; //coins to take
+        int C_MAX = 100; //coins to take
+        int N_MAX = 10000; //initial coins amount
 
-        for (int c = 1; c <= C_MAX; c++) {
+        for (int c = C_MIN; c <= C_MAX; c++) {
             System.out.printf("%3d: ", c);
-            int[] grand = new int[N_MAX + 1];
-            for (int n = 0; n <= N_MAX; n++) {
+            int[] grand = new int[100 * c + 1];
+            for (int n = 0; n <= 100 * c; n++) {
                 if (n - c < 0) {
                     grand[n] = 0;
                 } else {
@@ -25,7 +26,7 @@ public class Zillionim {
             }
             int prev = grand[0];
             int cnt = 1;
-            for (int i = 1; i <= N_MAX; i++) {
+            for (int i = 1; i < grand.length; i++) {
                 if (grand[i] == prev) {
                     cnt++;
                 } else {
