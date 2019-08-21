@@ -1,4 +1,4 @@
-package codejam;
+package codejam.pancakePyramid;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 public class PancakePyramid {
-    private static final long MOD = 1000000009;
+    private static final long MOD = 1000000007;
 
     private static int s;
     private static long[] p;
@@ -29,10 +29,6 @@ public class PancakePyramid {
 
         public int getPos() {
             return pos;
-        }
-
-        public int getInvPos() {
-            return -pos;
         }
     }
 
@@ -76,11 +72,10 @@ public class PancakePyramid {
 
                 int rightMaxIndex = pArr.pos + lenRight + 1;
                 if (rightMaxIndex < s) {
-                    resLeft[rightMaxIndex] += resLeft[pArr.pos] + (lenLeft + 1) * (lenRight * pArr.val - (sumLeftToRight[rightMaxIndex - 1] - sumLeftToRight[pArr.pos]));
+                    resLeft[rightMaxIndex] += (resLeft[pArr.pos] + ((lenLeft + 1) * ((lenRight * pArr.val - (sumLeftToRight[rightMaxIndex - 1] - sumLeftToRight[pArr.pos])) % MOD) % MOD)) % MOD;
+                    resLeft[rightMaxIndex] %= MOD;
                 }
             }
-
-            pArray.sort(Comparator.comparingLong(PArray::getVal).thenComparingInt(PArray::getInvPos));
 
             for (PArray pArr : pArray) {
                 int lenLeft = leftLens[pArr.pos];
@@ -89,7 +84,8 @@ public class PancakePyramid {
                 int leftMaxIndex = pArr.pos - lenLeft - 1;
 
                 if (leftMaxIndex > -1) {
-                    resRight[leftMaxIndex] += resRight[pArr.pos] + (lenRight + 1) * (lenLeft * pArr.val - (sumLeftToRight[pArr.pos - 1] - sumLeftToRight[leftMaxIndex]));
+                    resRight[leftMaxIndex] += (resRight[pArr.pos] + ((lenRight + 1) * ((lenLeft * pArr.val - (sumLeftToRight[pArr.pos - 1] - sumLeftToRight[leftMaxIndex])) % MOD) % MOD)) % MOD;
+                    resRight[leftMaxIndex] %= MOD;
                 }
             }
 
@@ -99,7 +95,8 @@ public class PancakePyramid {
                 int lenLeft = leftLens[i];
                 int lenRight = rightLens[i];
 
-                res += resRight[i] * (lenLeft + 1) + resLeft[i] * (lenRight + 1);
+                res += ((resRight[i] * (lenLeft + 1)) % MOD + (resLeft[i] * (lenRight + 1)) % MOD) % MOD;
+                res %= MOD;
             }
             System.out.printf("Case #%s: %s\n", t, res);
         }
@@ -138,11 +135,11 @@ public class PancakePyramid {
         }
 
         if (start == end) {
-            return p[start] < p[pos] ? pos - start : pos - start - 1;
+            return p[start] <= p[pos] ? pos - start : pos - start - 1;
         }
 
         int mid = (start + end) / 2;
-        if (getMaxValue(segTree, 1, 0, s - 1, mid + 1, end) >= p[pos]) {
+        if (getMaxValue(segTree, 1, 0, s - 1, mid + 1, end) > p[pos]) {
             return getLeftMaxIntervalLen(pos, segTree, mid + 1, end);
         } else {
             return getLeftMaxIntervalLen(pos, segTree, start, mid);
