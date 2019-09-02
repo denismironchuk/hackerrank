@@ -34,11 +34,7 @@ public class PoligonFlipTest extends JPanel {
                 if (!poligonIsDone) {
                     if (isExistingPoint(p)) {
                         poligonIsDone = true;
-                        java.util.List<Point2D> completedPoligon = new ArrayList<>();
-                        for (Point2D point : poligon) {
-                            completedPoligon.add(point);
-                        }
-                        poligons.add(completedPoligon);
+                        poligons.add(new ArrayList<>(poligon));
                     } else {
                         poligon.add(me.getPoint());
                     }
@@ -134,8 +130,9 @@ public class PoligonFlipTest extends JPanel {
 
                 for (int i = 0; i < poly.size(); i++) {
                     Point2D p2 = poly.get(i);
-                    double dist = getDistToLine(new Line2D.Double(p1, p2), p);
-                    if (dist < distThreshold && (p.x - p1.getX()) * (p.x - p2.getX()) <= pointDistThreshold && (p.y - p1.getY()) * (p.y - p2.getY()) <= pointDistThreshold) {
+                    double dist = new Line2D.Double(p1, p2).ptLineDist(p);
+                    if (dist < distThreshold && (p.x - p1.getX()) * (p.x - p2.getX()) <= pointDistThreshold
+                            && (p.y - p1.getY()) * (p.y - p2.getY()) <= pointDistThreshold) {
                         return i;
                     }
                     p1 = p2;
@@ -144,23 +141,8 @@ public class PoligonFlipTest extends JPanel {
                 return -1;
             }
 
-            private double getDistToLine(Line2D l, Point p) {
-                Point2D p1 = l.getP1();
-                Point2D p2 = l.getP2();
-
-                return Math.abs(((p2.getY() - p1.getY()) * p.x - (p2.getX() - p1.getX()) * p.y + (p2.getX() * p1.getY() - p2.getY() * p1.getX())))
-                        / Math.sqrt((p1.getY() - p2.getY()) * (p1.getY() - p2.getY()) + (p1.getX() - p2.getX()) * (p1.getX() - p2.getX()));
-            }
-
             private boolean isExistingPoint(Point newP) {
-                for (Point2D p : poligon) {
-                    double dist = Math.sqrt((p.getX() - newP.x) * (p.getX() - newP.x) + (p.getY() - newP.y) * (p.getY() - newP.y));
-                    if (dist < distThreshold) {
-                        return true;
-                    }
-                }
-
-                return false;
+                return poligon.stream().map(newP::distance).anyMatch(dist -> dist < distThreshold);
             }
         });
     }
@@ -172,10 +154,10 @@ public class PoligonFlipTest extends JPanel {
 
 
             if (poligonIsDone) {
-                //drawPolygon(g, poligon);
-                for (java.util.List<Point2D> poligon : poligons) {
+                drawPolygon(g, poligon);
+                /*for (java.util.List<Point2D> poligon : poligons) {
                     drawPolygon(g, poligon);
-                }
+                }*/
             } else {
                 Point2D prev = null;
                 for (Point2D p : poligon) {
