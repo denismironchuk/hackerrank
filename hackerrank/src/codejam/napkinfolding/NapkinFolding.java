@@ -3,11 +3,13 @@ package codejam.napkinfolding;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Objects;
 import java.util.StringTokenizer;
 
 public class NapkinFolding {
     private static Fraction HALF = new Fraction(1, 2);
     private static Fraction NEG = new Fraction(-1, 1);
+    private static Fraction TWO = new Fraction(2, 1);
 
     private static class Fraction {
         private int chisl;
@@ -32,11 +34,15 @@ public class NapkinFolding {
             int commonChisl = chisl * f.chisl;
             int gcd = gcd(commonZnam, commonChisl);
 
+            if (gcd == 0) {
+                System.out.println();
+            }
+
             return new Fraction(commonChisl / gcd, commonZnam / gcd);
         }
 
-        public Fraction inv(Fraction f) {
-            return new Fraction(f.znam, f.chisl);
+        public Fraction inv() {
+            return new Fraction(znam, chisl);
         }
 
         private int gcd(int a, int b) {
@@ -50,13 +56,36 @@ public class NapkinFolding {
                 return gcdInternal(b, a % b);
             }
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            Fraction fraction = (Fraction) o;
+            return chisl == fraction.chisl &&
+                    znam == fraction.znam;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(chisl, znam);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%d/%d", chisl, znam);
+        }
     }
 
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         int T = Integer.parseInt(br.readLine());
 
-        for (int t = 1; t < T; t++) {
+        for (int t = 1; t <= T; t++) {
             StringTokenizer tkn1 = new StringTokenizer(br.readLine());
             int n = Integer.parseInt(tkn1.nextToken());
             Fraction[][] points = new Fraction[n * 2][2];
@@ -80,37 +109,51 @@ public class NapkinFolding {
 
             int pointsToCheck = n;
 
-            for (int i = 0; i < 2 * n; i++) {
+            boolean solutionFound = false;
+            for (int i = 0; !solutionFound && i < 2 * n; i++) {
                 Fraction lineStartX = points[i][0];
                 Fraction lineStartY = points[i][1];
 
                 Fraction lineEndX = points[(i + pointsToCheck) % (2 * n)][0];
                 Fraction lineEndY = points[(i + pointsToCheck) % (2 * n)][1];
 
-                for (int pointToCheck = 1; pointToCheck < pointsToCheck; pointToCheck++) {
+                solutionFound = true;
+
+                for (int pointToCheck = 1; solutionFound && pointToCheck < pointsToCheck; pointToCheck++) {
                     Fraction x1 = points[(i + pointToCheck) % (2 * n)][0];
                     Fraction y1 = points[(i + pointToCheck) % (2 * n)][1];
 
                     Fraction x2 = points[(i - pointToCheck + 2 * n) % (2 * n)][0];
                     Fraction y2 = points[(i - pointToCheck + 2 * n) % (2 * n)][1];
+
+                    Fraction[] symPoint = getSymmetryPoint(new Fraction[]{x1, y1}, new Fraction[]{lineStartX, lineStartY}, new Fraction[]{lineEndX, lineEndY});
+
+                    if (!symPoint[0].equals(x2) || !symPoint[1].equals(y2)) {
+                        solutionFound = false;
+                    }
                 }
+
+                if (solutionFound) {
+                    System.out.printf("Case #%s: POSSIBLE\n%s %s %s %s\n", t, lineStartX, lineStartY, lineEndX, lineEndY);
+                }
+            }
+            if (!solutionFound) {
+                System.out.printf("Case #%s: IMPOSSIBLE\n", t);
             }
         }
     }
 
-    private Fraction[] getSymmetryPoint(Fraction[] point, Fraction[] lineStart, Fraction[] lineEnd) {
+    private static Fraction[] getSymmetryPoint(Fraction[] point, Fraction[] lineStart, Fraction[] lineEnd) {
         Fraction A = lineEnd[1].add(lineStart[1].mul(NEG));
         Fraction B = lineEnd[0].add(lineStart[0].mul(NEG));
         Fraction C = lineStart[0].mul(lineEnd[1]).add(lineEnd[0].mul(lineStart[1]).mul(NEG));
 
-        /*int x = (B * (B * ax + A * ay) + C * A) / (A * A + B * B);
-        int y = (A * (B * ax + A * ay) - C * B) / (A * A + B * B);
+        Fraction x = B.mul(B.mul(point[0]).add(A.mul(point[1]))).add(C.mul(A)).mul(A.mul(A).add(B.mul(B)).inv());
+        Fraction y = A.mul(B.mul(point[0]).add(A.mul(point[1]))).add(C.mul(B).mul(NEG)).mul(A.mul(A).add(B.mul(B)).inv());
 
-        x = 2 * x - ax;
-        y = 2 * y - ay;
+        x = TWO.mul(x).add(point[0].mul(NEG));
+        y = TWO.mul(y).add(point[1].mul(NEG));
 
-        g.drawLine(ax, ay, x, y);*/
-
-        return null;
+        return new Fraction[] {x, y};
     }
 }
