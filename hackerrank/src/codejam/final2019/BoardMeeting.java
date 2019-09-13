@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 public class BoardMeeting {
-    private static final int N_MAX = 10;
-    private static final int BOARD_LIMS = 1000000;
+    private static final int N_MAX = 5;
+    private static final int BOARD_LIMS = 5;
     private static int n;
     private static Point[] kings;
     private static List<Diag> diags;
@@ -34,15 +34,21 @@ public class BoardMeeting {
     private static class Diag {
         private Point cord;
         private long pointCnt;
+        /*
+         1 = \
+        -1 = /
+         */
+        private long dir;
 
-        public Diag(Point cord, long pointCnt) {
+        public Diag(Point cord, long pointCnt, long dir) {
             this.cord = cord;
             this.pointCnt = pointCnt;
+            this.dir = dir;
         }
 
         @Override
         public String toString() {
-            return String.format("%s %s", cord, pointCnt);
+            return String.format("%s %s %s", cord, pointCnt, dir == 1 ? "\\" : "/");
         }
     }
 
@@ -141,82 +147,87 @@ public class BoardMeeting {
 
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        while(true) {
+        //while(true) {
             REQ_CNT = 0;
-            //n = (int) (Math.random() * N_MAX) + 1;
+            n = (int) (Math.random() * N_MAX) + 1;
             //n = Integer.parseInt(br.readLine());
-            n = 10;
+            //n = 10;
             kings = new Point[n];
 
             //inputPoints(br);
             generateRandomPoints();
-            //printBoard();
+            printBoard();
 
-            System.out.println("================");
-            long dist2 = countTotalMovesToPoint(-(BOARD_LIMS + 2), BOARD_LIMS + 2);
-            long dist1 = countTotalMovesToPoint(-(BOARD_LIMS + 1), BOARD_LIMS + 1);
+            diags = getDiags(1l);
 
-            long estimatedKingsAmount = dist2 - dist1;
-
-            diags = new ArrayList<>();
-
-            int foundKingsDiags = 0;
-
-            long initPos = -(BOARD_LIMS + 1);
-            long initMoves = dist1;
-            long step = dist2 - dist1;
-
-            while (foundKingsDiags != estimatedKingsAmount) {
-                long changePos = findChangeStepPos(initPos, BOARD_LIMS + 1, initMoves, initPos, step);
-                long currentDist = countTotalMovesToPoint(changePos, -changePos);
-                long prevDist = initMoves - (changePos - initPos - 1) * step;
-                long currentDiff = prevDist - currentDist;
-
-                long decr = step - currentDiff;
-                long testDist1 = countTotalMovesToPoint(changePos - 2, -changePos + 1);
-                long testDist2 = countTotalMovesToPoint(changePos - 1, -changePos);
-                long testDiff = testDist1 - testDist2;
-
-                if (testDiff == step) {
-                    diags.add(new Diag(new Point(changePos, -changePos + 1), decr)); //touches diag
-                    foundKingsDiags += decr;
-                    currentDiff -= decr;
-                } else {
-                    long amnt1 = step - testDiff;
-                    diags.add(new Diag(new Point(changePos - 1, -changePos + 1), amnt1)); //crosses diag
-                    foundKingsDiags += amnt1;
-
-                    long amnt2 = decr - (amnt1 * 2);
-                    if (amnt2 != 0) {
-                        diags.add(new Diag(new Point(changePos, -changePos + 1), amnt2)); //touches diag
-                        foundKingsDiags += amnt2;
-                        currentDiff -= amnt2;
-                    }
-                }
-
-                initPos = changePos;
-                initMoves = currentDist;
-                step = currentDiff;
-            }
-
-            //diags.forEach(System.out::println);
+            diags.forEach(System.out::println);
             validateDiags();
             System.out.println(REQ_CNT);
-        }
+            System.out.println("================");
+        //}
     }
 
-    private static long findChangeStepPos(long start, long end, long initMoves, long initPos, long step) {
+    private static List<Diag> getDiags(long diagDir) {
+        List<Diag> locDiags = new ArrayList<>();
+        long dist2 = countTotalMovesToPoint(-(BOARD_LIMS + 2), -diagDir * (BOARD_LIMS + 2));
+        long dist1 = countTotalMovesToPoint(-(BOARD_LIMS + 1), -diagDir * (BOARD_LIMS + 1));
+
+        long estimatedKingsAmount = dist2 - dist1;
+
+        int foundKingsDiags = 0;
+
+        long initPos = -(BOARD_LIMS + 1);
+        long initMoves = dist1;
+        long step = dist2 - dist1;
+
+        while (foundKingsDiags != estimatedKingsAmount) {
+            long changePos = findChangeStepPos(initPos, BOARD_LIMS + 1, initMoves, initPos, step, diagDir);
+            long currentDist = countTotalMovesToPoint(changePos, changePos * diagDir);
+            long prevDist = initMoves - (changePos - initPos - 1) * step;
+            long currentDiff = prevDist - currentDist;
+
+            long decr = step - currentDiff;
+            long testDist1 = countTotalMovesToPoint(changePos - 2, (changePos - 1) * diagDir);
+            long testDist2 = countTotalMovesToPoint(changePos - 1, changePos * diagDir);
+            long testDiff = testDist1 - testDist2;
+
+            if (testDiff == step) {
+                locDiags.add(new Diag(new Point(changePos, (changePos - 1) * diagDir), decr, diagDir)); //touches diag
+                foundKingsDiags += decr;
+                currentDiff -= decr;
+            } else {
+                long amnt1 = step - testDiff;
+                locDiags.add(new Diag(new Point(changePos - 1, (changePos - 1) * diagDir), amnt1, diagDir)); //crosses diag
+                foundKingsDiags += amnt1;
+
+                long amnt2 = decr - (amnt1 * 2);
+                if (amnt2 != 0) {
+                    locDiags.add(new Diag(new Point(changePos, (changePos - 1) * diagDir), amnt2, diagDir)); //touches diag
+                    foundKingsDiags += amnt2;
+                    currentDiff -= amnt2;
+                }
+            }
+
+            initPos = changePos;
+            initMoves = currentDist;
+            step = currentDiff;
+        }
+
+        return locDiags;
+    }
+
+    private static long findChangeStepPos(long start, long end, long initMoves, long initPos, long step, long diagDir) {
         if (start == end) {
             return start;
         }
 
         long mid = start + ((end - start) / 2);
-        long moves = countTotalMovesToPoint(mid, -mid);
+        long moves = countTotalMovesToPoint(mid, mid * diagDir);
         long expectedMoves = initMoves - (mid - initPos) * step;
         if (moves == expectedMoves) {
-            return findChangeStepPos(mid + 1, end, initMoves, initPos, step);
+            return findChangeStepPos(mid + 1, end, initMoves, initPos, step, diagDir);
         } else {
-            return findChangeStepPos(start, mid, initMoves, initPos, step);
+            return findChangeStepPos(start, mid, initMoves, initPos, step, diagDir);
         }
     }
 
@@ -233,7 +244,7 @@ public class BoardMeeting {
         for (Point king : kings) {
             int validDiags = 0;
             for (Diag d : diags) {
-                if (d.cord.x - king.x == d.cord.y - king.y) {
+                if (d.cord.x - king.x == -d.dir * (d.cord.y - king.y)) {
                     validDiags++;
                 }
             }
