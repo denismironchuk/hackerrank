@@ -6,7 +6,7 @@ import java.io.InputStreamReader;
 import java.util.*;
 
 public class BoardMeeting {
-    private static final int N_MAX = 4;
+    private static final int N_MAX = 10;
     private static final int BOARD_LIMS = 1000000;
     private static int n;
     private static Point[] kings;
@@ -170,7 +170,7 @@ public class BoardMeeting {
 
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        while(true) {
+        //while(true) {
             REQ_CNT = 0;
             //n = (int) (Math.random() * N_MAX) + 1;
             //n = Integer.parseInt(br.readLine());
@@ -184,66 +184,39 @@ public class BoardMeeting {
             List<Diag> positiveDiags = getDiags(-1l);
             List<Diag> negativeDiags = getDiags(1l);
 
-            /*System.out.println("Positive diags /");
-            positiveDiags.forEach(System.out::println);
-            System.out.println("Negative diags \\");
-            negativeDiags.forEach(System.out::println);*/
-
-            validateDiags(positiveDiags);
-            validateDiags(negativeDiags);
-
             List<DiagPoint> possiblePositions = getPossibleKingsPositions(positiveDiags, negativeDiags);
-
-            validatePossiblePositions(possiblePositions);
 
             int kingsCnt = getKingsCnt(positiveDiags);
 
-            Date start = new Date();
+            while(true) {
+                Point targetPoint = new Point(generateRandomBoardCord(), generateRandomBoardCord());
+                long targetDist = countTotalMovesToPoint(targetPoint.x, targetPoint.y);
 
-            //long combsCnt = generateCombinations(positiveDiags, 0, 0, new LinkedList<>(), kingsCnt, 0);
-            boolean realPosIsPresent = generateCombinations2(positiveDiags, 0, 0, new LinkedList<>(), kingsCnt, 0);
+                //System.out.println("Target point - " + targetPoint);
+                //System.out.println("Target dist - " + targetDist);
 
-            Date end = new Date();
+                List<List<DiagPoint>> combinations = new ArrayList<>();
 
-            if (!realPosIsPresent) {
-                throw new RuntimeException("No real pos among candidates");
+                generateCombinations(positiveDiags, 0, 0, new LinkedList<>(), kingsCnt, 0, targetDist,
+                        combinations, targetPoint);
+
+                System.out.println(combinations.size());
             }
 
-            //System.out.println("Request = " + REQ_CNT);
-            long execTime = end.getTime() - start.getTime();
-            //if (execTime > 400) {
-                System.out.println("Combinations generation took " + execTime + "ms");
-                //System.out.println("Combinations = " + combsCnt);
-            //}
-            System.out.println("================");
-        }
+        //}
     }
 
-    public static boolean generateCombinations2(List<Diag> diags, int diagIndex, int startPoint, LinkedList<DiagPoint> comb, int kingsCnt, long combCnt) {
-        if (comb.size() == kingsCnt) {
-
-            for (Point king : kings) {
-                boolean isPresent = false;
-                for (DiagPoint p : comb) {
-                    if (king.x == p.x && king.y == p.y) {
-                        isPresent = true;
-                        break;
-                    }
-                }
-                if (!isPresent) {
-                    return false;
-                }
-            }
-
-            return true;
+    public static void generateCombinations(List<Diag> diags, int diagIndex, int startPoint, LinkedList<DiagPoint> comb, int kingsCnt,
+            long dist, long targetDist, List<List<DiagPoint>> combinations, Point targetPoint) {
+        if (comb.size() == kingsCnt && dist == targetDist) {
+            combinations.add(new ArrayList<>(comb));
+            return;
         }
 
         Diag diag = diags.get(diagIndex);
 
         if (diag.usedPoints == diag.pointCnt) {
-            if (generateCombinations2(diags, diagIndex + 1, 0, comb, kingsCnt, combCnt)) {
-                return true;
-            }
+            generateCombinations(diags, diagIndex + 1, 0, comb, kingsCnt, dist, targetDist, combinations, targetPoint);
         } else {
             for (int i = startPoint; i < diag.points.size(); i++) {
                 DiagPoint p = diag.points.get(i);
@@ -253,9 +226,9 @@ public class BoardMeeting {
                     p.negDiag.usedPoints++;
                     p.posDiag.usedPoints++;
 
-                    if (generateCombinations2(diags, diagIndex, i + 1, comb, kingsCnt, combCnt)) {
-                        return true;
-                    }
+                    long nextDist = dist + Math.max(Math.abs(p.x - targetPoint.x), Math.abs(p.y - targetPoint.y));
+
+                    generateCombinations(diags, diagIndex, i + 1, comb, kingsCnt, nextDist, targetDist, combinations, targetPoint);
 
                     comb.removeLast();
                     p.negDiag.usedPoints--;
@@ -263,8 +236,6 @@ public class BoardMeeting {
                 }
             }
         }
-
-        return false;
     }
 
     private static int getKingsCnt(List<Diag> diags) {
