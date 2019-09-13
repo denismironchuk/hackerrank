@@ -3,16 +3,13 @@ package codejam.final2019;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 public class BoardMeeting {
-    private static final int N_MAX = 5;
-    private static final int BOARD_LIMS = 5;
+    private static final int N_MAX = 4;
+    private static final int BOARD_LIMS = 1000000;
     private static int n;
     private static Point[] kings;
-    private static List<Diag> diags;
 
     private static int REQ_CNT = 0;
 
@@ -31,19 +28,55 @@ public class BoardMeeting {
         }
     }
 
+    private static class DiagPoint {
+        private long x;
+        private long y;
+
+        private Diag posDiag;
+        private Diag negDiag;
+
+        public DiagPoint(long x, long y, Diag posDiag, Diag negDiag) {
+            this.x = x;
+            this.y = y;
+
+            this.posDiag = posDiag;
+            this.negDiag = negDiag;
+
+            posDiag.addPoint(this);
+            negDiag.addPoint(this);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("(%s %s)", x, y);
+        }
+    }
+
     private static class Diag {
         private Point cord;
         private long pointCnt;
         /*
-         1 = \
         -1 = /
+         1 = \
          */
         private long dir;
+
+        private List<DiagPoint> points = new ArrayList<>();
+
+        private int usedPoints = 0;
 
         public Diag(Point cord, long pointCnt, long dir) {
             this.cord = cord;
             this.pointCnt = pointCnt;
             this.dir = dir;
+        }
+
+        public void addPoint(DiagPoint point) {
+            points.add(point);
+        }
+
+        public boolean isShiftedDiag() {
+            return Math.abs(cord.x) != Math.abs(cord.y);
         }
 
         @Override
@@ -105,16 +138,6 @@ public class BoardMeeting {
         }
     }
 
-    private static Diag findDiagWithPoint(long x, long y) {
-        for (Diag diag : diags) {
-            if (diag.cord.x == x && diag.cord.y == y) {
-                return diag;
-            }
-        }
-
-        return null;
-    }
-
     private static void printBoard() {
         for (long row = BOARD_LIMS; row > -BOARD_LIMS - 1; row--) {
             System.out.printf("%3d | ", row);
@@ -147,26 +170,135 @@ public class BoardMeeting {
 
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        //while(true) {
+        while(true) {
             REQ_CNT = 0;
-            n = (int) (Math.random() * N_MAX) + 1;
+            //n = (int) (Math.random() * N_MAX) + 1;
             //n = Integer.parseInt(br.readLine());
-            //n = 10;
+            n = 10;
             kings = new Point[n];
 
             //inputPoints(br);
             generateRandomPoints();
-            printBoard();
+            //printBoard();
 
-            diags = getDiags(1l);
+            List<Diag> positiveDiags = getDiags(-1l);
+            List<Diag> negativeDiags = getDiags(1l);
 
-            diags.forEach(System.out::println);
-            validateDiags();
-            System.out.println(REQ_CNT);
+            /*System.out.println("Positive diags /");
+            positiveDiags.forEach(System.out::println);
+            System.out.println("Negative diags \\");
+            negativeDiags.forEach(System.out::println);*/
+
+            validateDiags(positiveDiags);
+            validateDiags(negativeDiags);
+
+            List<DiagPoint> possiblePositions = getPossibleKingsPositions(positiveDiags, negativeDiags);
+
+            validatePossiblePositions(possiblePositions);
+
+            int kingsCnt = getKingsCnt(positiveDiags);
+
+            Date start = new Date();
+
+            //long combsCnt = generateCombinations(positiveDiags, 0, 0, new LinkedList<>(), kingsCnt, 0);
+            boolean realPosIsPresent = generateCombinations2(positiveDiags, 0, 0, new LinkedList<>(), kingsCnt, 0);
+
+            Date end = new Date();
+
+            if (!realPosIsPresent) {
+                throw new RuntimeException("No real pos among candidates");
+            }
+
+            //System.out.println("Request = " + REQ_CNT);
+            long execTime = end.getTime() - start.getTime();
+            //if (execTime > 400) {
+                System.out.println("Combinations generation took " + execTime + "ms");
+                //System.out.println("Combinations = " + combsCnt);
+            //}
             System.out.println("================");
-        //}
+        }
     }
 
+    public static boolean generateCombinations2(List<Diag> diags, int diagIndex, int startPoint, LinkedList<DiagPoint> comb, int kingsCnt, long combCnt) {
+        if (comb.size() == kingsCnt) {
+
+            for (Point king : kings) {
+                boolean isPresent = false;
+                for (DiagPoint p : comb) {
+                    if (king.x == p.x && king.y == p.y) {
+                        isPresent = true;
+                        break;
+                    }
+                }
+                if (!isPresent) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        Diag diag = diags.get(diagIndex);
+
+        if (diag.usedPoints == diag.pointCnt) {
+            if (generateCombinations2(diags, diagIndex + 1, 0, comb, kingsCnt, combCnt)) {
+                return true;
+            }
+        } else {
+            for (int i = startPoint; i < diag.points.size(); i++) {
+                DiagPoint p = diag.points.get(i);
+
+                if (p.negDiag.usedPoints < p.negDiag.pointCnt && p.posDiag.usedPoints < p.posDiag.pointCnt) {
+                    comb.add(p);
+                    p.negDiag.usedPoints++;
+                    p.posDiag.usedPoints++;
+
+                    if (generateCombinations2(diags, diagIndex, i + 1, comb, kingsCnt, combCnt)) {
+                        return true;
+                    }
+
+                    comb.removeLast();
+                    p.negDiag.usedPoints--;
+                    p.posDiag.usedPoints--;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static int getKingsCnt(List<Diag> diags) {
+        int res = 0;
+
+        for (Diag d : diags) {
+            res += d.pointCnt;
+        }
+
+        return res;
+    }
+
+    private static List<DiagPoint> getPossibleKingsPositions(List<Diag> positiveDiags, List<Diag> negativeDiags) {
+        List<DiagPoint> res = new ArrayList<>();
+
+        for (Diag posDiag : positiveDiags) {
+            for (Diag negDiag : negativeDiags) {
+                if (!posDiag.isShiftedDiag() && !negDiag.isShiftedDiag()) {
+                    DiagPoint cross = new DiagPoint(posDiag.cord.x + negDiag.cord.x, posDiag.cord.y + negDiag.cord.y, posDiag, negDiag);
+                    res.add(cross);
+                } else if (posDiag.isShiftedDiag() && negDiag.isShiftedDiag()) {
+                    DiagPoint cross = new DiagPoint(posDiag.cord.x + negDiag.cord.x - 1, posDiag.cord.y + negDiag.cord.y, posDiag, negDiag);
+                    res.add(cross);
+                }
+            }
+        }
+
+        return res;
+    }
+
+    /*
+    -1 - /
+     1 - \
+     */
     private static List<Diag> getDiags(long diagDir) {
         List<Diag> locDiags = new ArrayList<>();
         long dist2 = countTotalMovesToPoint(-(BOARD_LIMS + 2), -diagDir * (BOARD_LIMS + 2));
@@ -231,7 +363,23 @@ public class BoardMeeting {
         }
     }
 
-    private static void validateDiags() {
+    private static void validatePossiblePositions(List<DiagPoint> possiblePositions) {
+        for (Point king : kings) {
+            boolean isPresent = false;
+            for (DiagPoint pos : possiblePositions) {
+                if (king.x == pos.x && king.y == pos.y) {
+                    isPresent = true;
+                    break;
+                }
+            }
+
+            if (!isPresent) {
+                throw new RuntimeException("Invalid possible positions!!!");
+            }
+        }
+    }
+
+    private static void validateDiags(List<Diag> diags) {
         int kingsCnt = 0;
         for (Diag d : diags) {
             kingsCnt+=d.pointCnt;
