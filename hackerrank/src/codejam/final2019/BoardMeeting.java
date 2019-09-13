@@ -9,16 +9,18 @@ import java.util.StringTokenizer;
 
 public class BoardMeeting {
     private static final int N_MAX = 10;
-    private static final int BOARD_LIMS = 100;
+    private static final int BOARD_LIMS = 1000000;
     private static int n;
     private static Point[] kings;
     private static List<Diag> diags;
 
-    private static class Point {
-        private int x;
-        private int y;
+    private static int REQ_CNT = 0;
 
-        public Point(int x, int y) {
+    private static class Point {
+        private long x;
+        private long y;
+
+        public Point(long x, long y) {
             this.x = x;
             this.y = y;
         }
@@ -31,9 +33,9 @@ public class BoardMeeting {
 
     private static class Diag {
         private Point cord;
-        private int pointCnt;
+        private long pointCnt;
 
-        public Diag(Point cord, int pointCnt) {
+        public Diag(Point cord, long pointCnt) {
             this.cord = cord;
             this.pointCnt = pointCnt;
         }
@@ -44,7 +46,7 @@ public class BoardMeeting {
         }
     }
 
-    private static boolean isOccupiedCell(int x, int y) {
+    private static boolean isOccupiedCell(long x, long y) {
         for (Point king : kings) {
             if (king == null) {
                 return false;
@@ -57,12 +59,13 @@ public class BoardMeeting {
         return false;
     }
 
-    private static int generateRandomBoardCord() {
-        return (int)(2 * BOARD_LIMS * Math.random()) - BOARD_LIMS;
+    private static long generateRandomBoardCord() {
+        return (long)(2 * BOARD_LIMS * Math.random()) - BOARD_LIMS;
     }
 
-    private static int countTotalMovesToPoint(int x, int y) {
-        int res = 0;
+    private static long countTotalMovesToPoint(long x, long y) {
+        REQ_CNT++;
+        long res = 0;
 
         for (Point king : kings) {
             res += Math.max(Math.abs(king.x - x), Math.abs(king.y - y));
@@ -73,8 +76,8 @@ public class BoardMeeting {
 
     private static void generateRandomPoints() {
         for (int i = 0; i < n; i++) {
-            int x = generateRandomBoardCord();
-            int y = generateRandomBoardCord();
+            long x = generateRandomBoardCord();
+            long y = generateRandomBoardCord();
 
             while (isOccupiedCell(x, y)) {
                 x = generateRandomBoardCord();
@@ -89,14 +92,14 @@ public class BoardMeeting {
         for (int i = 0; i < n; i++) {
             StringTokenizer pointTkn = new StringTokenizer(br.readLine());
 
-            int x = Integer.parseInt(pointTkn.nextToken());
-            int y = Integer.parseInt(pointTkn.nextToken());
+            long x = Long.parseLong(pointTkn.nextToken());
+            long y = Long.parseLong(pointTkn.nextToken());
 
             kings[i] = new Point(x, y);
         }
     }
 
-    private static Diag findDiagWithPoint(int x, int y) {
+    private static Diag findDiagWithPoint(long x, long y) {
         for (Diag diag : diags) {
             if (diag.cord.x == x && diag.cord.y == y) {
                 return diag;
@@ -107,9 +110,9 @@ public class BoardMeeting {
     }
 
     private static void printBoard() {
-        for (int row = BOARD_LIMS; row > -BOARD_LIMS - 1; row--) {
+        for (long row = BOARD_LIMS; row > -BOARD_LIMS - 1; row--) {
             System.out.printf("%3d | ", row);
-            for (int col = -BOARD_LIMS; col < BOARD_LIMS + 1; col++) {
+            for (long col = -BOARD_LIMS; col < BOARD_LIMS + 1; col++) {
                 if (isPoint(col, row)) {
                     System.out.print("*  ");
                 } else {
@@ -126,7 +129,7 @@ public class BoardMeeting {
         System.out.println();
     }
 
-    private static boolean isPoint(int x, int y) {
+    private static boolean isPoint(long x, long y) {
         for (Point king : kings) {
             if (king.x == x && king.y == y) {
                 return true;
@@ -139,52 +142,51 @@ public class BoardMeeting {
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         while(true) {
-            n = (int) (Math.random() * N_MAX) + 1;
+            REQ_CNT = 0;
+            //n = (int) (Math.random() * N_MAX) + 1;
             //n = Integer.parseInt(br.readLine());
+            n = 10;
             kings = new Point[n];
 
             //inputPoints(br);
             generateRandomPoints();
             //printBoard();
 
-            //System.out.println("================");
-            int dist102 = countTotalMovesToPoint(-(BOARD_LIMS + 2), BOARD_LIMS + 2);
-            int dist101 = countTotalMovesToPoint(-(BOARD_LIMS + 1), BOARD_LIMS + 1);
-            //int prevDiff = dist102 - dist101;
+            System.out.println("================");
+            long dist2 = countTotalMovesToPoint(-(BOARD_LIMS + 2), BOARD_LIMS + 2);
+            long dist1 = countTotalMovesToPoint(-(BOARD_LIMS + 1), BOARD_LIMS + 1);
 
-            int estimatedKingsAmount = dist102 - dist101;
-
-            //System.out.printf("Kings amnt = %s\n", estimatedKingsAmount);
+            long estimatedKingsAmount = dist2 - dist1;
 
             diags = new ArrayList<>();
 
             int foundKingsDiags = 0;
 
-            int initPos = -(BOARD_LIMS + 1);
-            int initMoves = dist101;
-            int step = dist102 - dist101;
+            long initPos = -(BOARD_LIMS + 1);
+            long initMoves = dist1;
+            long step = dist2 - dist1;
 
             while (foundKingsDiags != estimatedKingsAmount) {
-                int changePos = findChangeStepPos(initPos, BOARD_LIMS + 1, initMoves, initPos, step);
-                int currentDist = countTotalMovesToPoint(changePos, -changePos);
-                int prevDist = initMoves - (changePos - initPos - 1) * step;
-                int currentDiff = prevDist - currentDist;
+                long changePos = findChangeStepPos(initPos, BOARD_LIMS + 1, initMoves, initPos, step);
+                long currentDist = countTotalMovesToPoint(changePos, -changePos);
+                long prevDist = initMoves - (changePos - initPos - 1) * step;
+                long currentDiff = prevDist - currentDist;
 
-                int decr = step - currentDiff;
-                int testDist1 = countTotalMovesToPoint(changePos - 2, -changePos + 1);
-                int testDist2 = countTotalMovesToPoint(changePos - 1, -changePos);
-                int testDiff = testDist1 - testDist2;
+                long decr = step - currentDiff;
+                long testDist1 = countTotalMovesToPoint(changePos - 2, -changePos + 1);
+                long testDist2 = countTotalMovesToPoint(changePos - 1, -changePos);
+                long testDiff = testDist1 - testDist2;
 
                 if (testDiff == step) {
                     diags.add(new Diag(new Point(changePos, -changePos + 1), decr)); //touches diag
                     foundKingsDiags += decr;
                     currentDiff -= decr;
                 } else {
-                    int amnt1 = step - testDiff;
+                    long amnt1 = step - testDiff;
                     diags.add(new Diag(new Point(changePos - 1, -changePos + 1), amnt1)); //crosses diag
                     foundKingsDiags += amnt1;
 
-                    int amnt2 = decr - (amnt1 * 2);
+                    long amnt2 = decr - (amnt1 * 2);
                     if (amnt2 != 0) {
                         diags.add(new Diag(new Point(changePos, -changePos + 1), amnt2)); //touches diag
                         foundKingsDiags += amnt2;
@@ -199,17 +201,18 @@ public class BoardMeeting {
 
             //diags.forEach(System.out::println);
             validateDiags();
+            System.out.println(REQ_CNT);
         }
     }
 
-    private static int findChangeStepPos(int start, int end, int initMoves, int initPos, int step) {
+    private static long findChangeStepPos(long start, long end, long initMoves, long initPos, long step) {
         if (start == end) {
             return start;
         }
 
-        int mid = start + ((end - start) / 2);
-        int moves = countTotalMovesToPoint(mid, -mid);
-        int expectedMoves = initMoves - (mid - initPos) * step;
+        long mid = start + ((end - start) / 2);
+        long moves = countTotalMovesToPoint(mid, -mid);
+        long expectedMoves = initMoves - (mid - initPos) * step;
         if (moves == expectedMoves) {
             return findChangeStepPos(mid + 1, end, initMoves, initPos, step);
         } else {
