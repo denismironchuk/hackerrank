@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 public class BoardMeeting {
-    private static final int N_MAX = 30;
-    private static final int BOARD_LIMS = 4;
+    private static final int N_MAX = 10;
+    private static final int BOARD_LIMS = 100;
     private static int n;
     private static Point[] kings;
     private static List<Diag> diags;
@@ -82,8 +82,6 @@ public class BoardMeeting {
             }
 
             kings[i] = new Point(x, y);
-
-            //System.out.printf("%s %s\n", x, y);
         }
     }
 
@@ -150,42 +148,53 @@ public class BoardMeeting {
             //printBoard();
 
             //System.out.println("================");
-            int dist102 = countTotalMovesToPoint(-BOARD_LIMS - 2, BOARD_LIMS + 2);
-            int dist101 = countTotalMovesToPoint(-BOARD_LIMS - 1, BOARD_LIMS + 1);
-            int prevDiff = dist102 - dist101;
+            int dist102 = countTotalMovesToPoint(-(BOARD_LIMS + 2), BOARD_LIMS + 2);
+            int dist101 = countTotalMovesToPoint(-(BOARD_LIMS + 1), BOARD_LIMS + 1);
+            //int prevDiff = dist102 - dist101;
 
-            //System.out.printf("Kings amnt = %s\n", prevDiff);
+            int estimatedKingsAmount = dist102 - dist101;
 
-            int prevDist = dist101;
+            //System.out.printf("Kings amnt = %s\n", estimatedKingsAmount);
 
             diags = new ArrayList<>();
 
-            for (int i = -BOARD_LIMS; i < BOARD_LIMS + 2; i++) {
-                int currentDist = countTotalMovesToPoint(i, -i);
+            int foundKingsDiags = 0;
+
+            int initPos = -(BOARD_LIMS + 1);
+            int initMoves = dist101;
+            int step = dist102 - dist101;
+
+            while (foundKingsDiags != estimatedKingsAmount) {
+                int changePos = findChangeStepPos(initPos, BOARD_LIMS + 1, initMoves, initPos, step);
+                int currentDist = countTotalMovesToPoint(changePos, -changePos);
+                int prevDist = initMoves - (changePos - initPos - 1) * step;
                 int currentDiff = prevDist - currentDist;
 
-                if (currentDiff != prevDiff) {
-                    int decr = prevDiff - currentDiff;
-                    int testDist1 = countTotalMovesToPoint(i - 2, -i + 1);
-                    int testDist2 = countTotalMovesToPoint(i - 1, -i);
-                    int testDiff = testDist1 - testDist2;
+                int decr = step - currentDiff;
+                int testDist1 = countTotalMovesToPoint(changePos - 2, -changePos + 1);
+                int testDist2 = countTotalMovesToPoint(changePos - 1, -changePos);
+                int testDiff = testDist1 - testDist2;
 
-                    if (testDiff == prevDiff) {
-                        diags.add(new Diag(new Point(i, -i + 1), decr)); //touches diag
-                        currentDiff -= decr;
-                    } else {
-                        int amnt1 = prevDiff - testDiff;
-                        diags.add(new Diag(new Point(i - 1, -i + 1), amnt1)); //crosses diag
-                        int amnt2 = decr - (amnt1 * 2);
-                        if (amnt2 != 0) {
-                            diags.add(new Diag(new Point(i, -i + 1), amnt2)); //touches diag
-                            currentDiff -= amnt2;
-                        }
+                if (testDiff == step) {
+                    diags.add(new Diag(new Point(changePos, -changePos + 1), decr)); //touches diag
+                    foundKingsDiags += decr;
+                    currentDiff -= decr;
+                } else {
+                    int amnt1 = step - testDiff;
+                    diags.add(new Diag(new Point(changePos - 1, -changePos + 1), amnt1)); //crosses diag
+                    foundKingsDiags += amnt1;
+
+                    int amnt2 = decr - (amnt1 * 2);
+                    if (amnt2 != 0) {
+                        diags.add(new Diag(new Point(changePos, -changePos + 1), amnt2)); //touches diag
+                        foundKingsDiags += amnt2;
+                        currentDiff -= amnt2;
                     }
                 }
 
-                prevDiff = currentDiff;
-                prevDist = currentDist;
+                initPos = changePos;
+                initMoves = currentDist;
+                step = currentDiff;
             }
 
             //diags.forEach(System.out::println);
@@ -193,7 +202,31 @@ public class BoardMeeting {
         }
     }
 
+    private static int findChangeStepPos(int start, int end, int initMoves, int initPos, int step) {
+        if (start == end) {
+            return start;
+        }
+
+        int mid = start + ((end - start) / 2);
+        int moves = countTotalMovesToPoint(mid, -mid);
+        int expectedMoves = initMoves - (mid - initPos) * step;
+        if (moves == expectedMoves) {
+            return findChangeStepPos(mid + 1, end, initMoves, initPos, step);
+        } else {
+            return findChangeStepPos(start, mid, initMoves, initPos, step);
+        }
+    }
+
     private static void validateDiags() {
+        int kingsCnt = 0;
+        for (Diag d : diags) {
+            kingsCnt+=d.pointCnt;
+        }
+
+        if (kingsCnt != n) {
+            throw new RuntimeException("Invalid!!!");
+        }
+
         for (Point king : kings) {
             int validDiags = 0;
             for (Diag d : diags) {
