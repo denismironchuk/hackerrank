@@ -1,4 +1,4 @@
-package math.fundamentals;
+package math.numberTheory;
 
 import java.util.*;
 
