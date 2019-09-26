@@ -5,26 +5,79 @@ import java.util.Arrays;
 import java.util.List;
 
 public class SortingPermutationUnit {
-    private static final int N = 10;
-    private static final int MAX = 10;
+    private static final int N = 50;
+    private static final int MAX = 1000;
+
+    private static int[] a;
+    private static int[] pos;
+    private static List<int[][]> perms = new ArrayList<>();;
+
+    private static int CNT = 0;
 
     public static void main(String[] args) {
-        /*int[] a = new int[N];
-        int[] aSort = new int[N];
+        while (true) {
+            CNT = 0;
+            a = new int[N];
+            int[] aSort = new int[N];
 
-        for (int i = 0; i < N; i++) {
-            a[i] = (int)(MAX * Math.random());
-            aSort[i] = a[i];
-        }*/
+            for (int i = 0; i < N; i++) {
+                a[i] = (int) (MAX * Math.random());
+                aSort[i] = a[i];
+            }
 
-        int[] a = new int[] {1, 2, 6, 5, 4, 10, 5, 5, 4, 3};
-        int[] aSort = new int[] {1, 2, 6, 5, 4, 10, 5, 5, 4, 3};
+            //printArray(a);
+            Arrays.sort(aSort);
+            calculateCorrectPositions(aSort);
+            //printArray(pos);
+            generateAllowablePermutations();
 
-        printArray(a);
+            int seqShuffle = 0;
+            while (true) {
+                if (pos[0] == 0) {
+                    int disorderedPos = 1;
+                    for (; disorderedPos < N && pos[disorderedPos] == 1 + (N - 2 - seqShuffle + disorderedPos) % (N - 1); disorderedPos++)
+                        ;
 
-        Arrays.sort(aSort);
+                    if (disorderedPos == N) {
+                        applySdvig(N - 1 - seqShuffle);
+                        break;
+                    }
 
-        int[] pos = new int[N];
+                    int locShuffle = N - disorderedPos;
+
+                    seqShuffle += locShuffle;
+                    seqShuffle %= N - 1;
+
+                    applySdvig(locShuffle);
+                    shuffleFirstElems();
+                }
+
+                int newShuff = (N - pos[0]) % (N - 1);
+
+                applySdvig((newShuff - seqShuffle + (N - 1)) % (N - 1));
+
+                seqShuffle = newShuff;
+                shuffleFirstElems();
+            }
+            //System.out.println("================");
+            //printArray(a);
+            //printArray(pos);
+
+            validate(a, aSort);
+            System.out.println(CNT);
+        }
+    }
+
+    private static void validate(int[] a, int[] aSort) {
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] != aSort[i]) {
+                throw new RuntimeException("!!!!!!!!!");
+            }
+        }
+    }
+
+    private static void calculateCorrectPositions(int[] aSort) {
+        pos = new int[N];
         int[] isOccup = new int[N];
 
         for (int i = 0; i < N; i++) {
@@ -36,37 +89,22 @@ public class SortingPermutationUnit {
                 }
             }
         }
+    }
 
-        printArray(pos);
-
-        System.out.println("==============");
-
-        int startIndex = 0;
-
-        for (;startIndex < N && pos[startIndex] == startIndex; startIndex++);
-
-        List<int[][]> perms = new ArrayList<>();
+    private static void generateAllowablePermutations() {
         int[][] perm1 = new int[N][N];
-        for (int i = 0; i < startIndex; i++) {
-            perm1[i][i] = 1;
-        }
 
-        if (startIndex == N) {
-            System.out.println("Array is already sorted");
-            return;
-        }
+        perm1[0][1] = 1;
+        perm1[1][0] = 1;
 
-        perm1[startIndex][startIndex + 1] = 1;
-        perm1[startIndex + 1][startIndex] = 1;
-
-        for (int i = startIndex + 2; i < N; i++) {
+        for (int i = 2; i < N; i++) {
             perm1[i][i] = 1;
         }
 
         perms.add(perm1);
 
         List<Integer> sdvigs = new ArrayList<>();
-        int n = N - startIndex;
+        int n = N;
         int sdvig = 1;
 
         while (n != 0) {
@@ -75,46 +113,41 @@ public class SortingPermutationUnit {
             sdvig *= 3;
         }
 
-        n = N - startIndex - 1;
-
         for (int s : sdvigs) {
             int[][] perm = new int[N][N];
+            perm[0][0] = 1;
 
-            for (int i = 0; i <= startIndex; i++) {
-                perm[i][i] = 1;
-            }
-
-            for (int col = startIndex + 1; col < N; col++) {
-                perm[startIndex + 1 + ((col - startIndex - 1 - s + n) % (n))][col] = 1;
+            for (int col = 1; col < N; col++) {
+                perm[1 + ((col - s + N - 2) % (N - 1))][col] = 1;
             }
 
             perms.add(perm);
         }
+    }
 
-        printMatrix(perms.get(0));
-        a = applyPerm(a, perms.get(0));
-        pos = applyPerm(pos, perms.get(0));
-
-        printArray(a);
-        printArray(pos);
-        System.out.println("==============");
-        int posToMove = pos[startIndex + 1];
-        List<Integer> sdvigsCnt = createSdvigSeq(posToMove - startIndex - 1);
+    private static void applySdvig(int sdvig) {
+        List<Integer> sdvigsCnt = createSdvigSeq(sdvig);
 
         int move = 1;
 
         for (int sdvigCnt : sdvigsCnt) {
             for (int i = 0; i < sdvigCnt; i++) {
-                printMatrix(perms.get(move));
-                System.out.println("==============");
-                a = applyPerm(a, perms.get(move));
-                pos = applyPerm(pos, perms.get(move));
-                System.out.println("==============");
-                printArray(a);
-                printArray(pos);
+                //printMatrix(perms.get(move));
+                a = applyPerm(a, perms.get(move), 1);
+                pos = applyPerm(pos, perms.get(move), 0);
+                //printArray(a);
+                //printArray(pos);
             }
             move++;
         }
+    }
+
+    private static void shuffleFirstElems() {
+        //printMatrix(perms.get(0));
+        a = applyPerm(a, perms.get(0), 1);
+        pos = applyPerm(pos, perms.get(0), 0);
+        //printArray(a);
+        //printArray(pos);
     }
 
     private static List<Integer> createSdvigSeq(int expectedSdvig) {
@@ -129,13 +162,15 @@ public class SortingPermutationUnit {
 
     private static void printArray(int[] a) {
         for (int i = 0; i < N; i++) {
-            System.out.printf("%2s ", a[i]);
+            System.out.printf("%3s ", a[i]);
         }
 
         System.out.println();
     }
 
-    private static int[] applyPerm(int[] a, int[][] perm) {
+    private static int[] applyPerm(int[] a, int[][] perm, int incr) {
+        CNT += incr;
+
         int[] res = new int[a.length];
 
         for (int i = 0; i < a.length; i++) {
@@ -148,6 +183,7 @@ public class SortingPermutationUnit {
     }
 
     private static void printMatrix(int[][] matr) {
+        System.out.println("==============");
         for (int row = 0; row < matr.length; row++) {
             for (int col = 0; col < matr[row].length; col++) {
                 System.out.printf("%s ", matr[row][col]);
