@@ -28,7 +28,7 @@ public class Solution {
 
             System.out.printf("Case #%s:\n", t);
 
-            generateAllowablePermutations(N);
+            generateAllowablePermutations();
             System.out.println(perms.size());
             for (int[][] perm : perms) {
                 printPermutation(perm, N);
@@ -172,7 +172,7 @@ public class Solution {
         return pos;
     }
 
-    private static void generateAllowablePermutations(int N) {
+    private static void generateAllowablePermutations() {
         perms = new ArrayList<>();
 
         int[][] perm1 = new int[N][N];
@@ -187,7 +187,7 @@ public class Solution {
         perms.add(perm1);
 
         List<Integer> sdvigs = new ArrayList<>();
-        int n = N;
+        int n = N - 1;
         int sdvig = 1;
 
         while (n != 0) {

@@ -5,8 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class SortingPermutationUnit {
-    private static final int N = 50;
-    private static final int MAX = 1000;
+    private static final int N = 3;
+    private static final int MAX = 10;
 
     private static int[] a;
     private static int[] pos;
@@ -104,7 +104,7 @@ public class SortingPermutationUnit {
         perms.add(perm1);
 
         List<Integer> sdvigs = new ArrayList<>();
-        int n = N;
+        int n = N - 1;
         int sdvig = 1;
 
         while (n != 0) {
