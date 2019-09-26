@@ -1,4 +1,4 @@
-package codejam;
+package codejam.sortingPermutationUnit;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,7 +10,7 @@ public class SortingPermutationUnit {
 
     private static int[] a;
     private static int[] pos;
-    private static List<int[][]> perms = new ArrayList<>();;
+    private static List<int[][]> perms = new ArrayList<>();
 
     private static int CNT = 0;
 
