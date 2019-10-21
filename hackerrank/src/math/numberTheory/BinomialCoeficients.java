@@ -31,16 +31,7 @@ public class BinomialCoeficients {
                 allSmallerOrEqual = allSmallerOrEqual.multiply(rem.add(BigInteger.ONE));
             }
 
-            BigInteger all = BigInteger.ONE;
-
-            for (int i = 0; i < rems.size(); i++) {
-                all = all.multiply(pBig);
-            }
-
-            BigInteger atLeastOneGreater = all.subtract(allSmallerOrEqual);
-
-            BigInteger res = atLeastOneGreater.subtract(all.subtract(nBckp)).add(BigInteger.ONE);
-
+            BigInteger res = nBckp.subtract(allSmallerOrEqual).add(BigInteger.ONE);
             System.out.println(res);
         }
     }
