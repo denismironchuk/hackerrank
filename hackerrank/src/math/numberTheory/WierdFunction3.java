@@ -70,16 +70,14 @@ public class WierdFunction3 {
         }
 
         int elementsCnt = elements.size();
-        long[] euler = new long[elementsCnt];
-        for (int i = 0; i < elementsCnt; i++) {
-            Elmt el = elements.get(i);
-            euler[i] = (long)eulers[el.build1] * (long)eulers[el.build2];
-        }
-
         long[] cumSum = new long[elementsCnt];
-        cumSum[0] = euler[0];
+
+        Elmt el0 = elements.get(0);
+        cumSum[0] = (long)eulers[el0.build1] * (long)eulers[el0.build2];
+
         for (int i = 1; i < elementsCnt; i++) {
-            cumSum[i] = cumSum[i - 1] + euler[i];
+            Elmt el = elements.get(i);
+            cumSum[i] = cumSum[i - 1] + (long)eulers[el.build1] * (long)eulers[el.build2];
         }
 
         StringBuilder output = new StringBuilder();
