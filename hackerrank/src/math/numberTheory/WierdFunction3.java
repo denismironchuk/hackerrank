@@ -51,29 +51,21 @@ public class WierdFunction3 {
 
         int n = (int)maxBuild + 1;
 
-        int[] primesCnt = new int[n + 1];
-        int[][] primes = new int[n + 1][10];
+        int[] isPrime = new int[n + 1];
+        int[] eulers = new int[n + 1];
 
-        for (int i = 2; i * i <= n; i++) {
-            if (primesCnt[i] == 0) {
-                for (int j = i * i; j <= n; j+=i) {
-                    primes[j][primesCnt[j]] = i;
-                    primesCnt[j]++;
-                }
-            }
+        for (int i = 0; i <= n; i++) {
+            eulers[i] = i;
+            isPrime[i] = 1;
         }
 
         for (int i = 2; i <= n; i++) {
-            int i_ = i;
-            for (int j = 0; j < primesCnt[i]; j++) {
-                while (i_ % primes[i][j] == 0) {
-                    i_ /= primes[i][j];
+            if (isPrime[i] == 1) {
+                eulers[i] = i - 1;
+                for (int j = 2; i * j <= n; j++) {
+                    eulers[i * j] -= eulers[i * j] / i;
+                    isPrime[i * j] = 0;
                 }
-            }
-
-            if (i_ != 1) {
-                primes[i][primesCnt[i]] = i_;
-                primesCnt[i]++;
             }
         }
 
@@ -81,7 +73,7 @@ public class WierdFunction3 {
         long[] euler = new long[elementsCnt];
         for (int i = 0; i < elementsCnt; i++) {
             Elmt el = elements.get(i);
-            euler[i] = euler(el.val, merge(primes[el.build1], primesCnt[el.build1], primes[el.build2], primesCnt[el.build2]));
+            euler[i] = (long)eulers[el.build1] * (long)eulers[el.build2];
         }
 
         long[] cumSum = new long[elementsCnt];
@@ -131,61 +123,5 @@ public class WierdFunction3 {
         } else {
             return getPositionLessOrEqual(vals, search, mid, end);
         }
-    }
-
-    private static long euler(long n, int[] primes) {
-        long res = n;
-
-        for (int i = 0; i < primes.length && primes[i] != 0; i++) {
-            res -= res / (long)primes[i];
-        }
-
-        return res;
-    }
-
-    private static int[] merge(int[] a1, int len1, int[] a2, int len2) {
-        int[] res = new int[len1 + len2];
-        int index = 0;
-
-        int index1 = 0;
-        int index2 = 0;
-
-        int lastAdded = -1;
-
-        while (index1 < len1 && index2 < len2) {
-            if (a1[index1] < a2[index2]) {
-                if (lastAdded != a1[index1]) {
-                    res[index] = a1[index1];
-                    lastAdded = a1[index1];
-                    index++;
-                }
-                index1++;
-            } else {
-                if (lastAdded != a2[index2]) {
-                    res[index] = a2[index2];
-                    lastAdded = a2[index2];
-                    index++;
-                }
-                index2++;
-            }
-        }
-
-        for (int i = index1; i < len1; i++) {
-            if (lastAdded != a1[i]) {
-                res[index] = a1[i];
-                lastAdded = a1[i];
-                index++;
-            }
-        }
-
-        for (int i = index2; i < len2; i++) {
-            if (lastAdded != a2[i]) {
-                res[index] = a2[i];
-                lastAdded = a2[i];
-                index++;
-            }
-        }
-
-        return res;
     }
 }
