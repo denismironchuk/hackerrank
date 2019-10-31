@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -83,8 +82,11 @@ public class WierdFunction3 {
         StringBuilder output = new StringBuilder();
 
         for (long[] req : requests) {
-            int posStart = getPositionGreaterOrEqual(elements, req[0], 0, elementsCnt - 1);
-            int posEnd = getPositionLessOrEqual(elements, req[1], 0, elementsCnt - 1);
+            double posStartDouble = (Math.sqrt(8 * req[0] + 1) - 1) / 2;
+            int posStart = Math.floor(posStartDouble) == posStartDouble ? (int)posStartDouble - 1 : (int)posStartDouble;
+
+            double posEndDouble = (Math.sqrt(8 * req[1] + 1) - 1) / 2;
+            int posEnd = (int)posEndDouble - 1;
 
             if (posStart == 0) {
                 output.append(cumSum[posEnd]).append("\n");
@@ -95,31 +97,5 @@ public class WierdFunction3 {
         }
 
         System.out.println(output);
-    }
-
-    private static int getPositionGreaterOrEqual(List<Elmt> vals, long search, int start, int end) {
-        if (start == end) {
-            return start;
-        }
-
-        int mid = (start + end) / 2;
-        if (vals.get(mid).val < search) {
-            return getPositionGreaterOrEqual(vals, search, mid + 1, end);
-        } else {
-            return getPositionGreaterOrEqual(vals, search, start, mid);
-        }
-    }
-
-    private static int getPositionLessOrEqual(List<Elmt> vals, long search, int start, int end) {
-        if (start == end) {
-            return start;
-        }
-
-        int mid = 1+ (start + end) / 2;
-        if (vals.get(mid).val > search) {
-            return getPositionLessOrEqual(vals, search, start, mid - 1);
-        } else {
-            return getPositionLessOrEqual(vals, search, mid, end);
-        }
     }
 }
