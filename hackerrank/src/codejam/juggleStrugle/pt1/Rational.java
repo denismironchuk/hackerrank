@@ -5,12 +5,17 @@ import java.util.Objects;
 
 public class Rational implements Comparable<Rational> {
 
-    public static final BigInteger NEGATIVE_ONE = BigInteger.valueOf(-1);
-    public static final Rational ZERO = new Rational(BigInteger.ZERO);
-    public static final Rational MINUS_ONE = new Rational(NEGATIVE_ONE);
+    public static final Rational ZERO = new Rational(0);
+    public static final Rational ONE = new Rational(1);
+    public static final Rational TWO = new Rational(2);
+    public static final Rational MINUS_ONE = new Rational(-1);
 
     private BigInteger chisl;
     private BigInteger znam;
+
+    public static Rational random(long lim) {
+        return new Rational((long)(Math.random() * lim));
+    }
 
     public Rational(BigInteger chisl, BigInteger znam) {
         if (znam.equals(BigInteger.ZERO)) {
@@ -30,6 +35,9 @@ public class Rational implements Comparable<Rational> {
         this(BigInteger.valueOf(chisl), BigInteger.ONE);
     }
 
+    public Rational(long chisl, long znam) {
+        this(BigInteger.valueOf(chisl), BigInteger.valueOf(znam));
+    }
 
     public Rational add(Rational r) {
         return new Rational(chisl.multiply(r.znam).add(r.chisl.multiply(znam)), znam.multiply(r.znam));
@@ -45,7 +53,7 @@ public class Rational implements Comparable<Rational> {
 
     public Rational inverse() {
         if (chisl.compareTo(BigInteger.ZERO) == -1) {
-            return new Rational(znam.multiply(NEGATIVE_ONE), chisl.multiply(NEGATIVE_ONE));
+            return new Rational(znam.negate(), chisl.negate());
         } else {
             return new Rational(znam, chisl);
         }

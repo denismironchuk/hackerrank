@@ -4,10 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class JuggleStruggle1 extends JPanel {
@@ -16,7 +14,7 @@ public class JuggleStruggle1 extends JPanel {
 
     public static int MAX_X = 900;
     public static int MAX_Y = 900;
-    public static int POINTS_CNT = 8;
+    public static int POINTS_CNT = 200;
 
     private static List<Point> points;
     private static List<Line> lines;
@@ -32,6 +30,8 @@ public class JuggleStruggle1 extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 extendLinesToIntersection();
+                System.out.println("Extension completed!!!");
+                System.out.println(points);
                 paint(e.getComponent().getGraphics());
             }
         });
@@ -81,12 +81,10 @@ public class JuggleStruggle1 extends JPanel {
 
     /*private static void generatePoints() {
         points = new ArrayList<>();
-        points.add(new Point(new Rational(893), new Rational(159)));
-        points.add(new Point(new Rational(439), new Rational(516)));
-        points.add(new Point(new Rational(54), new Rational(195)));
-        points.add(new Point(new Rational(463), new Rational(3)));
-        points.add(new Point(new Rational(486), new Rational(252)));
-        points.add(new Point(new Rational(575), new Rational(202)));
+        points.add(new Point(new Rational(168), new Rational(163)));
+        points.add(new Point(new Rational(641), new Rational(720)));
+        points.add(new Point(new Rational(580), new Rational(788)));
+        points.add(new Point(new Rational(740), new Rational(767)));
     }*/
 
     private static void generatePoints() {
@@ -139,15 +137,66 @@ public class JuggleStruggle1 extends JPanel {
     private static void extendLineToPoint(Line l, Point p) {
         if (!l.isPointInSegment(p)) {
             if (l.p1.getSqrDist(p).compareTo(l.p2.getSqrDist(p)) == -1) {
-                l.setP1(p);
+                Point extension = getLineExtension(l.p2, p);
+                while (!isValidPoint(extension, l.p1)) {
+                    extension = getLineExtension(l.p2, p);
+                }
+
+                l.setP1(extension);
             } else {
-                l.setP2(p);
+                Point extension = getLineExtension(l.p1, p);
+                while (!isValidPoint(extension, l.p2)) {
+                    extension = getLineExtension(l.p1, p);
+                }
+
+                l.setP2(extension);
             }
+            rebuildPoints();
         }
     }
 
+    private static boolean isValidPoint(Point checked, Point excluded) {
+        boolean isValid = true;
+
+        for (int i = 0; isValid && i < POINTS_CNT - 1; i++) {
+            Point p1 = points.get(i);
+
+            if (p1.equals(excluded)) {
+                continue;
+            }
+
+            for (int j = i + 1; isValid && j < POINTS_CNT; j++) {
+                Point p2 = points.get(j);
+
+                if (p2.equals(excluded)) {
+                    continue;
+                }
+
+                Line line = new Line(p1, p2);
+                isValid = !line.pointBelongs(checked);
+            }
+        }
+
+        return isValid;
+    }
+
+    private static void rebuildPoints() {
+        points = lines.stream().flatMap(line -> Arrays.asList(line.p1, line.p2).stream()).collect(Collectors.toList());
+    }
+
+    private static Point getLineExtension(Point linePoint, Point interPoint) {
+        Rational part = Rational.random(15).add(Rational.ONE);
+
+        Rational xLen = interPoint.x.substract(linePoint.x);
+        Rational yLen = interPoint.y.substract(linePoint.y);
+
+        Point pOnLine = new Point(interPoint.x.substract(xLen.divide(part)), interPoint.y.substract(yLen.divide(part)));
+
+        return pOnLine.flipPoint(interPoint);
+    }
+
     public void paint(Graphics g) {
-        super.paintComponent(g);
+        paintComponent(g);
 
         for (Line l : lines) {
             g.drawLine(l.p1.x.getValue(), l.p1.y.getValue(), l.p2.x.getValue(), l.p2.y.getValue());

@@ -1,6 +1,5 @@
 package codejam.juggleStrugle.pt1;
 
-import java.math.BigInteger;
 import java.util.Objects;
 
 public class Point {
@@ -16,8 +15,8 @@ public class Point {
     }
 
     public static Point random(long xLimit, long yLimit) {
-        Rational x = new Rational(BigInteger.valueOf((long)(Math.random() * xLimit)));
-        Rational y = new Rational(BigInteger.valueOf((long)(Math.random() * yLimit)));
+        Rational x = Rational.random(xLimit);
+        Rational y = Rational.random(yLimit);
         return new Point(x, y);
     }
 
@@ -41,6 +40,10 @@ public class Point {
 
     public Rational getSqrDist(Point p) {
         return x.substract(p.x).mul(x.substract(p.x)).add(y.substract(p.y).mul(y.substract(p.y)));
+    }
+
+    public Point flipPoint(Point origin) {
+        return new Point(Rational.TWO.mul(origin.x).substract(x), Rational.TWO.mul(origin.y).substract(y));
     }
 
     @Override
