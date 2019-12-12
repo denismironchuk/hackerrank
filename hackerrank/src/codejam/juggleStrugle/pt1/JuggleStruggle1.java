@@ -14,7 +14,7 @@ public class JuggleStruggle1 extends JPanel {
 
     public static int MAX_X = 900;
     public static int MAX_Y = 900;
-    public static int POINTS_CNT = 200;
+    public static int POINTS_CNT = 12;
 
     private static List<Point> points;
     private static List<Line> lines;

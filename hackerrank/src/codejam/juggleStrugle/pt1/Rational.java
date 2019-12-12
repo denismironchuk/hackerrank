@@ -1,6 +1,8 @@
 package codejam.juggleStrugle.pt1;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.Objects;
 
 public class Rational implements Comparable<Rational> {
@@ -67,6 +69,10 @@ public class Rational implements Comparable<Rational> {
         return (chisl.divide(znam).intValue());
     }
 
+    public double getDoubleValue() {
+        return new BigDecimal(chisl, 6).divide(new BigDecimal(znam, 6), 6, RoundingMode.HALF_EVEN).doubleValue();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -76,8 +82,9 @@ public class Rational implements Comparable<Rational> {
             return false;
         }
         Rational rational = (Rational) o;
-        return Objects.equals(chisl, rational.chisl) &&
-                Objects.equals(znam, rational.znam);
+        return compareTo(rational) == 0;
+        /*return Objects.equals(chisl, rational.chisl) &&
+                Objects.equals(znam, rational.znam);*/
     }
 
     @Override

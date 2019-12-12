@@ -36,7 +36,7 @@ public class Line {
     }
 
     public boolean pointBelongs(Point p) {
-        return A.mul(p.x).add(B.mul(p.y)).add(C).equals(Rational.ZERO);
+        return A.mul(p.x).add(B.mul(p.y)).add(C).compareTo(Rational.ZERO) == 0;
     }
 
     public Point getIntersection(Line l) {
@@ -62,5 +62,13 @@ public class Line {
         Rational dist2 = p.getSqrDist(p2);
 
         return dist1.compareTo(dist2) == -1 ? p1 : p2;
+    }
+
+    public Rational squareLen() {
+        return p1.getSqrDist(p2);
+    }
+
+    public Vector getVector() {
+        return new Vector(this);
     }
 }

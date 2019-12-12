@@ -6,12 +6,19 @@ public class Point {
     Rational x;
     Rational y;
 
+    int index;
+
     public Point() {
     }
 
     public Point(Rational x, Rational y) {
         this.x = x;
         this.y = y;
+    }
+
+    public Point setIndex(int index) {
+        this.index = index;
+        return this;
     }
 
     public static Point random(long xLimit, long yLimit) {
@@ -51,6 +58,7 @@ public class Point {
         return "Point{" +
                 "x=" + x +
                 ", y=" + y +
+                ", index=" + index +
                 '}';
     }
 }
