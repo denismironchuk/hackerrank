@@ -39,25 +39,6 @@ public class JuggleStruggleFinal {
         public void setSector(int sector) {
             this.sector = sector;
         }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            Point point = (Point) o;
-            return num == point.num &&
-                    x == point.x &&
-                    y == point.y;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(num, x, y);
-        }
     }
 
     private static class Line {
@@ -251,7 +232,7 @@ public class JuggleStruggleFinal {
         Point center = points.get((int)(Math.random() * points.size()));
         Point end = center;
 
-        while (center.equals(end)) {
+        while (center.num == end.num) {
             end = points.get((int)(Math.random() * points.size()));
         }
 
@@ -264,16 +245,14 @@ public class JuggleStruggleFinal {
         int leftCnt = 0;
 
         for (Point p : points) {
-            if (!p.equals(center) && !p.equals(end)) {
-                if (line.getPointSide(p) == -1) {
-                    Vector v2 = new Line(p, center).getVector();
-                    pointAndAngles.add(new PointAndAngle(p, getAngleCos(v1, v2), false));
-                    leftCnt++;
-                } else {
-                    Vector v2 = new Line(center, p).getVector();
-                    pointAndAngles.add(new PointAndAngle(p, getAngleCos(v1, v2), true));
-                    rightCnt++;
-                }
+            if (line.getPointSide(p) == -1) {
+                Vector v2 = new Line(p, center).getVector();
+                pointAndAngles.add(new PointAndAngle(p, getAngleCos(v1, v2), false));
+                leftCnt++;
+            } else if (line.getPointSide(p) == 1) {
+                Vector v2 = new Line(center, p).getVector();
+                pointAndAngles.add(new PointAndAngle(p, getAngleCos(v1, v2), true));
+                rightCnt++;
             }
         }
 
