@@ -16,6 +16,12 @@ public class Point {
         this.y = y;
     }
 
+    public Point(int index, Rational x, Rational y) {
+        this.x = x;
+        this.y = y;
+        this.index = index;
+    }
+
     public Point setIndex(int index) {
         this.index = index;
         return this;
