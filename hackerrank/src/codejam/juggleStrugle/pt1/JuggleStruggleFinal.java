@@ -39,6 +39,15 @@ public class JuggleStruggleFinal {
         public void setSector(int sector) {
             this.sector = sector;
         }
+
+        @Override
+        public String toString() {
+            return "Point{" +
+                    "num=" + num +
+                    ", x=" + x +
+                    ", y=" + y +
+                    '}';
+        }
     }
 
     private static class Line {
@@ -68,6 +77,14 @@ public class JuggleStruggleFinal {
         public Vector getVector() {
             return new Vector(this);
         }
+
+        @Override
+        public String toString() {
+            return "Line{" +
+                    "p1=" + p1 +
+                    ", p2=" + p2 +
+                    '}';
+        }
     }
 
     public static class Vector {
@@ -79,7 +96,7 @@ public class JuggleStruggleFinal {
             this.y = line.p2.y - line.p1.y;
         }
 
-        public long scalarMul(Vector v) {
+        public double scalarMul(Vector v) {
             return x * v.x + y * v.y;
         }
 
@@ -91,17 +108,17 @@ public class JuggleStruggleFinal {
     private static class PointAndAngle implements Comparable<PointAndAngle> {
         private Point p;
         private double angle;
-        private boolean right;
+        private boolean clockWise;
 
         public PointAndAngle(Point p, double angle) {
             this.p = p;
             this.angle = angle;
         }
 
-        public PointAndAngle(Point p, double angle, boolean right) {
+        public PointAndAngle(Point p, double angle, boolean clockWise) {
             this.p = p;
             this.angle = angle;
-            this.right = right;
+            this.clockWise = clockWise;
         }
 
         @Override
@@ -233,7 +250,8 @@ public class JuggleStruggleFinal {
         Point end = center;
 
         while (center.num == end.num) {
-            end = points.get((int)(Math.random() * points.size()));
+            int ind = (int)(Math.random() * points.size());
+            end = points.get(ind);
         }
 
         Line line = new Line(center, end);
@@ -241,43 +259,43 @@ public class JuggleStruggleFinal {
 
         List<PointAndAngle> pointAndAngles = new ArrayList<>();
 
-        int rightCnt = 0;
-        int leftCnt = 0;
+        int clockWiseCnt = 0;
+        int contClockWiseCnt = 0;
 
         for (Point p : points) {
             if (line.getPointSide(p) == -1) {
                 Vector v2 = new Line(p, center).getVector();
                 pointAndAngles.add(new PointAndAngle(p, getAngleCos(v1, v2), false));
-                leftCnt++;
+                contClockWiseCnt++;
             } else if (line.getPointSide(p) == 1) {
                 Vector v2 = new Line(center, p).getVector();
                 pointAndAngles.add(new PointAndAngle(p, getAngleCos(v1, v2), true));
-                rightCnt++;
+                clockWiseCnt++;
             }
         }
 
         Collections.sort(pointAndAngles);
         int index = 0;
-        boolean isRight = true;
+        boolean isClockWise = true;
 
-        while (rightCnt != leftCnt && center.sector == end.sector) {
+        while (clockWiseCnt != contClockWiseCnt || center.sector == end.sector) {
             PointAndAngle curr = pointAndAngles.get(index);
             index++;
             end = curr.p;
 
-            if (curr.right) {
-                if (isRight) {
-                    rightCnt--;
-                    leftCnt++;
+            if (curr.clockWise) {
+                if (isClockWise) {
+                    clockWiseCnt--;
+                    contClockWiseCnt++;
                 } else {
-                    isRight = !isRight;
+                    isClockWise = !isClockWise;
                 }
             } else {
-                if (!isRight) {
-                    leftCnt--;
-                    rightCnt++;
+                if (!isClockWise) {
+                    contClockWiseCnt--;
+                    clockWiseCnt++;
                 } else {
-                    isRight = !isRight;
+                    isClockWise = !isClockWise;
                 }
             }
         }
