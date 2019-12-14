@@ -235,7 +235,7 @@ public class JuggleStruggleFinal {
         for (int i = 1; i < points.size(); i++) {
             Point p = points.get(i);
             Vector v2 = new Line(center, p).getVector();
-            pointAndAngles.add(new PointAndAngle(p, getAngleCos(v1, v2), false));
+            pointAndAngles.add(new PointAndAngle(p, getAngleCos(v1, v2)));
         }
 
         Collections.sort(pointAndAngles);
@@ -245,7 +245,7 @@ public class JuggleStruggleFinal {
         return new Line(center, end);
     }
 
-    private static Line getDividingLine(List<Point> points) {
+    /*private static Line getDividingLine(List<Point> points) {
         Point center = points.get((int)(Math.random() * points.size()));
         Point end = center;
 
@@ -301,9 +301,38 @@ public class JuggleStruggleFinal {
         }
 
         return new Line(center, end);
+    }*/
+
+    private static Line getDividingLine(List<Point> points) {
+        for (Point center : points) {
+            for (Point end : points) {
+                if (center.sector != end.sector) {
+                    int leftCnt = 0;
+                    int rightCnt = 0;
+
+                    Line line = new Line(center, end);
+
+                    for (Point p : points) {
+                        int side = line.getPointSide(p);
+
+                        if (side == 1) {
+                            leftCnt++;
+                        } else if (side == -1) {
+                            rightCnt++;
+                        }
+                    }
+
+                    if (leftCnt == rightCnt) {
+                        return line;
+                    }
+                }
+            }
+        }
+
+        throw new RuntimeException();
     }
 
     private static double getAngleCos(Vector v1, Vector v2) {
-        return v1.scalarMul(v2) / (v1.getLen() * v2.getLen());
+        return v1.scalarMul(v2) / v1.getLen() / v2.getLen();
     }
 }
