@@ -191,6 +191,23 @@ public class JuggleStruggleSimple {
     private static Line getDividingLineInitial(Set<Point> points) {
         List<Point> pointsSorted = points.stream().sorted(Comparator.comparingLong(Point::getX)).collect(Collectors.toList());
         Point center = pointsSorted.get(0);
+        Line line = null;
+
+        for (int i = 1; i < pointsSorted.size(); i++) {
+            Point p = pointsSorted.get(i);
+            line = new Line(center, p);
+
+            if (validate(points, line)) {
+                break;
+            }
+        }
+
+        return line;
+    }
+
+    /*private static Line getDividingLineInitial(Set<Point> points) {
+        List<Point> pointsSorted = points.stream().sorted(Comparator.comparingLong(Point::getX)).collect(Collectors.toList());
+        Point center = pointsSorted.get(0);
         List<PointAndAngle> pointAndAngles = new ArrayList<>();
 
         Line line = new Line(center, new Point(-1, center.x, center.y + 1));
@@ -211,5 +228,5 @@ public class JuggleStruggleSimple {
 
     private static double getAngleCos(Vector v1, Vector v2) {
         return v1.scalarMul(v2) / v1.getLen() / v2.getLen();
-    }
+    }*/
 }
