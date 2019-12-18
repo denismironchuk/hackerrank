@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class JuggleStruggleFinal {
 
@@ -96,7 +97,7 @@ public class JuggleStruggleFinal {
             this.y = line.p2.y - line.p1.y;
         }
 
-        public double scalarMul(Vector v) {
+        public long scalarMul(Vector v) {
             return x * v.x + y * v.y;
         }
 
@@ -224,7 +225,7 @@ public class JuggleStruggleFinal {
         }
     }
 
-    private static Line getDividingLineInitial(List<Point> points) {
+    /*private static Line getDividingLineInitial(List<Point> points) {
         points.sort(Comparator.comparingLong(Point::getX));
         Point center = points.get(0);
         List<PointAndAngle> pointAndAngles = new ArrayList<>();
@@ -243,7 +244,55 @@ public class JuggleStruggleFinal {
         Point end = pointAndAngles.get(pointAndAngles.size() / 2).p;
 
         return new Line(center, end);
+    }*/
+
+    private static Line getDividingLineInitial(List<Point> points) {
+        List<Point> pointsSorted = points.stream().sorted(Comparator.comparingLong(Point::getX)).collect(Collectors.toList());
+        Point center = pointsSorted.get(0);
+        Line line = null;
+
+        for (int i = 1; i < pointsSorted.size(); i++) {
+            Point p = pointsSorted.get(i);
+            line = new Line(center, p);
+
+            if (validate(points, line)) {
+                break;
+            }
+        }
+
+        return line;
     }
+
+    private static boolean validate(List<Point> points, Line line) {
+        int leftCnt = 0;
+        int rightCount = 0;
+
+        for (Point p : points) {
+            int side = line.getPointSide(p);
+
+            if (side == -1) {
+                leftCnt++;
+            } else if (side == 1) {
+                rightCount++;
+            }
+        }
+
+        return leftCnt == rightCount;
+    }
+
+    private static Line getDividingLine(List<Point> points) {
+        Point center = points.get((int) (Math.random() * points.size()));
+        Point end = center;
+
+        while (center.num == end.num) {
+            int ind = (int) (Math.random() * points.size());
+            end = points.get(ind);
+        }
+
+        return null;
+    }
+
+
 
     /*private static Line getDividingLine(List<Point> points) {
         Point center = points.get((int)(Math.random() * points.size()));
@@ -303,10 +352,10 @@ public class JuggleStruggleFinal {
         return new Line(center, end);
     }*/
 
-    private static Line getDividingLine(List<Point> points) {
+    /*private static Line getDividingLine(List<Point> points) {
         for (Point center : points) {
             for (Point end : points) {
-                if (center.sector != end.sector) {
+                if (center.num != end.num) {
                     int leftCnt = 0;
                     int rightCnt = 0;
 
@@ -330,9 +379,9 @@ public class JuggleStruggleFinal {
         }
 
         throw new RuntimeException();
-    }
+    }*/
 
-    private static double getAngleCos(Vector v1, Vector v2) {
+    /*private static double getAngleCos(Vector v1, Vector v2) {
         return v1.scalarMul(v2) / v1.getLen() / v2.getLen();
-    }
+    }*/
 }
