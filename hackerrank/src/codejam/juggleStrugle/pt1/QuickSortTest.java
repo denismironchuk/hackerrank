@@ -7,7 +7,7 @@ public class QuickSortTest {
     public static void main(String[] args) {
         while (true) {
             System.out.println("=========");
-            int n = 200000;
+            int n = 100000;
             int[] a = new int[n];
             int[] aOrigin = new int[n];
             for (int i = 0; i < n; i++) {

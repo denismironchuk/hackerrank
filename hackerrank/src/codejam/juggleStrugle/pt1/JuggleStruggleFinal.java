@@ -142,7 +142,7 @@ public class JuggleStruggleFinal {
                 points.add(new Point(i, x, y));
             }
 
-            Line divideLine = getDividingLineInitial(points);
+            Line divideLine = getDividingLine(points);
             List<Point> sector1 = new ArrayList<>();
             List<Point> sector2 = new ArrayList<>();
 
@@ -281,18 +281,55 @@ public class JuggleStruggleFinal {
     }
 
     private static Line getDividingLine(List<Point> points) {
+        if (points.size() == 2) {
+            return new Line(points.get(0), points.get(1));
+        }
         Point center = points.get((int) (Math.random() * points.size()));
-        Point end = center;
+        List<Point> noCenterPoints = points.stream().filter(p -> p.num != center.num).collect(Collectors.toList());
+        Point end = sort(noCenterPoints, center, 0, noCenterPoints.size() - 1, noCenterPoints.size() / 2);
+        return new Line(center, end);
+    }
 
-        while (center.num == end.num) {
-            int ind = (int) (Math.random() * points.size());
-            end = points.get(ind);
+    private static Point sort(List<Point> points, Point center, int start, int end, int expectedPivot) {
+        try {
+            if (start > end) {
+                return points.get(start);
+            }
+            int index = start + (int) (Math.random() * (end - start + 1));
+            Point pivotPoint = points.get(index);
+            points.set(index, points.get(end));
+            points.set(end, pivotPoint);
+
+            Line l = new Line(center, pivotPoint);
+
+            int newPivotIndex = start;
+
+            for (int i = start; i < end; i++) {
+                Point p = points.get(i);
+
+                if (l.getPointSide(p) < 0) {
+                    points.set(i, points.get(newPivotIndex));
+                    points.set(newPivotIndex, p);
+                    newPivotIndex++;
+                }
+            }
+
+            points.set(end, points.get(newPivotIndex));
+            points.set(newPivotIndex, pivotPoint);
+
+            if (newPivotIndex == expectedPivot) {
+                return pivotPoint;
+            } else if (newPivotIndex > expectedPivot) {
+                return sort(points, center, start, newPivotIndex - 1, expectedPivot);
+            } else {
+                return sort(points, center, newPivotIndex + 1, end, expectedPivot);
+            }
+        } catch (Throwable ex) {
+            System.out.println();
         }
 
         return null;
     }
-
-
 
     /*private static Line getDividingLine(List<Point> points) {
         Point center = points.get((int)(Math.random() * points.size()));

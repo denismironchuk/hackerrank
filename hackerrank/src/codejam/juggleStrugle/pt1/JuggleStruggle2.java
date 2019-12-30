@@ -12,9 +12,9 @@ public class JuggleStruggle2 extends JPanel {
 
     private static final long serialVersionUID = 1438861584964777725L;
 
-    public static int MAX_X = 2000;
-    public static int MAX_Y = 2000;
-    public static int POINTS_CNT = 10;
+    public static int MAX_X = 500;
+    public static int MAX_Y = 500;
+    public static int POINTS_CNT = 6;
 
     private static List<Point> points;
     private static Line divideLine;
@@ -28,6 +28,14 @@ public class JuggleStruggle2 extends JPanel {
 
         Point center = points.get((int)(Math.random() * POINTS_CNT));
         //Point center = points.get(4);
+
+        divideLine = getDividingLine(points);
+
+
+        if (!validate(divideLine)) {
+            points.forEach(System.out::println);
+            throw new RuntimeException();
+        }
 
         addMouseListener(new CustomAdapter(center));
     }
@@ -43,7 +51,7 @@ public class JuggleStruggle2 extends JPanel {
         @Override
         public void mouseClicked(MouseEvent e) {
             System.out.println("Mouse clicked");
-            if (end == null) {
+            /*if (end == null) {
                 end = getRandomPoint(center);
             }
 
@@ -53,6 +61,14 @@ public class JuggleStruggle2 extends JPanel {
             paint(e.getComponent().getGraphics());
 
             if (!validate(center, end)) {
+                throw new RuntimeException();
+            }*/
+
+            divideLine = getDividingLine(points);
+
+
+            if (!validate(divideLine)) {
+                points.forEach(System.out::println);
                 throw new RuntimeException();
             }
         }
@@ -69,6 +85,14 @@ public class JuggleStruggle2 extends JPanel {
 
 
             if (!validate(center, end)) {
+                throw new RuntimeException();
+            }
+
+            Line line = getDividingLine(points);
+
+
+            if (!validate(line)) {
+                points.forEach(System.out::println);
                 throw new RuntimeException();
             }
 
@@ -89,6 +113,57 @@ public class JuggleStruggle2 extends JPanel {
         //System.out.println(point);
 
         return point;
+    }
+
+    private static Line getDividingLine(List<Point> points) {
+        //Point center = points.get((int) (Math.random() * points.size()));
+        Point center = points.get(4);
+        System.out.println("Center = " + center);
+        List<Point> noCenterPoints = points.stream().filter(p -> !p.equals(center)).collect(Collectors.toList());
+        Point end = sort(noCenterPoints, center, 0, noCenterPoints.size() - 1, noCenterPoints.size() / 2);
+        return new Line(center, end);
+    }
+
+    private static Point sort(List<Point> points, Point center, int start, int end, int expectedPivot) {
+        try {
+            if (start >= end) {
+                return points.get(start);
+            }
+            int index = 3;//start + (int) (Math.random() * (end - start + 1));
+            System.out.println("index = " + index);
+            Point pivotPoint = points.get(index);
+            points.set(index, points.get(end));
+            points.set(end, pivotPoint);
+
+            Line l = new Line(center, pivotPoint);
+
+            int newPivotIndex = start;
+
+            for (int i = start; i < end; i++) {
+                Point p = points.get(i);
+
+                if (l.getPointSide(p) < 0) {
+                    points.set(i, points.get(newPivotIndex));
+                    points.set(newPivotIndex, p);
+                    newPivotIndex++;
+                }
+            }
+
+            points.set(end, points.get(newPivotIndex));
+            points.set(newPivotIndex, pivotPoint);
+
+            if (newPivotIndex == expectedPivot) {
+                return pivotPoint;
+            } else if (newPivotIndex > expectedPivot) {
+                return sort(points, center, start, newPivotIndex - 1, expectedPivot);
+            } else {
+                return sort(points, center, newPivotIndex + 1, end, expectedPivot);
+            }
+        } catch (Throwable ex) {
+            System.out.println();
+        }
+
+        return null;
     }
 
     private static Point getEqualDivideLine(Point center) {
@@ -183,26 +258,12 @@ public class JuggleStruggle2 extends JPanel {
 
     private static void generatePoints() {
         points = Arrays.asList(
-                new Point(2,new Rational(-387),new Rational(516)),
-                new Point(14,new Rational(24),new Rational(-271)),
-                new Point(13,new Rational(644),new Rational(220)),
-                new Point(8,new Rational(240),new Rational(-176)),
-                new Point(11,new Rational(224),new Rational(700)),
-                new Point(19,new Rational(843),new Rational(-39)),
-                new Point(0,new Rational(907),new Rational(-250)),
-                new Point(5,new Rational(793),new Rational(-867)),
-                new Point(10,new Rational(-703),new Rational(258)),
-                new Point(7,new Rational(21),new Rational(-32)),
-                new Point(4,new Rational(343),new Rational(997)),
-                new Point(3,new Rational(-973),new Rational(445)),
-                new Point(17,new Rational(252),new Rational(480)),
-                new Point(6,new Rational(658),new Rational(194)),
-                new Point(16,new Rational(-207),new Rational(308)),
-                new Point(12,new Rational(471),new Rational(-515)),
-                new Point(15,new Rational(-988),new Rational(-7)),
-                new Point(9,new Rational(-813),new Rational(670)),
-                new Point(1,new Rational(945),new Rational(-238)),
-                new Point(18,new Rational(-832),new Rational(-13))
+                new Point(4, new Rational(107), new Rational(5)),
+                new Point(1, new Rational(478), new Rational(142)),
+                new Point(3, new Rational(232), new Rational(31)),
+                new Point(5, new Rational(277), new Rational(217)),
+                new Point(2, new Rational(243), new Rational(107)),
+                new Point(0, new Rational(288), new Rational(86))
         );
     }
 
@@ -241,6 +302,23 @@ public class JuggleStruggle2 extends JPanel {
         points = pointsSet.stream().collect(Collectors.toList());
         //System.out.println(points);
     }*/
+
+    private static boolean validate(Line line) {
+        int leftCnt = 0;
+        int rightCount = 0;
+
+        for (Point p : points) {
+            if (!p.equals(line.p1) && !p.equals(line.p2)) {
+                if (line.getPointSide(p) == -1) {
+                    leftCnt++;
+                } else {
+                    rightCount++;
+                }
+            }
+        }
+
+        return leftCnt == rightCount;
+    }
 
     private static boolean validate(Point p1, Point p2) {
         int leftCnt = 0;
