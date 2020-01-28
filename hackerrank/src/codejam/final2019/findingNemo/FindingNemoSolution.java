@@ -3,7 +3,7 @@ package codejam.final2019.findingNemo;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.StringTokenizer;
+import java.util.*;
 
 public class FindingNemoSolution {
     private static class Point {
@@ -51,15 +51,23 @@ public class FindingNemoSolution {
                             int rowDisp_ = rowDisp;
                             int colDisp_ = colDisp;
 
-                            while (nemo.row + rowDisp_ < rows && nemo.row + rowDisp_ >= 0 && nemo.col + colDisp_ < cols && nemo.col + colDisp_ >= 0) {
-                                Point newNemoPos = new Point(nemo.row + rowDisp_, nemo.col + colDisp_);
+                            int step = 1;
+                            while (nemo.row + rowDisp_ < rows && nemo.row + rowDisp_ >= 0
+                                    && nemo.col + colDisp_ < cols && nemo.col + colDisp_ >= 0) {
 
+                                int prevRowDisp = rowDisp_ - rowDisp;
+                                int prevColDisp = colDisp_ - colDisp;
+
+                                Point newNemoPos = new Point(nemo.row + rowDisp_, nemo.col + colDisp_);
+                                int[][]  distsFromNemoToEnd = countShortestPaths(currentBoard, newNemoPos, prevRowDisp, prevColDisp);
                                 currentBoard = intersectBoards(currentBoard, initialBoard, rowDisp_, colDisp_);
+                                int[][] distsFromStartToNemo = countShortestPaths(currentBoard, newNemoPos, rowDisp_, colDisp_);
 
                                 printBoard(currentBoard);
 
                                 rowDisp_ += rowDisp;
                                 colDisp_ += colDisp;
+                                step++;
                             }
                         }
 
@@ -69,13 +77,50 @@ public class FindingNemoSolution {
         }
     }
 
-    /*private int[][] countShortestPaths(char[][] board, Point nemoPos, int rowDisp, int colDisp) {
+    private static int[][] countShortestPaths(char[][] board, Point nemoPos, int rowDisp, int colDisp) {
         int rows = board.length;
         int cols = board[0].length;
 
         int[][] dists = new int[rows][cols];
+        int[][] proc = new int[rows][cols];
 
-    }*/
+        for (int row = 0; row < rows; row++) {
+            Arrays.fill(dists[row], Integer.MAX_VALUE);
+            Arrays.fill(proc[row], 0);
+        }
+
+        dists[nemoPos.row][nemoPos.col] = 0;
+        proc[nemoPos.row][nemoPos.col] = 1;
+
+        Queue<Point> q = new LinkedList<>();
+        q.add(nemoPos);
+
+        while (!q.isEmpty()) {
+            Point p = q.poll();
+
+            List<Point> nextPoints = Arrays.asList(new Point(p.row, p.col + 1),
+                    new Point(p.row, p.col - 1),
+                    new Point(p.row + 1, p.col),
+                    new Point(p.row - 1, p.col));
+
+            for (Point nextPoint : nextPoints) {
+                if (isPointInAvailbleArea(nextPoint, rowDisp, colDisp, rows, cols)
+                        && proc[nextPoint.row][nextPoint.col] == 0
+                        && board[nextPoint.row][nextPoint.col] != '#') {
+                    dists[nextPoint.row][nextPoint.col] = dists[p.row][p.col] + 1;
+                    proc[nextPoint.row][nextPoint.col] = 1;
+                    q.add(nextPoint);
+                }
+            }
+        }
+
+        return dists;
+    }
+
+    private static boolean isPointInAvailbleArea(Point p, int rowDisp, int colDisp, int rows, int cols) {
+        return p.row < Math.min(rows, rows + rowDisp) && p.row >= Math.max(0, rowDisp) &&
+                p.col < Math.min(cols, cols + colDisp) && p.col >= Math.max(0, colDisp);
+    }
 
     private static void printBoard(char[][] board) {
         int rows = board.length;
