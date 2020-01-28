@@ -51,10 +51,13 @@ public class FindingNemoSolution {
                             int rowDisp_ = rowDisp;
                             int colDisp_ = colDisp;
 
-                            while (nemo.row + rowDisp_ < rows && nemo.row + rowDisp >= 0 && nemo.col + colDisp_ < cols && nemo.col + colDisp_ >= 0) {
+                            while (nemo.row + rowDisp_ < rows && nemo.row + rowDisp_ >= 0 && nemo.col + colDisp_ < cols && nemo.col + colDisp_ >= 0) {
                                 Point newNemoPos = new Point(nemo.row + rowDisp_, nemo.col + colDisp_);
 
                                 currentBoard = intersectBoards(currentBoard, initialBoard, rowDisp_, colDisp_);
+
+                                printBoard(currentBoard);
+
                                 rowDisp_ += rowDisp;
                                 colDisp_ += colDisp;
                             }
@@ -64,6 +67,27 @@ public class FindingNemoSolution {
                 }
             }
         }
+    }
+
+    /*private int[][] countShortestPaths(char[][] board, Point nemoPos, int rowDisp, int colDisp) {
+        int rows = board.length;
+        int cols = board[0].length;
+
+        int[][] dists = new int[rows][cols];
+
+    }*/
+
+    private static void printBoard(char[][] board) {
+        int rows = board.length;
+        int cols = board[0].length;
+
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                System.out.print(board[row][col]);
+            }
+            System.out.println();
+        }
+        System.out.println("==================");
     }
 
     private static char[][] duplicateBoard(char[][] board) {
@@ -85,8 +109,8 @@ public class FindingNemoSolution {
 
         char[][] resultBoard = new char[rows][cols];
 
-        for (int row = Math.max(0, -rowDisp); row < Math.min(rows, rows - rowDisp); row++) {
-            for (int col = Math.max(0, -colDisp); col < Math.min(cols, cols - colDisp); col++) {
+        for (int row = Math.max(0, rowDisp); row < Math.min(rows, rows + rowDisp); row++) {
+            for (int col = Math.max(0, colDisp); col < Math.min(cols, cols + colDisp); col++) {
                 resultBoard[row][col] = mergeTwoBoardPositions(board[row][col], originalBoard[row - rowDisp][col - colDisp]);
             }
         }
