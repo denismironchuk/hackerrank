@@ -55,7 +55,9 @@ public class FindingNemoSolution {
                             int[][]  distsToNemoNoLoop = countShortestPaths(currentBoard, nemo, rowDisp, colDisp);
                             for (int row = 0; row < rows; row++) {
                                 for (int col = 0; col < cols; col++) {
-                                    distsToNemo[row][col] = Math.min(distsToNemoNoLoop[row][col], distsToNemo[row][col]);
+                                    if (distsToNemoNoLoop[row][col] != Integer.MAX_VALUE) {
+                                        distsToNemo[row][col] = Math.min(distsToNemoNoLoop[row][col], distsToNemo[row][col]);
+                                    }
                                 }
                             }
                         } else {
@@ -78,8 +80,10 @@ public class FindingNemoSolution {
                                 for(int row = 0; row < rows; row++) {
                                     for (int col = 0; col < cols; col++) {
                                         if (row - rowDisp_ >= 0 && col - colDisp_ >= 0 && row - rowDisp_ < rows && col - colDisp_ < cols) {
-                                            int distCandidate = distsFromStartToNemo[row][col] + distsFromNemoToEnd[row - rowDisp_][col - colDisp_] + 1;
-                                            distsToNemo[row][col] = Math.min(distCandidate, distsToNemo[row][col]);
+                                            if (distsFromStartToNemo[row][col] != Integer.MAX_VALUE && distsFromNemoToEnd[row - rowDisp_][col - colDisp_] != Integer.MAX_VALUE) {
+                                                int distCandidate = distsFromStartToNemo[row][col] + distsFromNemoToEnd[row - rowDisp_][col - colDisp_] + 1;
+                                                distsToNemo[row][col] = Math.min(distCandidate, distsToNemo[row][col]);
+                                            }
                                         }
                                     }
                                 }
@@ -96,9 +100,11 @@ public class FindingNemoSolution {
 
                 for (int row = 0; row < rows; row++) {
                     for (int col = 0; col < cols; col++) {
-                        int candidate = distsFromMarlin[row][col] + distsToNemo[row][col];
-                        if (candidate < minDist) {
-                            minDist = candidate;
+                        if (distsFromMarlin[row][col] != Integer.MAX_VALUE && distsToNemo[row][col] != Integer.MAX_VALUE) {
+                            int candidate = distsFromMarlin[row][col] + distsToNemo[row][col];
+                            if (candidate < minDist) {
+                                minDist = candidate;
+                            }
                         }
                     }
                 }
