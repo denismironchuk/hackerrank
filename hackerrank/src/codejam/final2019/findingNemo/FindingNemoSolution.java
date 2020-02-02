@@ -72,10 +72,9 @@ public class FindingNemoSolution {
 
                                 Point newNemoPos = new Point(nemo.row + rowDisp_, nemo.col + colDisp_);
                                 int[][]  distsFromNemoToEnd = countShortestPaths(currentBoard, newNemoPos, prevRowDisp, prevColDisp);
-                                currentBoard = intersectBoards(currentBoard, initialBoard, rowDisp_, colDisp_);
-                                int[][] distsFromStartToNemo = countShortestPaths(currentBoard, newNemoPos, rowDisp_, colDisp_);
-
+                                currentBoard = intersectBoards(currentBoard, initialBoard, rowDisp, colDisp, rowDisp_, colDisp_);
                                 //printBoard(currentBoard);
+                                int[][] distsFromStartToNemo = countShortestPaths(currentBoard, newNemoPos, rowDisp_, colDisp_);
 
                                 for(int row = 0; row < rows; row++) {
                                     for (int col = 0; col < cols; col++) {
@@ -185,15 +184,15 @@ public class FindingNemoSolution {
         return duplicate;
     }
 
-    private static char[][] intersectBoards(char[][] board, char[][] originalBoard, int rowDisp, int colDisp) {
+    private static char[][] intersectBoards(char[][] board, char[][] originalBoard, int rowDisp, int colDisp, int borderRow, int borderCol) {
         int rows = board.length;
         int cols = board[0].length;
 
         char[][] resultBoard = new char[rows][cols];
 
-        for (int row = Math.max(0, rowDisp); row < Math.min(rows, rows + rowDisp); row++) {
-            for (int col = Math.max(0, colDisp); col < Math.min(cols, cols + colDisp); col++) {
-                resultBoard[row][col] = mergeTwoBoardPositions(board[row][col], originalBoard[row - rowDisp][col - colDisp]);
+        for (int row = Math.max(0, borderRow); row < Math.min(rows, rows + borderRow); row++) {
+            for (int col = Math.max(0, borderCol); col < Math.min(cols, cols + borderCol); col++) {
+                resultBoard[row][col] = mergeTwoBoardPositions(originalBoard[row][col], board[row - rowDisp][col - colDisp]);
             }
         }
 
