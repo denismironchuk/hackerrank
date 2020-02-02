@@ -75,13 +75,13 @@ public class FindingNemoSolution {
                                 currentBoard = intersectBoards(currentBoard, initialBoard, rowDisp_, colDisp_);
                                 int[][] distsFromStartToNemo = countShortestPaths(currentBoard, newNemoPos, rowDisp_, colDisp_);
 
-                                printBoard(currentBoard);
+                                //printBoard(currentBoard);
 
                                 for(int row = 0; row < rows; row++) {
                                     for (int col = 0; col < cols; col++) {
-                                        if (row - rowDisp_ >= 0 && col - colDisp_ >= 0 && row - rowDisp_ < rows && col - colDisp_ < cols) {
-                                            if (distsFromStartToNemo[row][col] != Integer.MAX_VALUE && distsFromNemoToEnd[row - rowDisp_][col - colDisp_] != Integer.MAX_VALUE) {
-                                                int distCandidate = distsFromStartToNemo[row][col] + distsFromNemoToEnd[row - rowDisp_][col - colDisp_] + 1;
+                                        if (row - rowDisp >= 0 && col - colDisp >= 0 && row - rowDisp < rows && col - colDisp < cols) {
+                                            if (distsFromStartToNemo[row][col] != Integer.MAX_VALUE && distsFromNemoToEnd[row - rowDisp][col - colDisp] != Integer.MAX_VALUE) {
+                                                int distCandidate = distsFromStartToNemo[row][col] + distsFromNemoToEnd[row - rowDisp][col - colDisp] + 1;
                                                 distsToNemo[row][col] = Math.min(distCandidate, distsToNemo[row][col]);
                                             }
                                         }
@@ -109,7 +109,7 @@ public class FindingNemoSolution {
                     }
                 }
 
-                System.out.printf("Case #%s: %s", t, minDist);
+                System.out.printf("Case #%s: %s\n", t, minDist == Integer.MAX_VALUE ? "IMPOSSIBLE" : minDist);
             }
         }
     }
