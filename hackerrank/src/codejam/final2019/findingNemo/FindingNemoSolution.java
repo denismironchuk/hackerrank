@@ -84,9 +84,16 @@ public class FindingNemoSolution {
 
                                 Point newNemoPos = new Point(nemo.row + rowDisp_, nemo.col + colDisp_);
 
+                                if (currentBoard[newNemoPos.row][newNemoPos.col] == '#') {
+                                    break;
+                                }
+
                                 List[][] commandsFromNemoToEnd = new List[rows][cols];
                                 int[][]  distsFromNemoToEnd = countShortestPaths(currentBoard, newNemoPos, prevRowDisp, prevColDisp, commandsFromNemoToEnd, false);
                                 currentBoard = intersectBoards(currentBoard, initialBoard, rowDisp, colDisp, rowDisp_, colDisp_);
+                                if (currentBoard[newNemoPos.row][newNemoPos.col] == '#') {
+                                    break;
+                                }
                                 //printBoard(currentBoard);
                                 List[][] commandsFromStartToNemo = new List[rows][cols];
                                 int[][] distsFromStartToNemo = countShortestPaths(currentBoard, newNemoPos, rowDisp_, colDisp_, commandsFromStartToNemo, true);
@@ -141,7 +148,9 @@ public class FindingNemoSolution {
                 }
 
                 System.out.printf("Case #%s: %s\n", t, minDist == Integer.MAX_VALUE ? "IMPOSSIBLE" : minDist);
-                commands.forEach(System.out::println);
+                if (null !=commands) {
+                    commands.forEach(System.out::println);
+                }
             }
         }
     }
