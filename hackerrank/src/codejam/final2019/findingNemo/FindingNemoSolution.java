@@ -7,6 +7,7 @@ import java.util.*;
 
 public class FindingNemoSolution {
     private static int MAX_VAL = 1000000000;
+    private static int THRESHOLD = 800000000;
 
     private static class Point {
         private int row;
@@ -80,10 +81,8 @@ public class FindingNemoSolution {
                             for (int row = 0; row < rows; row++) {
                                 for (int col = 0; col < cols; col++) {
                                     CNT++;
-                                    if (distsToNemoNoLoop[row][col] != MAX_VAL) {
-                                        if (distsToNemoNoLoop[row][col] < distsToNemo[row][col]) {
-                                            distsToNemo[row][col] = distsToNemoNoLoop[row][col];
-                                        }
+                                    if (distsToNemoNoLoop[row][col] < distsToNemo[row][col]) {
+                                        distsToNemo[row][col] = distsToNemoNoLoop[row][col];
                                     }
                                 }
                             }
@@ -119,11 +118,9 @@ public class FindingNemoSolution {
                                 for(int row = Math.max(0, rowDisp); row < Math.min(rows, rows + rowDisp); row++) {
                                     for (int col = Math.max(0, colDisp); col < Math.min(cols, cols + colDisp); col++) {
                                         CNT++;
-                                        if (distsFromStartToNemo[row][col] != MAX_VAL && distsFromNemoToEnd[row - rowDisp][col - colDisp] != MAX_VAL) {
-                                            int distCandidate = distsFromStartToNemo[row][col] + distsFromNemoToEnd[row - rowDisp][col - colDisp] + 1;
-                                            if (distCandidate < distsToNemo[row][col]) {
-                                                distsToNemo[row][col] = distCandidate;
-                                            }
+                                        int distCandidate = distsFromStartToNemo[row][col] + distsFromNemoToEnd[row - rowDisp][col - colDisp] + 1;
+                                        if (distCandidate < distsToNemo[row][col]) {
+                                            distsToNemo[row][col] = distCandidate;
                                         }
                                     }
                                 }
@@ -143,19 +140,17 @@ public class FindingNemoSolution {
                 for (int row = 0; row < rows; row++) {
                     for (int col = 0; col < cols; col++) {
                         CNT++;
-                        if (distsFromMarlin[row][col] != MAX_VAL && distsToNemo[row][col] != MAX_VAL) {
-                            int candidate = distsFromMarlin[row][col] + distsToNemo[row][col];
-                            if (candidate < minDist) {
-                                minDist = candidate;
-                            }
+                        int candidate = distsFromMarlin[row][col] + distsToNemo[row][col];
+                        if (candidate < minDist) {
+                            minDist = candidate;
                         }
                     }
                 }
 
                 Date end = new Date();
-                System.out.printf("Case #%s: %s\n", t, minDist == MAX_VAL ? "IMPOSSIBLE" : minDist);
-                //System.out.println(end.getTime() - start.getTime() + "ms");
-                //System.out.println(CNT);
+                System.out.printf("Case #%s: %s\n", t, minDist > THRESHOLD ? "IMPOSSIBLE" : minDist);
+                /*System.out.println(end.getTime() - start.getTime() + "ms");
+                System.out.println(CNT);*/
             }
         }
     }
@@ -163,9 +158,6 @@ public class FindingNemoSolution {
     private static int[][] countShortestPaths(char[][] board, Point nemoPos, int rowDisp, int colDisp, int[][] dists, int[][] proc) {
         int rows = board.length;
         int cols = board[0].length;
-
-        /*int[][] dists = new int[rows][cols];
-        int[][] proc = new int[rows][cols];*/
 
         for (int row = 0; row < rows; row++) {
             Arrays.fill(dists[row], MAX_VAL);
@@ -210,14 +202,10 @@ public class FindingNemoSolution {
         int rows = board.length;
         int cols = board[0].length;
 
-        //char[][] duplicate = new char[rows][cols];
-
         for (int row = 0; row < rows; row++) {
             CNT++;
             System.arraycopy(board[row], 0, duplicate[row], 0, cols);
         }
-
-        //return duplicate;
     }
 
     private static void intersectBoards(char[][] board, char[][] originalBoard, int rowDisp, int colDisp,
@@ -225,16 +213,12 @@ public class FindingNemoSolution {
         int rows = board.length;
         int cols = board[0].length;
 
-        //char[][] resultBoard = new char[rows][cols];
-
         for (int row = Math.max(0, borderRow); row < Math.min(rows, rows + borderRow); row++) {
             for (int col = Math.max(0, borderCol); col < Math.min(cols, cols + borderCol); col++) {
                 CNT++;
                 intersectionResult[row][col] = mergeTwoBoardPositions(originalBoard[row][col], board[row - rowDisp][col - colDisp]);
             }
         }
-
-        //return resultBoard;
     }
 
     private static char mergeTwoBoardPositions(char pos1, char pos2) {
