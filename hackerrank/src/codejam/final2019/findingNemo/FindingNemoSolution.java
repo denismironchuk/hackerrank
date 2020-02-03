@@ -19,8 +19,6 @@ public class FindingNemoSolution {
         }
     }
 
-    private static long CNT = 0;
-
     public static void main(String[] args) throws IOException {
         try(BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
             int T = Integer.parseInt(br.readLine());
@@ -30,20 +28,9 @@ public class FindingNemoSolution {
                 int cols = Integer.parseInt(sizeTkn.nextToken());
                 char[][] initialBoard = new char[rows][cols];
 
-                /*for (int row = 0; row < rows; row++) {
-                    for (int col = 0; col < cols; col++) {
-                        initialBoard[row][col] = '.';
-                    }
-                }
-
-                initialBoard[rows / 2][cols / 2] = 'N';
-                initialBoard[0][0] = 'M';*/
-
                 for (int row = 0; row < rows; row++) {
                     initialBoard[row] = br.readLine().toCharArray();
                 }
-
-                Date start = new Date();
 
                 Point nemo = null;
                 Point marlin = null;
@@ -80,15 +67,20 @@ public class FindingNemoSolution {
                             countShortestPaths(currentBoard, nemo, rowDisp, colDisp, distsToNemoNoLoop, proc);
                             for (int row = 0; row < rows; row++) {
                                 for (int col = 0; col < cols; col++) {
-                                    CNT++;
                                     if (distsToNemoNoLoop[row][col] < distsToNemo[row][col]) {
                                         distsToNemo[row][col] = distsToNemoNoLoop[row][col];
                                     }
                                 }
                             }
                         } else {
+
                             int rowDisp_ = rowDisp;
                             int colDisp_ = colDisp;
+
+                            int minRow = Math.max(0, rowDisp);
+                            int maxRow = Math.min(rows, rows + rowDisp);
+                            int minCol = Math.max(0, colDisp);
+                            int maxCol = Math.min(cols, cols + colDisp);
 
                             while (nemo.row + rowDisp_ < rows && nemo.row + rowDisp_ >= 0
                                     && nemo.col + colDisp_ < cols && nemo.col + colDisp_ >= 0) {
@@ -115,9 +107,8 @@ public class FindingNemoSolution {
 
                                 countShortestPaths(currentBoard, newNemoPos, rowDisp_, colDisp_, distsFromStartToNemo, proc);
 
-                                for(int row = Math.max(0, rowDisp); row < Math.min(rows, rows + rowDisp); row++) {
-                                    for (int col = Math.max(0, colDisp); col < Math.min(cols, cols + colDisp); col++) {
-                                        CNT++;
+                                for(int row = minRow; row < maxRow; row++) {
+                                    for (int col = minCol; col < maxCol; col++) {
                                         int distCandidate = distsFromStartToNemo[row][col] + distsFromNemoToEnd[row - rowDisp][col - colDisp] + 1;
                                         if (distCandidate < distsToNemo[row][col]) {
                                             distsToNemo[row][col] = distCandidate;
@@ -134,23 +125,17 @@ public class FindingNemoSolution {
 
                 int[][]  distsFromMarlin = new int[rows][cols];
                 countShortestPaths(initialBoard, marlin, 0, 0, distsFromMarlin, proc);
-
                 int minDist = MAX_VAL;
 
                 for (int row = 0; row < rows; row++) {
                     for (int col = 0; col < cols; col++) {
-                        CNT++;
                         int candidate = distsFromMarlin[row][col] + distsToNemo[row][col];
                         if (candidate < minDist) {
                             minDist = candidate;
                         }
                     }
                 }
-
-                Date end = new Date();
                 System.out.printf("Case #%s: %s\n", t, minDist > THRESHOLD ? "IMPOSSIBLE" : minDist);
-                /*System.out.println(end.getTime() - start.getTime() + "ms");
-                System.out.println(CNT);*/
             }
         }
     }
@@ -170,32 +155,57 @@ public class FindingNemoSolution {
         Queue<Point> q = new LinkedList<>();
         q.add(nemoPos);
 
+        int minRow = Math.max(0, rowDisp);
+        int maxRow = Math.min(rows, rows + rowDisp);
+        int minCol = Math.max(0, colDisp);
+        int maxCol = Math.min(cols, cols + colDisp);
+
         while (!q.isEmpty()) {
-            CNT++;
             Point p = q.poll();
 
-            List<Point> nextPoints = Arrays.asList(new Point(p.row, p.col + 1),
-                    new Point(p.row, p.col - 1),
-                    new Point(p.row + 1, p.col),
-                    new Point(p.row - 1, p.col));
+            Point p1 = new Point(p.row, p.col + 1);
+            Point p2 = new Point(p.row, p.col - 1);
+            Point p3 = new Point(p.row + 1, p.col);
+            Point p4 = new Point(p.row - 1, p.col);
 
-            for (Point nextPoint : nextPoints) {
-                if (isPointInAvailbleArea(nextPoint, rowDisp, colDisp, rows, cols)
-                        && proc[nextPoint.row][nextPoint.col] == 0
-                        && board[nextPoint.row][nextPoint.col] != '#') {
-                    dists[nextPoint.row][nextPoint.col] = dists[p.row][p.col] + 1;
-                    proc[nextPoint.row][nextPoint.col] = 1;
-                    q.add(nextPoint);
-                }
+            if (isPointInAvailbleArea(p1, minRow, maxRow, minCol, maxCol)
+                    && proc[p1.row][p1.col] == 0
+                    && board[p1.row][p1.col] != '#') {
+                dists[p1.row][p1.col] = dists[p.row][p.col] + 1;
+                proc[p1.row][p1.col] = 1;
+                q.add(p1);
+            }
+
+            if (isPointInAvailbleArea(p2, minRow, maxRow, minCol, maxCol)
+                    && proc[p2.row][p2.col] == 0
+                    && board[p2.row][p2.col] != '#') {
+                dists[p2.row][p2.col] = dists[p.row][p.col] + 1;
+                proc[p2.row][p2.col] = 1;
+                q.add(p2);
+            }
+
+            if (isPointInAvailbleArea(p3, minRow, maxRow, minCol, maxCol)
+                    && proc[p3.row][p3.col] == 0
+                    && board[p3.row][p3.col] != '#') {
+                dists[p3.row][p3.col] = dists[p.row][p.col] + 1;
+                proc[p3.row][p3.col] = 1;
+                q.add(p3);
+            }
+
+            if (isPointInAvailbleArea(p4, minRow, maxRow, minCol, maxCol)
+                    && proc[p4.row][p4.col] == 0
+                    && board[p4.row][p4.col] != '#') {
+                dists[p4.row][p4.col] = dists[p.row][p.col] + 1;
+                proc[p4.row][p4.col] = 1;
+                q.add(p4);
             }
         }
 
         return dists;
     }
 
-    private static boolean isPointInAvailbleArea(Point p, int rowDisp, int colDisp, int rows, int cols) {
-        return p.row < Math.min(rows, rows + rowDisp) && p.row >= Math.max(0, rowDisp) &&
-                p.col < Math.min(cols, cols + colDisp) && p.col >= Math.max(0, colDisp);
+    private static boolean isPointInAvailbleArea(Point p, int minRow, int maxRow, int minCol, int maxCol) {
+        return p.row < maxRow && p.row >= minRow && p.col < maxCol && p.col >= minCol;
     }
 
     private static void duplicateBoard(char[][] board, char[][] duplicate) {
@@ -203,7 +213,6 @@ public class FindingNemoSolution {
         int cols = board[0].length;
 
         for (int row = 0; row < rows; row++) {
-            CNT++;
             System.arraycopy(board[row], 0, duplicate[row], 0, cols);
         }
     }
@@ -213,9 +222,13 @@ public class FindingNemoSolution {
         int rows = board.length;
         int cols = board[0].length;
 
-        for (int row = Math.max(0, borderRow); row < Math.min(rows, rows + borderRow); row++) {
-            for (int col = Math.max(0, borderCol); col < Math.min(cols, cols + borderCol); col++) {
-                CNT++;
+        int minRow = Math.max(0, borderRow);
+        int maxRow = Math.min(rows, rows + borderRow);
+        int minCol = Math.max(0, borderCol);
+        int maxCol = Math.min(cols, cols + borderCol);
+
+        for (int row = minRow; row < maxRow; row++) {
+            for (int col = minCol; col < maxCol; col++) {
                 intersectionResult[row][col] = mergeTwoBoardPositions(originalBoard[row][col], board[row - rowDisp][col - colDisp]);
             }
         }
