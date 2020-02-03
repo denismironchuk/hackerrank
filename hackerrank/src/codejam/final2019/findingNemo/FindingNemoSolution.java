@@ -9,17 +9,10 @@ public class FindingNemoSolution {
     private static class Point {
         private int row;
         private int col;
-        private String direction;
 
         public Point(int row, int col) {
             this.row = row;
             this.col = col;
-        }
-
-        public Point(int row, int col, String direction) {
-            this.row = row;
-            this.col = col;
-            this.direction = direction;
         }
     }
 
@@ -49,7 +42,6 @@ public class FindingNemoSolution {
                 }
 
                 int[][] distsToNemo = new int[rows][cols];
-                List[][] commandsToNemo = new List[rows][cols];
 
                 for (int i = 0; i < rows; i++) {
                     Arrays.fill(distsToNemo[i], Integer.MAX_VALUE);
@@ -60,14 +52,12 @@ public class FindingNemoSolution {
                         char[][] currentBoard = duplicateBoard(initialBoard);
 
                         if (rowDisp == 0 && colDisp == 0) {
-                            List[][] commandsToNoLoop = new List[rows][cols];
-                            int[][]  distsToNemoNoLoop = countShortestPaths(currentBoard, nemo, rowDisp, colDisp, commandsToNoLoop, true);
+                            int[][]  distsToNemoNoLoop = countShortestPaths(currentBoard, nemo, rowDisp, colDisp);
                             for (int row = 0; row < rows; row++) {
                                 for (int col = 0; col < cols; col++) {
                                     if (distsToNemoNoLoop[row][col] != Integer.MAX_VALUE) {
                                         if (distsToNemoNoLoop[row][col] < distsToNemo[row][col]) {
                                             distsToNemo[row][col] = distsToNemoNoLoop[row][col];
-                                            commandsToNemo[row][col] = commandsToNoLoop[row][col];
                                         }
                                     }
                                 }
@@ -88,15 +78,13 @@ public class FindingNemoSolution {
                                     break;
                                 }
 
-                                List[][] commandsFromNemoToEnd = new List[rows][cols];
-                                int[][]  distsFromNemoToEnd = countShortestPaths(currentBoard, newNemoPos, prevRowDisp, prevColDisp, commandsFromNemoToEnd, false);
+                                int[][]  distsFromNemoToEnd = countShortestPaths(currentBoard, newNemoPos, prevRowDisp, prevColDisp);
                                 currentBoard = intersectBoards(currentBoard, initialBoard, rowDisp, colDisp, rowDisp_, colDisp_);
                                 if (currentBoard[newNemoPos.row][newNemoPos.col] == '#') {
                                     break;
                                 }
                                 //printBoard(currentBoard);
-                                List[][] commandsFromStartToNemo = new List[rows][cols];
-                                int[][] distsFromStartToNemo = countShortestPaths(currentBoard, newNemoPos, rowDisp_, colDisp_, commandsFromStartToNemo, true);
+                                int[][] distsFromStartToNemo = countShortestPaths(currentBoard, newNemoPos, rowDisp_, colDisp_);
 
                                 for(int row = 0; row < rows; row++) {
                                     for (int col = 0; col < cols; col++) {
@@ -105,10 +93,6 @@ public class FindingNemoSolution {
                                                 int distCandidate = distsFromStartToNemo[row][col] + distsFromNemoToEnd[row - rowDisp][col - colDisp] + 1;
                                                 if (distCandidate < distsToNemo[row][col]) {
                                                     distsToNemo[row][col] = distCandidate;
-                                                    commandsToNemo[row][col] = new ArrayList();
-                                                    commandsToNemo[row][col].addAll(commandsFromStartToNemo[row][col]);
-                                                    commandsToNemo[row][col].addAll(commandsFromNemoToEnd[row - rowDisp][col - colDisp]);
-                                                    commandsToNemo[row][col].add("goto");
                                                 }
                                             }
                                         }
@@ -122,10 +106,8 @@ public class FindingNemoSolution {
                     }
                 }
 
-                List[][] commandsFromMarlin = new List[rows][cols];
-                int[][]  distsFromMarlin = countShortestPaths(initialBoard, marlin, 0, 0, commandsFromMarlin, false);
+                int[][]  distsFromMarlin = countShortestPaths(initialBoard, marlin, 0, 0);
                 int minDist = Integer.MAX_VALUE;
-                List<String> commands = null;
 
                 for (int row = 0; row < rows; row++) {
                     for (int col = 0; col < cols; col++) {
@@ -133,29 +115,17 @@ public class FindingNemoSolution {
                             int candidate = distsFromMarlin[row][col] + distsToNemo[row][col];
                             if (candidate < minDist) {
                                 minDist = candidate;
-                                if (commandsToNemo[row][col] != null && commandsToNemo[row][col].size() != 0
-                                        && commandsToNemo[row][col].get(commandsToNemo[row][col].size() - 1).equals("goto")) {
-                                    String gotoStep = "goto " + (commandsFromMarlin[row][col].size() + 1);
-                                    commandsToNemo[row][col].set(commandsToNemo[row][col].size() - 1, gotoStep);
-                                }
-
-                                commands = commandsFromMarlin[row][col];
-                                commands.addAll(commandsToNemo[row][col]);
-
                             }
                         }
                     }
                 }
 
                 System.out.printf("Case #%s: %s\n", t, minDist == Integer.MAX_VALUE ? "IMPOSSIBLE" : minDist);
-                if (null !=commands) {
-                    commands.forEach(System.out::println);
-                }
             }
         }
     }
 
-    private static int[][] countShortestPaths(char[][] board, Point nemoPos, int rowDisp, int colDisp, List[][] commands, boolean invert) {
+    private static int[][] countShortestPaths(char[][] board, Point nemoPos, int rowDisp, int colDisp) {
         int rows = board.length;
         int cols = board[0].length;
 
@@ -165,9 +135,6 @@ public class FindingNemoSolution {
         for (int row = 0; row < rows; row++) {
             Arrays.fill(dists[row], Integer.MAX_VALUE);
             Arrays.fill(proc[row], 0);
-            for (int col = 0; col < cols; col++) {
-                commands[row][col] = new ArrayList();
-            }
         }
 
         dists[nemoPos.row][nemoPos.col] = 0;
@@ -179,10 +146,10 @@ public class FindingNemoSolution {
         while (!q.isEmpty()) {
             Point p = q.poll();
 
-            List<Point> nextPoints = Arrays.asList(new Point(p.row, p.col + 1, invert ? "W" : "E"),
-                    new Point(p.row, p.col - 1, invert ? "E" : "W"),
-                    new Point(p.row + 1, p.col, invert ? "N" : "S"),
-                    new Point(p.row - 1, p.col, invert ? "S" : "N"));
+            List<Point> nextPoints = Arrays.asList(new Point(p.row, p.col + 1),
+                    new Point(p.row, p.col - 1),
+                    new Point(p.row + 1, p.col),
+                    new Point(p.row - 1, p.col));
 
             for (Point nextPoint : nextPoints) {
                 if (isPointInAvailbleArea(nextPoint, rowDisp, colDisp, rows, cols)
@@ -191,13 +158,6 @@ public class FindingNemoSolution {
                     dists[nextPoint.row][nextPoint.col] = dists[p.row][p.col] + 1;
                     proc[nextPoint.row][nextPoint.col] = 1;
                     q.add(nextPoint);
-                    if (invert) {
-                        commands[nextPoint.row][nextPoint.col].add(nextPoint.direction);
-                        commands[nextPoint.row][nextPoint.col].addAll(commands[p.row][p.col]);
-                    } else {
-                        commands[nextPoint.row][nextPoint.col].addAll(commands[p.row][p.col]);
-                        commands[nextPoint.row][nextPoint.col].add(nextPoint.direction);
-                    }
                 }
             }
         }
