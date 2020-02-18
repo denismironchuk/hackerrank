@@ -30,7 +30,10 @@ public class DecibinaryNumbers {
             for (int decimalVal = 1; decimalVal <= lastDecimalValue; decimalVal++) {
                 int binaryLen = getBinaryLength(decimalVal);
                 int mul = 1;
-                for (int decibinaryPosition = 0; decibinaryPosition < binaryLen; decibinaryPosition++) {
+                if (decimalVal < 10) {
+                    dyn[decimalVal][0][decimalVal] = 1;
+                }
+                for (int decibinaryPosition = 1; decibinaryPosition < binaryLen; decibinaryPosition++) {
                     for (int positionDigit = 1; positionDigit < 10; positionDigit++) {
                         for (int d = 0; d < 10; d++) {
                             if (decimalVal - mul * positionDigit >= 0 && decibinaryPosition - 1 >= 0) {
