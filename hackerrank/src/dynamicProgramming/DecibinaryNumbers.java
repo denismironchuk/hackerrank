@@ -1,49 +1,64 @@
 package dynamicProgramming;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DecibinaryNumbers {
     public static void main(String [] args) throws IOException {
-        try(BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
-            int Q = Integer.parseInt(br.readLine());
-            long[] xArr = new long[Q];
-            long maxX = -1;
-            for (int q = 0; q < Q; q++) {
-                xArr[q] = Long.parseLong(br.readLine());
-                if (xArr[q] > maxX) {
-                    maxX = xArr[q];
-                }
-            }
+        //long maxX = 100;
+        //List<Long> decimalCounts = buildDecibinaryCountList(maxX);
+        //System.out.println(decimalCounts);
+        //int lastDecimalValue = decimalCounts.size();
+        int lastDecimalValue = 10;
+        int maxBinaryLen = getBinaryLength(lastDecimalValue);
+        long[][][] dyn = new long[lastDecimalValue + 1][maxBinaryLen][10];
+        for (int i = 0; i < maxBinaryLen; i++) {
+            dyn[0][i][0] = 1;
+        }
 
-            List<Long> decimalCounts = buildDecibinaryCountList(maxX);
-            System.out.println(decimalCounts);
+        System.out.println(0);
+        print(dyn[0]);
+        System.out.println("=================");
 
-            int lastDecimalValue = decimalCounts.size();
-            int maxBinaryLen = getBinaryLength(lastDecimalValue);
-            long[][][] dyn = new long[lastDecimalValue + 1][maxBinaryLen][10];
-            dyn[0][0][0] = 1;
-
-            for (int decimalVal = 1; decimalVal <= lastDecimalValue; decimalVal++) {
-                int binaryLen = getBinaryLength(decimalVal);
-                int mul = 1;
-                if (decimalVal < 10) {
-                    dyn[decimalVal][0][decimalVal] = 1;
-                }
-                for (int decibinaryPosition = 1; decibinaryPosition < binaryLen; decibinaryPosition++) {
-                    for (int positionDigit = 1; positionDigit < 10; positionDigit++) {
-                        for (int d = 0; d < 10; d++) {
-                            if (decimalVal - mul * positionDigit >= 0 && decibinaryPosition - 1 >= 0) {
-                                dyn[decimalVal][decibinaryPosition][positionDigit] += dyn[decimalVal - mul * positionDigit][decibinaryPosition - 1][d];
-                            }
-                        }
+        for (int i = 1; i < 10; i++) {
+            dyn[i][0][i] = 1;
+        }
+        for (int decimalVal = 1; decimalVal <= lastDecimalValue; decimalVal++) {
+            int binaryLen = getBinaryLength(decimalVal);
+            int mul = 2;
+            for (int decibinaryPosition = 1; decibinaryPosition < binaryLen; decibinaryPosition++) {
+                for (int positionDigit = 0; positionDigit < 10 && decimalVal - mul * positionDigit >= 0; positionDigit++) {
+                    for (int d = 0; d < 10; d++) {
+                        dyn[decimalVal][decibinaryPosition][positionDigit] += dyn[decimalVal - mul * positionDigit][decibinaryPosition - 1][d];
                     }
-                    mul *= 2;
+                }
+                mul *= 2;
+            }
+
+            for (int decibinaryPosition = binaryLen; decibinaryPosition < maxBinaryLen; decibinaryPosition++) {
+                for (int d = 0; d < 10; d++) {
+                    dyn[decimalVal][decibinaryPosition][0] += dyn[decimalVal][binaryLen - 1][d];
                 }
             }
+
+            System.out.println(decimalVal);
+            print(dyn[decimalVal]);
+            System.out.println("=================");
+        }
+
+        System.out.println();
+    }
+
+    private static void print(long[][] arr) {
+        int rows = arr.length;
+        int cols = arr[0].length;
+
+        for (int i = 0; i < cols; i++) {
+            for (int j = rows - 1; j >= 0; j--) {
+                System.out.printf("%3d ", arr[j][i]);
+            }
+            System.out.println();
         }
     }
 
