@@ -6,11 +6,7 @@ import java.util.List;
 
 public class DecibinaryNumbers {
     public static void main(String [] args) throws IOException {
-        //long maxX = 100;
-        //List<Long> decimalCounts = buildDecibinaryCountList(maxX);
-        //System.out.println(decimalCounts);
-        //int lastDecimalValue = decimalCounts.size();
-        int lastDecimalValue = 10;
+        int lastDecimalValue = 15;
         int maxBinaryLen = getBinaryLength(lastDecimalValue);
         long[][][] dyn = new long[lastDecimalValue + 1][maxBinaryLen][10];
         for (int i = 0; i < maxBinaryLen; i++) {
@@ -27,19 +23,20 @@ public class DecibinaryNumbers {
         for (int decimalVal = 1; decimalVal <= lastDecimalValue; decimalVal++) {
             int binaryLen = getBinaryLength(decimalVal);
             int mul = 2;
+            long positionSum = 1;
             for (int decibinaryPosition = 1; decibinaryPosition < binaryLen; decibinaryPosition++) {
+                positionSum = 0;
                 for (int positionDigit = 0; positionDigit < 10 && decimalVal - mul * positionDigit >= 0; positionDigit++) {
                     for (int d = 0; d < 10; d++) {
                         dyn[decimalVal][decibinaryPosition][positionDigit] += dyn[decimalVal - mul * positionDigit][decibinaryPosition - 1][d];
                     }
+                    positionSum += dyn[decimalVal][decibinaryPosition][positionDigit];
                 }
                 mul *= 2;
             }
 
             for (int decibinaryPosition = binaryLen; decibinaryPosition < maxBinaryLen; decibinaryPosition++) {
-                for (int d = 0; d < 10; d++) {
-                    dyn[decimalVal][decibinaryPosition][0] += dyn[decimalVal][binaryLen - 1][d];
-                }
+                dyn[decimalVal][decibinaryPosition][0] += positionSum;
             }
 
             System.out.println(decimalVal);
@@ -56,7 +53,7 @@ public class DecibinaryNumbers {
 
         for (int i = 0; i < cols; i++) {
             for (int j = rows - 1; j >= 0; j--) {
-                System.out.printf("%3d ", arr[j][i]);
+                System.out.printf("%5d ", arr[j][i]);
             }
             System.out.println();
         }
