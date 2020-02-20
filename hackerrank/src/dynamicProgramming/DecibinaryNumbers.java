@@ -1,50 +1,55 @@
 package dynamicProgramming;
 
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class DecibinaryNumbers {
-    public static void main(String [] args) throws IOException {
-        int lastDecimalValue = 15;
+    private static int CNT = 0;
+
+    public static void main(String [] args) {
+        Date start = new Date();
+        int lastDecimalValue = 300000;
         int maxBinaryLen = getBinaryLength(lastDecimalValue);
         long[][][] dyn = new long[lastDecimalValue + 1][maxBinaryLen][10];
         for (int i = 0; i < maxBinaryLen; i++) {
             dyn[0][i][0] = 1;
         }
 
-        System.out.println(0);
+        /*System.out.println(0);
         print(dyn[0]);
-        System.out.println("=================");
+        System.out.println("=================");*/
 
         for (int i = 1; i < 10; i++) {
             dyn[i][0][i] = 1;
         }
+
         for (int decimalVal = 1; decimalVal <= lastDecimalValue; decimalVal++) {
             int binaryLen = getBinaryLength(decimalVal);
             int mul = 2;
-            long positionSum = 1;
+            long positionSum = decimalVal < 10 ? 1 : 0;
             for (int decibinaryPosition = 1; decibinaryPosition < binaryLen; decibinaryPosition++) {
-                positionSum = 0;
-                for (int positionDigit = 0; positionDigit < 10 && decimalVal - mul * positionDigit >= 0; positionDigit++) {
-                    for (int d = 0; d < 10; d++) {
-                        dyn[decimalVal][decibinaryPosition][positionDigit] += dyn[decimalVal - mul * positionDigit][decibinaryPosition - 1][d];
-                    }
+                dyn[decimalVal][decibinaryPosition][0] = positionSum;
+                for (int positionDigit = 1; positionDigit < 10 && decimalVal - mul * positionDigit >= 0; positionDigit++) {
+                    dyn[decimalVal][decibinaryPosition][positionDigit] = dyn[decimalVal - mul * positionDigit][decibinaryPosition][0];
                     positionSum += dyn[decimalVal][decibinaryPosition][positionDigit];
+                    CNT++;
                 }
                 mul *= 2;
             }
 
             for (int decibinaryPosition = binaryLen; decibinaryPosition < maxBinaryLen; decibinaryPosition++) {
                 dyn[decimalVal][decibinaryPosition][0] += positionSum;
+                CNT++;
             }
 
-            System.out.println(decimalVal);
+            /*System.out.println(decimalVal);
             print(dyn[decimalVal]);
-            System.out.println("=================");
+            System.out.println("=================");*/
         }
-
-        System.out.println();
+        Date end = new Date();
+        System.out.println(end.getTime() - start.getTime() + "ms");
+        System.out.println(CNT);
     }
 
     private static void print(long[][] arr) {
