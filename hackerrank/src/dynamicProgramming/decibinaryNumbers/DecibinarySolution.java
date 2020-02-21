@@ -1,26 +1,55 @@
-package dynamicProgramming;
+package dynamicProgramming.decibinaryNumbers;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
-public class DecibinaryNumbers {
-    private static int CNT = 0;
+public class DecibinarySolution {
+    public static void main(String[] args) throws IOException {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
+            int Q = Integer.parseInt(br.readLine());
+            long[] queries = new long[Q];
+            long max = -1;
+            for (int q = 0; q < Q; q++) {
+                long x = Long.parseLong(br.readLine());
+                queries[q] = x;
+                if (x > max) {
+                    max = x;
+                }
+            }
 
-    public static void main(String [] args) {
-        Date start = new Date();
-        int n = 300000;
-        int maxBinaryLen = getBinaryLength(n) + 1;
+            int n = getMaxDecimalVal(max - 1);
+
+            int maxBinaryLen = getBinaryLength(n) + 1;
+            long[][][] dyn = buildDynamicTable(n, maxBinaryLen);
+
+            long[] counts = new long[n + 1];
+
+            for (int i = 0; i <= n; i++) {
+                for (int j = 0; j < 10; j++) {
+                    counts[i] += dyn[i][maxBinaryLen - 1][j];
+                }
+            }
+
+            for (int i = 1; i <= n; i++) {
+                counts[i] += counts[i - 1];
+            }
+
+            StringBuilder res = new StringBuilder();
+            for (long x : queries) {
+                res.append(findNthDecibinaryVal(x, counts, dyn)).append("\n");
+            }
+            System.out.println(res);
+        }
+    }
+
+    private static long[][][] buildDynamicTable(int n, int maxBinaryLen) {
         long[][][] dyn = new long[n + 1][maxBinaryLen][10];
         for (int i = 0; i < maxBinaryLen; i++) {
             dyn[0][i][0] = 1;
         }
 
-        /*System.out.println(0);
-        print(dyn[0]);
-        System.out.println("=================");*/
-
-        for (int i = 1; i < 10; i++) {
+        for (int i = 1; i < Math.min(n, 10); i++) {
             dyn[i][0][i] = 1;
         }
 
@@ -33,46 +62,15 @@ public class DecibinaryNumbers {
                 for (int positionDigit = 1; positionDigit < 10 && decimalVal - mul * positionDigit >= 0; positionDigit++) {
                     dyn[decimalVal][decibinaryPosition][positionDigit] = dyn[decimalVal - mul * positionDigit][decibinaryPosition][0];
                     positionSum += dyn[decimalVal][decibinaryPosition][positionDigit];
-                    CNT++;
                 }
                 mul *= 2;
             }
 
             for (int decibinaryPosition = binaryLen; decibinaryPosition < maxBinaryLen; decibinaryPosition++) {
                 dyn[decimalVal][decibinaryPosition][0] += positionSum;
-                CNT++;
-            }
-
-            /*System.out.println(decimalVal);
-            print(dyn[decimalVal]);
-            System.out.println("=================");*/
-        }
-
-        long[] counts = new long[n + 1];
-
-        for (int i = 0; i <= n; i++) {
-            for (int j = 0; j < 10; j++) {
-                counts[i] += dyn[i][maxBinaryLen - 1][j];
             }
         }
-
-        for (int i = 1; i <= n; i++) {
-            counts[i] += counts[i - 1];
-        }
-
-        Date d1 = new Date();
-        long[] res = new long[100000];
-        for (int i = 0; i < 100000; i++) {
-            res[i] = findNthDecibinaryVal(100000000000000l + (long)(Math.random() * 100000000000000l), counts, dyn);
-        }
-        Date d2 = new Date();
-
-        System.out.println(d2.getTime() - d1.getTime() + "ms");
-
-        System.out.println("==============");
-        Date end = new Date();
-        System.out.println(end.getTime() - start.getTime() + "ms");
-        System.out.println(CNT);
+        return dyn;
     }
 
     private static long findNthDecibinaryVal(long n, long[] counts, long[][][] dyn) {
@@ -126,16 +124,26 @@ public class DecibinaryNumbers {
         }
     }
 
-    private static void print(long[][] arr) {
-        int rows = arr.length;
-        int cols = arr[0].length;
+    private static int getMaxDecimalVal(long pos) {
+        long[] cnt = new long[300000];
+        long sum = 0;
+        cnt[0] = 1;
 
-        for (int i = 0; i < cols; i++) {
-            for (int j = rows - 1; j >= 0; j--) {
-                System.out.printf("%5d ", arr[j][i]);
-            }
-            System.out.println();
+        if (pos == 0) {
+            return 0;
         }
+
+        int res = 1;
+        for (; sum < pos; res++) {
+            for (int i = res % 2; (res - i) / 2 >= 0 && i < 10; i += 2) {
+                cnt[res] += cnt[(res - i) / 2];
+            }
+            sum += cnt[res];
+        }
+
+        res--;
+
+        return res;
     }
 
     private static int getBinaryLength(int val) {
