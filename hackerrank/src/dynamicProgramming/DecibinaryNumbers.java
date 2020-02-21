@@ -1,22 +1,24 @@
 package dynamicProgramming;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class DecibinaryNumbers {
     private static int CNT = 0;
 
     public static void main(String [] args) {
         Date start = new Date();
-        int n = 10;
+        int n = 300000;
         int maxBinaryLen = getBinaryLength(n) + 1;
         long[][][] dyn = new long[n + 1][maxBinaryLen][10];
         for (int i = 0; i < maxBinaryLen; i++) {
             dyn[0][i][0] = 1;
         }
 
-        System.out.println(0);
+        /*System.out.println(0);
         print(dyn[0]);
-        System.out.println("=================");
+        System.out.println("=================");*/
 
         for (int i = 1; i < 10; i++) {
             dyn[i][0][i] = 1;
@@ -41,9 +43,9 @@ public class DecibinaryNumbers {
                 CNT++;
             }
 
-            System.out.println(decimalVal);
+            /*System.out.println(decimalVal);
             print(dyn[decimalVal]);
-            System.out.println("=================");
+            System.out.println("=================");*/
         }
 
         long[] counts = new long[n + 1];
@@ -58,12 +60,14 @@ public class DecibinaryNumbers {
             counts[i] += counts[i - 1];
         }
 
-
-        for (long i = 1; i < 60; i++) {
-            System.out.println(findNthDecibinaryVal(i, counts, dyn));
+        Date d1 = new Date();
+        long[] res = new long[100000];
+        for (int i = 0; i < 100000; i++) {
+            res[i] = findNthDecibinaryVal(100000000000000l + (long)(Math.random() * 100000000000000l), counts, dyn);
         }
+        Date d2 = new Date();
 
-        //System.out.println(findNthDecibinaryVal(36, counts, dyn));
+        System.out.println(d2.getTime() - d1.getTime() + "ms");
 
         System.out.println("==============");
         Date end = new Date();
