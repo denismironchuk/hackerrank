@@ -10,8 +10,8 @@ import java.util.Date;
 
 public class DecibinarySolution {
     public static void main(String[] args) throws IOException {
-        //try (BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\dmiro\\Downloads\\input07.txt"))) {
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
+        try (BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\dmiro\\Downloads\\input07.txt"))) {
+        //try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
             Date start = new Date();
             int Q = Integer.parseInt(br.readLine());
             long[] queries = new long[Q];
@@ -44,8 +44,7 @@ public class DecibinarySolution {
             System.out.println(res);
 
             Date end = new Date();
-
-            //System.out.println(end.getTime() - start.getTime() + "ms");
+            System.out.println(end.getTime() - start.getTime() + "ms");
         }
     }
 
@@ -64,17 +63,17 @@ public class DecibinarySolution {
         for (int decimalVal = 1; decimalVal <= n; decimalVal++) {
             if (decimalVal == increaseThreshold) {
                 binaryLen++;
-                increaseThreshold *= 2;
+                increaseThreshold <<= 1;
             }
-            int mul = 2;
+            int mul = 1;
             long positionSum = decimalVal < 10 ? 1 : 0;
             for (int decibinaryPosition = 1; decibinaryPosition < binaryLen; decibinaryPosition++) {
                 dyn[decimalVal][decibinaryPosition][0] = positionSum;
-                for (int positionDigit = 1; positionDigit < 10 && decimalVal - mul * positionDigit >= 0; positionDigit++) {
-                    positionSum += dyn[decimalVal - mul * positionDigit][decibinaryPosition][0];
+                for (int positionDigit = 1; positionDigit < 10 && decimalVal - (positionDigit << mul) >= 0; positionDigit++) {
+                    positionSum += dyn[decimalVal - (positionDigit << mul)][decibinaryPosition][0];
                     dyn[decimalVal][decibinaryPosition][positionDigit] = positionSum;
                 }
-                mul *= 2;
+                mul++;
             }
 
             for (int decibinaryPosition = binaryLen; decibinaryPosition < maxBinaryLen; decibinaryPosition++) {
@@ -113,7 +112,6 @@ public class DecibinarySolution {
         }
 
         int decimalPos = findClosestSmallerDecimalPos(position, dyn[decimalVal], 0, dyn[decimalVal].length - 1);
-        int mul2 = fastPowInt(2, decimalPos);
         long mul10 = fastPowLong(10, decimalPos);
 
         int digit = 0;
@@ -121,19 +119,7 @@ public class DecibinarySolution {
             digit++;
         }
 
-        return mul10 * (long) digit + buildNthDecibinaryNumber(position - dyn[decimalVal][decimalPos][digit - 1], decimalVal - digit * mul2, dyn);
-    }
-
-    private static int fastPowInt(int n, int pow) {
-        if (pow == 0) {
-            return 1;
-        }
-
-        if (pow % 2 == 0) {
-            return fastPowInt(n * n, pow / 2);
-        } else {
-            return n * fastPowInt(n, pow - 1);
-        }
+        return mul10 * (long) digit + buildNthDecibinaryNumber(position - dyn[decimalVal][decimalPos][digit - 1], decimalVal - (digit << decimalPos), dyn);
     }
 
     private static long fastPowLong(long n, int pow) {
