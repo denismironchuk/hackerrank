@@ -1,12 +1,18 @@
 package dynamicProgramming.decibinaryNumbers;
 
 import java.io.BufferedReader;
+import java.io.DataInput;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Date;
 
 public class DecibinarySolution {
     public static void main(String[] args) throws IOException {
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
+        try (BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\dmiro\\Downloads\\input08.txt"))) {
+        //try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
+            Date start = new Date();
             int Q = Integer.parseInt(br.readLine());
             long[] queries = new long[Q];
             long max = -1;
@@ -24,22 +30,22 @@ public class DecibinarySolution {
             long[][][] dyn = buildDynamicTable(n, maxBinaryLen);
 
             long[] counts = new long[n + 1];
-
-            for (int i = 0; i <= n; i++) {
-                for (int j = 0; j < 10; j++) {
-                    counts[i] += dyn[i][maxBinaryLen - 1][j];
-                }
-            }
+            counts[0] = dyn[0][maxBinaryLen - 1][0];
 
             for (int i = 1; i <= n; i++) {
-                counts[i] += counts[i - 1];
+                counts[i] = counts[i - 1] + dyn[i][maxBinaryLen - 1][0];
             }
 
             StringBuilder res = new StringBuilder();
             for (long x : queries) {
                 res.append(findNthDecibinaryVal(x, counts, dyn)).append("\n");
             }
+
             System.out.println(res);
+
+            Date end = new Date();
+
+            System.out.println(end.getTime() - start.getTime() + "ms");
         }
     }
 
@@ -83,23 +89,27 @@ public class DecibinarySolution {
         }
     }
 
+    private static int findClosestSmallerDecimalPos(long position, long[][] dyn, int start, int end) {
+        if (start == end) {
+            return start;
+        }
+
+        int middle = 1 + (start + end) / 2;
+        if (dyn[middle][0] >= position) {
+            return findClosestSmallerDecimalPos(position, dyn, start, middle - 1);
+        } else {
+            return findClosestSmallerDecimalPos(position, dyn, middle, end);
+        }
+    }
+
     private static long buildNthDecibinaryNumber(long position, int decimalVal, long[][][] dyn) {
         if (position == 1 && decimalVal < 10) {
             return decimalVal;
         }
 
-        int decimalPos = 0;
-        int mul2 = 1;
-        long mul10 = 1;
-        while (dyn[decimalVal][decimalPos][0] < position) {
-            decimalPos++;
-            mul2 *= 2;
-            mul10 *= 10;
-        }
-
-        decimalPos--;
-        mul2 /= 2;
-        mul10 /= 10;
+        int decimalPos = findClosestSmallerDecimalPos(position, dyn[decimalVal], 0, dyn[decimalVal].length - 1);
+        int mul2 = fastPowInt(2, decimalPos);
+        long mul10 = fastPowLong(10, decimalPos);
 
         int digit = 0;
         long sum = 0;
@@ -109,6 +119,30 @@ public class DecibinarySolution {
         }
 
         return mul10 * (long) digit + buildNthDecibinaryNumber(position - sum, decimalVal - digit * mul2, dyn);
+    }
+
+    private static int fastPowInt(int n, int pow) {
+        if (pow == 0) {
+            return 1;
+        }
+
+        if (pow % 2 == 0) {
+            return fastPowInt(n * n, pow / 2);
+        } else {
+            return n * fastPowInt(n, pow - 1);
+        }
+    }
+
+    private static long fastPowLong(long n, int pow) {
+        if (pow == 0) {
+            return 1;
+        }
+
+        if (pow % 2 == 0) {
+            return fastPowLong(n * n, pow / 2);
+        } else {
+            return n * fastPowLong(n, pow - 1);
+        }
     }
 
     private static int findDecimalVal(long[] counts, long decibinaryPosition, int start, int end) {
