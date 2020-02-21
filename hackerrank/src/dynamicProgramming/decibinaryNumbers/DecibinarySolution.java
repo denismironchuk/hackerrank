@@ -10,8 +10,8 @@ import java.util.Date;
 
 public class DecibinarySolution {
     public static void main(String[] args) throws IOException {
-        try (BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\dmiro\\Downloads\\input07.txt"))) {
-        //try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
+        //try (BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\dmiro\\Downloads\\input08.txt"))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
             Date start = new Date();
             int Q = Integer.parseInt(br.readLine());
             long[] queries = new long[Q];
@@ -54,7 +54,7 @@ public class DecibinarySolution {
             dyn[0][i][0] = 1;
         }
 
-        for (int i = 1; i < Math.min(n, 10); i++) {
+        for (int i = 1; i < Math.min(n + 1, 10); i++) {
             dyn[i][0][i] = 1;
         }
 
@@ -84,7 +84,7 @@ public class DecibinarySolution {
     }
 
     private static long findNthDecibinaryVal(long n, long[] counts, long[][][] dyn) {
-        int decimalVal = findDecimalVal(counts, n, 0, counts.length);
+        int decimalVal = findDecimalVal(counts, n, 0, counts.length - 1);
 
         if (decimalVal == 0) {
             return buildNthDecibinaryNumber(n, decimalVal, dyn);
