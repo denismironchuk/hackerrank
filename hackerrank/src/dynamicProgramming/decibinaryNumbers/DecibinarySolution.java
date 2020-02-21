@@ -10,7 +10,7 @@ import java.util.Date;
 
 public class DecibinarySolution {
     public static void main(String[] args) throws IOException {
-        try (BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\dmiro\\Downloads\\input08.txt"))) {
+        try (BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\dmiro\\Downloads\\input07.txt"))) {
         //try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
             Date start = new Date();
             int Q = Integer.parseInt(br.readLine());
@@ -59,8 +59,13 @@ public class DecibinarySolution {
             dyn[i][0][i] = 1;
         }
 
+        int binaryLen = 1;
+        int increaseThreshold = 2;
         for (int decimalVal = 1; decimalVal <= n; decimalVal++) {
-            int binaryLen = getBinaryLength(decimalVal);
+            if (decimalVal == increaseThreshold) {
+                binaryLen++;
+                increaseThreshold *= 2;
+            }
             int mul = 2;
             long positionSum = decimalVal < 10 ? 1 : 0;
             for (int decibinaryPosition = 1; decibinaryPosition < binaryLen; decibinaryPosition++) {
