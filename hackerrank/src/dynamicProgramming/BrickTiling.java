@@ -406,38 +406,38 @@ public class BrickTiling {
                     addNewRowToStates(columnStates, row);
 
                     for (int col = 0; col < m; col++) {
-                        if (board[row][col] == '#') {
-                            continue;
-                        }
-
                         Map<Integer, Long> newStates = new HashMap<>();
 
-                        for (BaseTile tile : tiles) {
-                            if (col < tile.getStartIndex() || col > tile.getEndIndex(m) || row + tile.getHeight() > n) {
-                                continue;
-                            }
-
-                            Map<Integer, Long> states = columnStates.get(3 - tile.getLen());
-                            for (Map.Entry<Integer, Long> entry : states.entrySet()) {
-                                Integer state = entry.getKey();
-                                Long cnt = entry.getValue();
-
-                                boolean skip = false;
-
-                                for(int mask : tile.getUpPositionMasks(col, m)) {
-                                    if ((state | mask) == state) {
-                                        skip = true;
-                                        break;
-                                    } else {
-                                        state = state | mask;
-                                    }
-                                }
-
-                                if (skip) {
+                        if (board[row][col] == '#') {
+                            newStates.putAll(columnStates.peekLast());
+                        } else {
+                            for (BaseTile tile : tiles) {
+                                if (col < tile.getStartIndex() || col > tile.getEndIndex(m) || row + tile.getHeight() > n) {
                                     continue;
                                 }
 
-                                newStates.merge(state, cnt, (oldVal, newVal) -> oldVal + newVal);
+                                Map<Integer, Long> states = columnStates.get(3 - tile.getLen());
+                                for (Map.Entry<Integer, Long> entry : states.entrySet()) {
+                                    Integer state = entry.getKey();
+                                    Long cnt = entry.getValue();
+
+                                    boolean skip = false;
+
+                                    for (int mask : tile.getUpPositionMasks(col, m)) {
+                                        if ((state | mask) == state) {
+                                            skip = true;
+                                            break;
+                                        } else {
+                                            state = state | mask;
+                                        }
+                                    }
+
+                                    if (skip) {
+                                        continue;
+                                    }
+
+                                    newStates.merge(state, cnt, (oldVal, newVal) -> oldVal + newVal);
+                                }
                             }
                         }
 
