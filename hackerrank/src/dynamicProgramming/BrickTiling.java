@@ -53,6 +53,13 @@ public class BrickTiling {
         public int getEndIndex(int cols) {
             return cols - 1;
         }
+
+        @Override
+        public String toString() {
+            return ".....\n" +
+                   "...#.\n" +
+                   ".###.";
+        }
     }
 
     private static class Tile2 extends BaseTile {
@@ -88,6 +95,13 @@ public class BrickTiling {
         @Override
         public int getEndIndex(int cols) {
             return cols - 1;
+        }
+
+        @Override
+        public String toString() {
+            return ".....\n" +
+                   ".#...\n" +
+                   ".###.";
         }
     }
 
@@ -125,6 +139,13 @@ public class BrickTiling {
         public int getEndIndex(int cols) {
             return cols - 2;
         }
+
+        @Override
+        public String toString() {
+            return ".##..\n" +
+                   ".#...\n" +
+                   ".#...";
+        }
     }
 
     private static class Tile4 extends BaseTile {
@@ -160,6 +181,13 @@ public class BrickTiling {
         @Override
         public int getEndIndex(int cols) {
             return cols - 1;
+        }
+
+        @Override
+        public String toString() {
+            return ".##..\n" +
+                   "..#..\n" +
+                   "..#..";
         }
     }
 
@@ -197,6 +225,13 @@ public class BrickTiling {
         public int getEndIndex(int cols) {
             return cols - 1;
         }
+
+        @Override
+        public String toString() {
+            return ".#...\n" +
+                   ".#...\n" +
+                   ".##..";
+        }
     }
 
     private static class Tile6 extends BaseTile {
@@ -233,6 +268,13 @@ public class BrickTiling {
         public int getEndIndex(int cols) {
             return cols - 1;
         }
+
+        @Override
+        public String toString() {
+            return "..#..\n" +
+                   "..#..\n" +
+                   ".##..";
+        }
     }
 
     private static class Tile7 extends BaseTile {
@@ -242,7 +284,7 @@ public class BrickTiling {
 
         @Override
         public int getLen() {
-            return 3;
+            return 1;
         }
 
         @Override
@@ -262,12 +304,19 @@ public class BrickTiling {
 
         @Override
         public int getStartIndex() {
-            return 1;
+            return 0;
         }
 
         @Override
         public int getEndIndex(int cols) {
             return cols - 3;
+        }
+
+        @Override
+        public String toString() {
+            return ".....\n" +
+                   ".###.\n" +
+                   ".#...";
         }
     }
 
@@ -278,7 +327,7 @@ public class BrickTiling {
 
         @Override
         public int getLen() {
-            return 3;
+            return 1;
         }
 
         @Override
@@ -304,6 +353,13 @@ public class BrickTiling {
         @Override
         public int getEndIndex(int cols) {
             return cols - 1;
+        }
+
+        @Override
+        public String toString() {
+            return ".....\n" +
+                   ".###.\n" +
+                   "...#.";
         }
     }
 
@@ -350,11 +406,11 @@ public class BrickTiling {
                     addNewRowToStates(columnStates, row);
 
                     for (int col = 0; col < m; col++) {
-                        Map<Integer, Long> newStates = new HashMap<>();
-
                         if (board[row][col] == '#') {
-                            newStates.putAll(columnStates.peekLast());
+                            continue;
                         }
+
+                        Map<Integer, Long> newStates = new HashMap<>();
 
                         for (BaseTile tile : tiles) {
                             if (col < tile.getStartIndex() || col > tile.getEndIndex(m) || row + tile.getHeight() > n) {
