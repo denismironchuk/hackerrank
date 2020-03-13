@@ -327,7 +327,7 @@ public class BrickTiling {
 
         @Override
         public int getLen() {
-            return 1;
+            return 3;
         }
 
         @Override
