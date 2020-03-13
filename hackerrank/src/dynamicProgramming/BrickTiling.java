@@ -30,7 +30,12 @@ public class BrickTiling {
 
         @Override
         public int[] getUpPositionMasks(int bottomRightPos, int columns) {
-            return new int[] {1 << (bottomRightPos + columns)};
+            return new int[] {
+                    1 << (bottomRightPos + columns),
+                    1 << (bottomRightPos),
+                    1 << (bottomRightPos - 1),
+                    1 << (bottomRightPos - 2),
+            };
         }
 
         @Override
@@ -56,7 +61,12 @@ public class BrickTiling {
 
         @Override
         public int[] getUpPositionMasks(int bottomRightPos, int columns) {
-            return new int[] {1 << (bottomRightPos + columns - 2)};
+            return new int[] {
+                    1 << (bottomRightPos + columns - 2),
+                    1 << (bottomRightPos),
+                    1 << (bottomRightPos - 1),
+                    1 << (bottomRightPos - 2)
+            };
         }
 
         @Override
@@ -85,7 +95,8 @@ public class BrickTiling {
             return new int[] {
                     1 << (bottomRightPos + columns),
                     1 << (bottomRightPos + 2 * columns),
-                    1 << (bottomRightPos + 2 * columns + 1)
+                    1 << (bottomRightPos + 2 * columns + 1),
+                    1 << (bottomRightPos)
             };
         }
 
@@ -115,7 +126,8 @@ public class BrickTiling {
             return new int[] {
                     1 << (bottomRightPos + columns),
                     1 << (bottomRightPos + 2 * columns),
-                    1 << (bottomRightPos + 2 * columns - 1)
+                    1 << (bottomRightPos + 2 * columns - 1),
+                    1 << (bottomRightPos)
             };
         }
 
@@ -144,7 +156,9 @@ public class BrickTiling {
         public int[] getUpPositionMasks(int bottomRightPos, int columns) {
             return new int[] {
                     1 << (bottomRightPos - 1 + columns),
-                    1 << (bottomRightPos - 1 + 2 * columns)
+                    1 << (bottomRightPos - 1 + 2 * columns),
+                    1 << (bottomRightPos),
+                    1 << (bottomRightPos - 1)
             };
         }
 
@@ -173,7 +187,9 @@ public class BrickTiling {
         public int[] getUpPositionMasks(int bottomRightPos, int columns) {
             return new int[] {
                     1 << (bottomRightPos + columns),
-                    1 << (bottomRightPos + 2 * columns)
+                    1 << (bottomRightPos + 2 * columns),
+                    1 << (bottomRightPos),
+                    1 << (bottomRightPos - 1)
             };
         }
 
