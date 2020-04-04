@@ -19,8 +19,10 @@ public class ChoosingWhiteBalls {
     }
 
     private static void countExpectation(Long state, int len, int remainAttempts, Map<Integer, Map<Long, Double>> expectations) {
-        if (!expectations.containsKey(len)) {
-            expectations.put(len, new HashMap<>());
+        Map<Long, Double> l1Map = expectations.get(len - 1);
+        if (l1Map == null) {
+            l1Map = new HashMap<>();
+            expectations.put(len - 1, l1Map);
         }
 
         if (remainAttempts == 0) {
@@ -31,14 +33,14 @@ public class ChoosingWhiteBalls {
         int mul = 1;
         double[] localExps = new double[len];
         for (int pos = 0; pos < len; pos++) {
-            long digit = (state / mul) % 2;
-            long nextState = (state / (mul * 2)) * (mul) + (state % mul);
+            long digit = (state >> pos) & 1;
+            long nextState = ((state >> (pos + 1)) << pos) + (state & (mul - 1));
 
-            if (!expectations.containsKey(len - 1) || !expectations.get(len - 1).containsKey(nextState)) {
+            if (!l1Map.containsKey(nextState)) {
                 countExpectation(nextState, len - 1, remainAttempts - 1, expectations);
             }
 
-            localExps[pos] = ((double)digit + expectations.get(len - 1).get(nextState)) / ((double)len);
+            localExps[pos] = ((double)digit + l1Map.get(nextState)) / ((double)len);
 
             mul <<= 1;
         }
@@ -65,11 +67,13 @@ public class ChoosingWhiteBalls {
 
             Date start = new Date();
             Map<Integer, Map<Long, Double>> stateExp = new HashMap<>();
+            Map<Long, Double> initLen = new HashMap<>();
+            stateExp.put(n, initLen);
             long initState = binToDec(balls);
             countExpectation(initState, n, k, stateExp);
             Date end = new Date();
             System.out.println(end.getTime() - start.getTime() + "ms");
-            System.out.printf("%.6f", stateExp.get(n).get(initState));
+            System.out.printf("%.6f", initLen.get(initState));
         }
     }
 }
