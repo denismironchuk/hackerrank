@@ -16,6 +16,7 @@ public class SecurityUpdate {
         private int x;
 
         private int reachTime = -1;
+        private int prevVersCnt = -1;
 
         public Node(int num, int x) {
             this.num = num;
@@ -30,8 +31,12 @@ public class SecurityUpdate {
             connections.add(con);
         }
 
-        public int getX() {
-            return x;
+        public int getReachTime() {
+            return reachTime;
+        }
+
+        public int getPrevVersCnt() {
+            return prevVersCnt;
         }
     }
 
@@ -69,6 +74,8 @@ public class SecurityUpdate {
                 Node[] nodes = new Node[c + 1];
                 nodes[1] = new Node(1, 0);
                 nodes[1].reachTime = 0;
+                nodes[1].prevVersCnt = 0;
+
                 StringTokenizer xTkn = new StringTokenizer(br.readLine());
                 for (int i = 0; i < c - 1; i++) {
                     x[i + 2] = Integer.parseInt(xTkn.nextToken());
@@ -89,28 +96,54 @@ public class SecurityUpdate {
                 List<Node> negativeNodes = new ArrayList<>();
                 for (int i = 2; i <= c; i++) {
                     if (nodes[i].x > 0) {
+                        nodes[i].reachTime = nodes[i].x;
                         positiveNodes.add(nodes[i]);
                     } else {
-                        nodes[i].x = -nodes[i].x;
+                        nodes[i].prevVersCnt = -nodes[i].x;
                         negativeNodes.add(nodes[i]);
                     }
                 }
-                positiveNodes.sort(Comparator.comparingInt(Node::getX));
-                negativeNodes.sort(Comparator.comparingInt(Node::getX));
-                int currentTime = 0;
-                int prevX = nodes[1].x;
+                positiveNodes.sort(Comparator.comparingInt(Node::getReachTime));
+                negativeNodes.sort(Comparator.comparingInt(Node::getPrevVersCnt));
+
+                List<Node> updateSeq = new ArrayList<>();
+                updateSeq.add(nodes[1]);
+                int positiveIndex = 0;
+
                 for (Node nd : negativeNodes) {
-                    if (prevX != nd.x) {
-                        currentTime++;
+                    while(nd.prevVersCnt - updateSeq.size() > 0) {
+                        updateSeq.add(positiveNodes.get(positiveIndex));
+                        positiveIndex++;
                     }
-                    nd.reachTime = currentTime;
+                    updateSeq.add(nd);
+                }
+
+                for (; positiveIndex < positiveNodes.size(); positiveIndex++) {
+                    updateSeq.add(positiveNodes.get(positiveIndex));
+                }
+
+                updateSeq.remove(0);
+
+                int currentTime = 0;
+                int prev = -1;
+                for (Node nd : updateSeq) {
+                    if (nd.prevVersCnt != -1) {
+                        if (prev != nd.prevVersCnt) {
+                            currentTime++;
+                        }
+                        prev = nd.prevVersCnt;
+                        nd.reachTime = currentTime;
+                    } else {
+                        currentTime = nd.reachTime;
+                        prev = -1;
+                    }
+
                     for (Connection con : nd.connections) {
                         Node neigh = con.getConnectedNode(nd);
                         if (neigh.reachTime != -1) {
                             con.time = Math.max(1, currentTime - neigh.reachTime);
                         }
                     }
-                    prevX = nd.x;
                 }
 
                 String res = connections.stream().map(Connection::getTime).map(String::valueOf).collect(Collectors.joining(" "));
