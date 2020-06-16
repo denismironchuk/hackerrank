@@ -9,7 +9,7 @@ import java.util.Date;
 public class MinDistTester {
     public static void main(String[] args) {
         while (true) {
-            Parenthesis root = Parenthesis.generateRandomParenthesis(1000);
+            Parenthesis root = Parenthesis.generateRandomParenthesis(500);
             Parenthesis[] treeArray = root.buildParenthesisArray();
             String pStr = root.toString();
             pStr = pStr.substring(1, pStr.length() - 1);
@@ -35,6 +35,12 @@ public class MinDistTester {
                 if (par.fromCloseToOpenTiming != dists[par.closeAbsPosition][par.openAbsPosition]) {
                     throw new RuntimeException();
                 }
+
+                par.calculateAndVerifyDistToDescendants(par, new Time(0, par.fromOpenToCloseTiming),
+                        new Time(par.fromCloseToOpenTiming, 0), dists);
+
+                par.calculateAndVerifyDistToAncestors(par, new Time(0, par.fromOpenToCloseTiming),
+                        new Time(par.fromCloseToOpenTiming, 0), dists);
 
                 for (int srcIndex = 0; srcIndex < par.children.size(); srcIndex++) {
                     for (int destIndex = 0; destIndex < par.children.size(); destIndex++) {

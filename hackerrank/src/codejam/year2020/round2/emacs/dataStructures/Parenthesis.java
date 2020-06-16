@@ -176,6 +176,150 @@ public class Parenthesis {
         return res;
     }
 
+    public void calculateAndVerifyDistToDescendants(Parenthesis src, Time fromOpeninig, Time fromClosing, long[][] dists) {
+        for (Parenthesis child : children) {
+            Time fromOpeningNew = countTimeFromOpeningToDescendant(child);
+
+            if (fromOpeningNew.opening != dists[openAbsPosition][child.openAbsPosition]) {
+                throw new RuntimeException();
+            }
+
+            if (fromOpeningNew.closing != dists[openAbsPosition][child.closeAbsPosition]) {
+                throw new RuntimeException();
+            }
+
+            Time fromClosingNew = countTimeFromClosingToDescendant(child);
+
+            if (fromClosingNew.opening != dists[closeAbsPosition][child.openAbsPosition]) {
+                throw new RuntimeException();
+            }
+
+            if (fromClosingNew.closing != dists[closeAbsPosition][child.closeAbsPosition]) {
+                throw new RuntimeException();
+            }
+
+            /***************************************/
+
+            Time fromOpeningMerged = new Time();
+            Time fromClosingMerged = new Time();
+
+            fromOpeningMerged.opening = Math.min(fromOpeninig.opening + fromOpeningNew.opening,
+                    fromOpeninig.closing + fromClosingNew.opening);
+            fromOpeningMerged.closing = Math.min(fromOpeninig.opening + fromOpeningNew.closing,
+                    fromOpeninig.closing + fromClosingNew.closing);
+
+            if (fromOpeningMerged.opening != dists[src.openAbsPosition][child.openAbsPosition]) {
+                throw new RuntimeException();
+            }
+
+            if (fromOpeningMerged.closing != dists[src.openAbsPosition][child.closeAbsPosition]) {
+                throw new RuntimeException();
+            }
+
+            fromClosingMerged.opening = Math.min(fromClosing.opening + fromOpeningNew.opening,
+                    fromClosing.closing + fromClosingNew.opening);
+            fromClosingMerged.closing = Math.min(fromClosing.opening + fromOpeningNew.closing,
+                    fromClosing.closing + fromClosingNew.closing);
+
+            if (fromClosingMerged.opening != dists[src.closeAbsPosition][child.openAbsPosition]) {
+                throw new RuntimeException();
+            }
+
+            if (fromClosingMerged.closing != dists[src.closeAbsPosition][child.closeAbsPosition]) {
+                throw new RuntimeException();
+            }
+
+            child.calculateAndVerifyDistToDescendants(src, fromOpeningMerged, fromClosingMerged, dists);
+        }
+    }
+
+    public Time countTimeFromOpeningToDescendant(Parenthesis child) {
+        Time timeFromOpening = new Time();
+        timeFromOpening.opening = Math.min(child.fromParentOpening.opening, this.fromOpenToCloseTiming + child.fromParentClosing.opening);
+        timeFromOpening.closing = Math.min(child.fromParentOpening.closing, this.fromOpenToCloseTiming + child.fromParentClosing.closing);
+        return timeFromOpening;
+    }
+
+    public Time countTimeFromClosingToDescendant(Parenthesis child) {
+        Time timeFromClosing = new Time();
+        timeFromClosing.opening = Math.min(child.fromParentClosing.opening, this.fromCloseToOpenTiming + child.fromParentOpening.opening);
+        timeFromClosing.closing = Math.min(child.fromParentClosing.closing, this.fromCloseToOpenTiming + child.fromParentOpening.closing);
+        return timeFromClosing;
+    }
+
+    public void calculateAndVerifyDistToAncestors(Parenthesis src, Time fromOpeninig, Time fromClosing, long[][] dists) {
+        if (parent == null || parent.parent == null) {
+            return;
+        }
+
+        Time fromOpeningNew = countTimeFromOpeningToAncestor();
+
+        if (fromOpeningNew.opening != dists[openAbsPosition][parent.openAbsPosition]) {
+            throw new RuntimeException();
+        }
+
+        if (fromOpeningNew.closing != dists[openAbsPosition][parent.closeAbsPosition]) {
+            throw new RuntimeException();
+        }
+
+        Time fromClosingNew = countTimeFromClosingToAncestor();
+
+        if (fromClosingNew.opening != dists[closeAbsPosition][parent.openAbsPosition]) {
+            throw new RuntimeException();
+        }
+
+        if (fromClosingNew.closing != dists[closeAbsPosition][parent.closeAbsPosition]) {
+            throw new RuntimeException();
+        }
+
+        /******************************/
+
+        Time fromOpeningMerged = new Time();
+        Time fromClosingMerged = new Time();
+
+        fromOpeningMerged.opening = Math.min(fromOpeninig.opening + fromOpeningNew.opening,
+                fromOpeninig.closing + fromClosingNew.opening);
+        fromOpeningMerged.closing = Math.min(fromOpeninig.opening + fromOpeningNew.closing,
+                fromOpeninig.closing + fromClosingNew.closing);
+
+        if (fromOpeningMerged.opening != dists[src.openAbsPosition][parent.openAbsPosition]) {
+            throw new RuntimeException();
+        }
+
+        if (fromOpeningMerged.closing != dists[src.openAbsPosition][parent.closeAbsPosition]) {
+            throw new RuntimeException();
+        }
+
+        fromClosingMerged.opening = Math.min(fromClosing.opening + fromOpeningNew.opening,
+                fromClosing.closing + fromClosingNew.opening);
+        fromClosingMerged.closing = Math.min(fromClosing.opening + fromOpeningNew.closing,
+                fromClosing.closing + fromClosingNew.closing);
+
+        if (fromClosingMerged.opening != dists[src.closeAbsPosition][parent.openAbsPosition]) {
+            throw new RuntimeException();
+        }
+
+        if (fromClosingMerged.closing != dists[src.closeAbsPosition][parent.closeAbsPosition]) {
+            throw new RuntimeException();
+        }
+
+        parent.calculateAndVerifyDistToAncestors(src, fromOpeningMerged, fromClosingMerged, dists);
+    }
+
+    public Time countTimeFromOpeningToAncestor() {
+        Time timeFromOpening = new Time();
+        timeFromOpening.opening = Math.min(toParentOpening.opening, toParentClosing.opening + parent.fromCloseToOpenTiming);
+        timeFromOpening.closing = Math.min(toParentClosing.opening, toParentOpening.opening + parent.fromOpenToCloseTiming);
+        return timeFromOpening;
+    }
+
+    public Time countTimeFromClosingToAncestor() {
+        Time timeFromClosing = new Time();
+        timeFromClosing.opening = Math.min(toParentOpening.closing, toParentClosing.closing + parent.fromCloseToOpenTiming);
+        timeFromClosing.closing = Math.min(toParentClosing.closing, toParentOpening.closing + parent.fromOpenToCloseTiming);
+        return timeFromClosing;
+    }
+
     /**
      * (  (  (  (  )  )  )  (  (  )  )  (  )  )
      * |------------------------------------->|
