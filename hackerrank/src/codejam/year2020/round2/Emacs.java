@@ -13,7 +13,12 @@ public class Emacs {
     private static class MoveTime {
         private long toLeft = 0;
         private long toRight = 0;
-        private long teleport = 0;
+        private long teleport = Long.MAX_VALUE;
+    }
+
+    private static class Time {
+        private long opening = 0;
+        private long closing = 0;
     }
 
     private static class Parenthesis {
@@ -27,11 +32,11 @@ public class Emacs {
         private long fromOpenToCloseTiming = 0;
         private long fromCloseToOpenTiming = 0;
 
-        long[] timeFromOpeningToInnerNodesOpenings;
-        long[] timeFromClosingToInnerNodesClosings;
+        private Time fromParentOpening = new Time();
+        private Time fromParentClosing = new Time();
 
-        long[] timeFromInnerNodesOpeningsToOpening;
-        long[] timeFromInnerNodesClosingsToClosing;
+        private Time toParentOpening = new Time();
+        private Time toParentClosing = new Time();
 
         public Parenthesis(Parenthesis parent) {
             this.parent = parent;
@@ -105,6 +110,8 @@ public class Emacs {
                 initTimeFromInnerNodesOpeningsToOpening(root);
                 initTimeFromInnerNodesClosingsToClosing(root);
 
+                finalTeleportCalculation(root);
+
                 System.out.println();
             }
         }
@@ -150,12 +157,13 @@ public class Emacs {
      * |------------------------------->|
      */
     private static void initTimeFromOpeningToInnerNodesOpenings(Parenthesis node) {
-        node.timeFromOpeningToInnerNodesOpenings = new long[node.children.size()];
         long time = node.openTime.toRight;
         for (int index = 0; index < node.children.size(); index++) {
             Parenthesis child = node.children.get(index);
-            node.timeFromOpeningToInnerNodesOpenings[index] = time;
-            time += child.fromOpenToCloseTiming + child.closeTime.toRight;
+            child.fromParentOpening.opening = time;
+            time += child.fromOpenToCloseTiming;
+            child.fromParentOpening.closing = time;
+            time += child.closeTime.toRight;
 
             initTimeFromOpeningToInnerNodesOpenings(child);
         }
@@ -171,12 +179,13 @@ public class Emacs {
      *             |<-------------------------|
      */
     private static void initTimeFromClosingToInnerNodesClosings(Parenthesis node) {
-        node.timeFromClosingToInnerNodesClosings = new long[node.children.size()];
         long time = node.closeTime.toLeft;
         for (int index = node.children.size() - 1; index >= 0; index--) {
             Parenthesis child = node.children.get(index);
-            node.timeFromClosingToInnerNodesClosings[index] = time;
-            time += child.fromCloseToOpenTiming + child.openTime.toLeft;
+            child.fromParentClosing.closing = time;
+            time += child.fromCloseToOpenTiming;
+            child.fromParentClosing.opening = time;
+            time += child.openTime.toLeft;
 
             initTimeFromClosingToInnerNodesClosings(child);
         }
@@ -192,13 +201,13 @@ public class Emacs {
      * |<-------------------------------|
      */
     private static void initTimeFromInnerNodesOpeningsToOpening(Parenthesis node) {
-        node.timeFromInnerNodesOpeningsToOpening = new long[node.children.size()];
         long time = 0;
         for (int index = 0; index < node.children.size(); index++) {
             Parenthesis child = node.children.get(index);
             time += child.openTime.toLeft;
-            node.timeFromInnerNodesOpeningsToOpening[index] = time;
+            child.toParentOpening.opening = time;
             time += child.fromCloseToOpenTiming;
+            child.toParentOpening.closing = time;
 
             initTimeFromInnerNodesOpeningsToOpening(child);
         }
@@ -214,15 +223,39 @@ public class Emacs {
      *             |------------------------->|
      */
     private static void initTimeFromInnerNodesClosingsToClosing(Parenthesis node) {
-        node.timeFromInnerNodesClosingsToClosing = new long[node.children.size()];
         long time = 0;
         for (int index = node.children.size() - 1; index >= 0; index--) {
             Parenthesis child = node.children.get(index);
             time += child.closeTime.toRight;
-            node.timeFromInnerNodesClosingsToClosing[index] = time;
+            child.toParentClosing.closing = time;
             time += child.fromOpenToCloseTiming;
+            child.toParentClosing.opening = time;
 
             initTimeFromInnerNodesClosingsToClosing(child);
+        }
+    }
+
+    /**
+     * >-------------------------------------------->
+     * |                                            |
+     * |                                            |
+     * <--(  (  (  (  )  )  )  (  (  )  )  (  )  )<--
+     *
+     * <--------------------------------------------<
+     * |                                            |
+     * |                                            |
+     * -->(  (  (  (  )  )  )  (  (  )  )  (  )  )-->
+     */
+    private static void finalTeleportCalculation(Parenthesis node) {
+        if (node.parent != null) {
+            long candidate1 = node.toParentOpening.opening + node.parent.fromOpenToCloseTiming + node.fromParentClosing.closing;
+            node.fromOpenToCloseTiming = Math.min(node.fromOpenToCloseTiming, candidate1);
+            long candidate2 = node.toParentClosing.closing + node.parent.fromCloseToOpenTiming + node.fromParentOpening.opening;
+            node.fromCloseToOpenTiming = Math.min(node.fromCloseToOpenTiming, candidate2);
+        }
+
+        for (Parenthesis child : node.children) {
+            finalTeleportCalculation(child);
         }
     }
 }
