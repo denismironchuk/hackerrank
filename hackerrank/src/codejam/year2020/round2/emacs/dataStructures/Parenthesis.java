@@ -7,11 +7,14 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-public class Parenthesis {
+public class Parenthesis implements Comparable<Parenthesis> {
+
     public Parenthesis parent = null;
     public List<Parenthesis> children = new ArrayList<>();
+    public TreeSet<Parenthesis> childrenTree = new TreeSet<>();
     public int positionInParentChildList = -1;
 
     public int openAbsPosition = -1;
@@ -28,6 +31,8 @@ public class Parenthesis {
 
     public Time toParentOpening = new Time();
     public Time toParentClosing = new Time();
+
+    public int enterTime = -1;
 
     public static Parenthesis generateRandomParenthesis(int pairs) {
         Parenthesis root = new Parenthesis(null);
@@ -136,6 +141,22 @@ public class Parenthesis {
         finalTeleportCalculation();
     }
 
+    public int dfs(int time) {
+        this.enterTime = time;
+        time++;
+        for (Parenthesis child : children) {
+            time = child.dfs(time);
+        }
+        return time;
+    }
+
+    public void fillTreeSet() {
+        childrenTree.addAll(children);
+        for (Parenthesis child : children) {
+            child.fillTreeSet();
+        }
+    }
+
     /**
      * Calculate distance between two children of the same parent on the same level.
      * From source opening to dist opening and closing
@@ -208,54 +229,6 @@ public class Parenthesis {
         return fromClosingMerged;
     }
 
-    public void calculateAndVerifyDistToDescendants(Parenthesis src, Time fromOpening, Time fromClosing, long[][] dists) {
-        for (Parenthesis child : children) {
-            Time fromOpeningNew = countTimeFromOpeningToDescendant(child);
-            Time fromClosingNew = countTimeFromClosingToDescendant(child);
-
-            if (fromOpeningNew.opening != dists[openAbsPosition][child.openAbsPosition]) {
-                throw new RuntimeException();
-            }
-
-            if (fromOpeningNew.closing != dists[openAbsPosition][child.closeAbsPosition]) {
-                throw new RuntimeException();
-            }
-
-            if (fromClosingNew.opening != dists[closeAbsPosition][child.openAbsPosition]) {
-                throw new RuntimeException();
-            }
-
-            if (fromClosingNew.closing != dists[closeAbsPosition][child.closeAbsPosition]) {
-                throw new RuntimeException();
-            }
-
-            /***************************************/
-
-            Time fromOpeningMerged = mergeOpeningTime(fromOpening, fromOpeningNew, fromClosingNew);
-
-
-            if (fromOpeningMerged.opening != dists[src.openAbsPosition][child.openAbsPosition]) {
-                throw new RuntimeException();
-            }
-
-            if (fromOpeningMerged.closing != dists[src.openAbsPosition][child.closeAbsPosition]) {
-                throw new RuntimeException();
-            }
-
-            Time fromClosingMerged = mergeClosingTime(fromClosing, fromOpeningNew, fromClosingNew);
-
-            if (fromClosingMerged.opening != dists[src.closeAbsPosition][child.openAbsPosition]) {
-                throw new RuntimeException();
-            }
-
-            if (fromClosingMerged.closing != dists[src.closeAbsPosition][child.closeAbsPosition]) {
-                throw new RuntimeException();
-            }
-
-            child.calculateAndVerifyDistToDescendants(src, fromOpeningMerged, fromClosingMerged, dists);
-        }
-    }
-
     public Time countTimeFromOpeningToDescendant(Parenthesis child) {
         Time timeFromOpening = new Time();
         timeFromOpening.opening = Math.min(child.fromParentOpening.opening, this.fromOpenToCloseTiming + child.fromParentClosing.opening);
@@ -268,55 +241,6 @@ public class Parenthesis {
         timeFromClosing.opening = Math.min(child.fromParentClosing.opening, this.fromCloseToOpenTiming + child.fromParentOpening.opening);
         timeFromClosing.closing = Math.min(child.fromParentClosing.closing, this.fromCloseToOpenTiming + child.fromParentOpening.closing);
         return timeFromClosing;
-    }
-
-    public void calculateAndVerifyDistToAncestors(Parenthesis src, Time fromOpening, Time fromClosing, long[][] dists) {
-        if (parent == null || parent.parent == null) {
-            return;
-        }
-
-        Time fromOpeningNew = countTimeFromOpeningToAncestor();
-        Time fromClosingNew = countTimeFromClosingToAncestor();
-
-        if (fromOpeningNew.opening != dists[openAbsPosition][parent.openAbsPosition]) {
-            throw new RuntimeException();
-        }
-
-        if (fromOpeningNew.closing != dists[openAbsPosition][parent.closeAbsPosition]) {
-            throw new RuntimeException();
-        }
-
-        if (fromClosingNew.opening != dists[closeAbsPosition][parent.openAbsPosition]) {
-            throw new RuntimeException();
-        }
-
-        if (fromClosingNew.closing != dists[closeAbsPosition][parent.closeAbsPosition]) {
-            throw new RuntimeException();
-        }
-
-        /******************************/
-
-        Time fromOpeningMerged = mergeOpeningTime(fromOpening, fromOpeningNew, fromClosingNew);
-
-        if (fromOpeningMerged.opening != dists[src.openAbsPosition][parent.openAbsPosition]) {
-            throw new RuntimeException();
-        }
-
-        if (fromOpeningMerged.closing != dists[src.openAbsPosition][parent.closeAbsPosition]) {
-            throw new RuntimeException();
-        }
-
-        Time fromClosingMerged = mergeClosingTime(fromClosing, fromOpeningNew, fromClosingNew);
-
-        if (fromClosingMerged.opening != dists[src.closeAbsPosition][parent.openAbsPosition]) {
-            throw new RuntimeException();
-        }
-
-        if (fromClosingMerged.closing != dists[src.closeAbsPosition][parent.closeAbsPosition]) {
-            throw new RuntimeException();
-        }
-
-        parent.calculateAndVerifyDistToAncestors(src, fromOpeningMerged, fromClosingMerged, dists);
     }
 
     public Time countTimeFromOpeningToAncestor() {
@@ -333,7 +257,7 @@ public class Parenthesis {
         return timeFromClosing;
     }
 
-    public ParenthesisDistTime calculateUpGoingTiming(Parenthesis dest, Time fromOpening, Time fromClosing, Parenthesis src, long[][] dists) {
+    public ParenthesisDistTime calculateUpGoingTiming(Parenthesis dest, Time fromOpening, Time fromClosing) {
         if (this == dest) {
             return new ParenthesisDistTime(fromOpening, fromClosing);
         }
@@ -342,29 +266,12 @@ public class Parenthesis {
         Time fromClosingNew = countTimeFromClosingToAncestor();
 
         Time fromOpeningMerged = mergeOpeningTime(fromOpening, fromOpeningNew, fromClosingNew);
-
-        if (fromOpeningMerged.opening != dists[src.openAbsPosition][parent.openAbsPosition]) {
-            throw new RuntimeException();
-        }
-
-        if (fromOpeningMerged.closing != dists[src.openAbsPosition][parent.closeAbsPosition]) {
-            throw new RuntimeException();
-        }
-
         Time fromClosingMerged = mergeClosingTime(fromClosing, fromOpeningNew, fromClosingNew);
 
-        if (fromClosingMerged.opening != dists[src.closeAbsPosition][parent.openAbsPosition]) {
-            throw new RuntimeException();
-        }
-
-        if (fromClosingMerged.closing != dists[src.closeAbsPosition][parent.closeAbsPosition]) {
-            throw new RuntimeException();
-        }
-
-        return parent.calculateUpGoingTiming(dest, fromOpeningMerged, fromClosingMerged, src, dists);
+        return parent.calculateUpGoingTiming(dest, fromOpeningMerged, fromClosingMerged);
     }
 
-    public ParenthesisDistTime calculateDownGoingTiming(Parenthesis src, Time fromOpening, Time fromClosing, Parenthesis dest, long[][] dists) {
+    public ParenthesisDistTime calculateDownGoingTiming(Parenthesis src, Time fromOpening, Time fromClosing) {
         if (this == src) {
             return new ParenthesisDistTime(fromOpening, fromClosing);
         }
@@ -373,26 +280,9 @@ public class Parenthesis {
         Time fromClosingNew = parent.countTimeFromClosingToDescendant(this);
 
         Time fromOpeningMerged = mergeOpeningTime(fromOpeningNew, fromOpening, fromClosing);
-
-        if (fromOpeningMerged.opening != dists[parent.openAbsPosition][dest.openAbsPosition]) {
-            throw new RuntimeException();
-        }
-
-        if (fromOpeningMerged.closing != dists[parent.openAbsPosition][dest.closeAbsPosition]) {
-            throw new RuntimeException();
-        }
-
         Time fromClosingMerged = mergeClosingTime(fromClosingNew, fromOpening, fromClosing);
 
-        if (fromClosingMerged.opening != dists[parent.closeAbsPosition][dest.openAbsPosition]) {
-            throw new RuntimeException();
-        }
-
-        if (fromClosingMerged.closing != dists[parent.closeAbsPosition][dest.closeAbsPosition]) {
-            throw new RuntimeException();
-        }
-
-        return parent.calculateDownGoingTiming(src, fromOpeningMerged, fromClosingMerged, dest, dists);
+        return parent.calculateDownGoingTiming(src, fromOpeningMerged, fromClosingMerged);
     }
 
     /**
@@ -561,13 +451,46 @@ public class Parenthesis {
         if (parent == dest.parent) {
             return new ParenthesisDistTime(parent.countTimeFromInnerOpening(this.positionInParentChildList, dest.positionInParentChildList),
                     parent.countTimeFromInnerClosing(this.positionInParentChildList, dest.positionInParentChildList));
-        }
+        } else {
+            Parenthesis lca = getLca(dest);
+            if (lca.equals(this)) {
+                return dest.calculateDownGoingTiming(this, new Time(0, dest.fromOpenToCloseTiming),
+                        new Time(dest.fromCloseToOpenTiming, 0));
+            } else if (lca.equals(dest)) {
+                return calculateUpGoingTiming(dest, new Time(0, fromOpenToCloseTiming),
+                        new Time(fromCloseToOpenTiming, 0));
+            } else {
+                Parenthesis sameLevelStart = lca.childrenTree.floor(this);
+                ParenthesisDistTime time1 = calculateUpGoingTiming(sameLevelStart, new Time(0, fromOpenToCloseTiming),
+                        new Time(fromCloseToOpenTiming, 0));
 
-        return null;
+                Parenthesis sameLevelEnd = lca.childrenTree.floor(dest);
+                ParenthesisDistTime time2 = new ParenthesisDistTime(lca.countTimeFromInnerOpening(sameLevelStart.positionInParentChildList, sameLevelEnd.positionInParentChildList),
+                        lca.countTimeFromInnerClosing(sameLevelStart.positionInParentChildList, sameLevelEnd.positionInParentChildList));
+
+                ParenthesisDistTime time3 = new ParenthesisDistTime(
+                        mergeOpeningTime(time1.timeFromOpening, time2.timeFromOpening, time2.timeFromClosing),
+                        mergeClosingTime(time1.timeFromClosing, time2.timeFromOpening, time2.timeFromClosing)
+                );
+
+                ParenthesisDistTime time4 = dest.calculateDownGoingTiming(sameLevelEnd, new Time(0, dest.fromOpenToCloseTiming),
+                        new Time(dest.fromCloseToOpenTiming, 0));
+
+                return new ParenthesisDistTime(
+                        mergeOpeningTime(time3.timeFromOpening, time4.timeFromOpening, time4.timeFromClosing),
+                        mergeClosingTime(time3.timeFromClosing, time4.timeFromOpening, time4.timeFromClosing)
+                );
+            }
+        }
     }
 
     @Override
     public String toString() {
         return "(" + children.stream().map(Parenthesis::toString).collect(Collectors.joining()) + ")";
+    }
+
+    @Override
+    public int compareTo(Parenthesis o) {
+        return Integer.compare(enterTime, o.enterTime);
     }
 }

@@ -1,7 +1,7 @@
 package codejam.year2020.round2.emacs;
 
 import codejam.year2020.round2.emacs.dataStructures.Parenthesis;
-import codejam.year2020.round2.emacs.dataStructures.Time;
+import codejam.year2020.round2.emacs.dataStructures.ParenthesisDistTime;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -20,6 +20,9 @@ public class MinDistTester {
             countDists(dists);
             Date end1 = new Date();
 
+            root.dfs(1);
+            root.fillTreeSet();
+
             Date start2 = new Date();
             root.calculateTiming();
             Date end2 = new Date();
@@ -27,52 +30,21 @@ public class MinDistTester {
             System.out.println(end1.getTime() - start1.getTime() + "ms");
             System.out.println(end2.getTime() - start2.getTime() + "ms");
 
-            for (Parenthesis par : treeArray) {
-                if (par.fromOpenToCloseTiming != dists[par.openAbsPosition][par.closeAbsPosition]) {
-                    throw new RuntimeException();
-                }
+            for (Parenthesis par1 : treeArray) {
+                for (Parenthesis par2 : treeArray) {
+                    if (!par1.equals(par2)) {
+                        ParenthesisDistTime time = par1.calculateMinTime(par2);
 
-                if (par.fromCloseToOpenTiming != dists[par.closeAbsPosition][par.openAbsPosition]) {
-                    throw new RuntimeException();
-                }
-
-                par.calculateAndVerifyDistToDescendants(par, new Time(0, par.fromOpenToCloseTiming),
-                        new Time(par.fromCloseToOpenTiming, 0), dists);
-
-                par.calculateAndVerifyDistToAncestors(par, new Time(0, par.fromOpenToCloseTiming),
-                        new Time(par.fromCloseToOpenTiming, 0), dists);
-
-                par.calculateUpGoingTiming(root, new Time(0, par.fromOpenToCloseTiming),
-                        new Time(par.fromCloseToOpenTiming, 0), par, dists);
-
-                par.calculateDownGoingTiming(root, new Time(0, par.fromOpenToCloseTiming),
-                        new Time(par.fromCloseToOpenTiming, 0), par, dists);
-
-                for (int srcIndex = 0; srcIndex < par.children.size(); srcIndex++) {
-                    for (int destIndex = 0; destIndex < par.children.size(); destIndex++) {
-                        if (srcIndex == destIndex) {
-                            continue;
-                        }
-
-                        Time timeFromOpening = par.countTimeFromInnerOpening(srcIndex, destIndex);
-                        Time timeFromClosing = par.countTimeFromInnerClosing(srcIndex, destIndex);
-
-                        Parenthesis src = par.children.get(srcIndex);
-                        Parenthesis dest = par.children.get(destIndex);
-
-                        if (timeFromOpening.opening != dists[src.openAbsPosition][dest.openAbsPosition]) {
+                        if (time.timeFromOpening.opening != dists[par1.openAbsPosition][par2.openAbsPosition]) {
                             throw new RuntimeException();
                         }
-
-                        if (timeFromOpening.closing != dists[src.openAbsPosition][dest.closeAbsPosition]) {
+                        if (time.timeFromOpening.closing != dists[par1.openAbsPosition][par2.closeAbsPosition]) {
                             throw new RuntimeException();
                         }
-
-                        if (timeFromClosing.opening != dists[src.closeAbsPosition][dest.openAbsPosition]) {
+                        if (time.timeFromClosing.opening != dists[par1.closeAbsPosition][par2.openAbsPosition]) {
                             throw new RuntimeException();
                         }
-
-                        if (timeFromClosing.closing != dists[src.closeAbsPosition][dest.closeAbsPosition]) {
+                        if (time.timeFromClosing.closing != dists[par1.closeAbsPosition][par2.closeAbsPosition]) {
                             throw new RuntimeException();
                         }
                     }
