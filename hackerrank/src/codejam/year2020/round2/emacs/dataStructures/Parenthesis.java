@@ -1,9 +1,11 @@
 package codejam.year2020.round2.emacs.dataStructures;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
@@ -76,9 +78,17 @@ public class Parenthesis {
 
     public Parenthesis[] buildParenthesisArray() {
         List<Parenthesis> parArr = new ArrayList<>();
+
+        this.openAbsPosition = parArr.size();
+        parArr.add(this);
+
         for (Parenthesis child : children) {
             child.fillParenthesisArray(parArr);
         }
+
+        this.closeAbsPosition = parArr.size();
+        parArr.add(this);
+
         return parArr.toArray(new Parenthesis[0]);
     }
 
@@ -198,7 +208,7 @@ public class Parenthesis {
         return fromClosingMerged;
     }
 
-    public void calculateAndVerifyDistToDescendants(Parenthesis src, Time fromOpeninig, Time fromClosing, long[][] dists) {
+    public void calculateAndVerifyDistToDescendants(Parenthesis src, Time fromOpening, Time fromClosing, long[][] dists) {
         for (Parenthesis child : children) {
             Time fromOpeningNew = countTimeFromOpeningToDescendant(child);
             Time fromClosingNew = countTimeFromClosingToDescendant(child);
@@ -221,7 +231,7 @@ public class Parenthesis {
 
             /***************************************/
 
-            Time fromOpeningMerged = mergeOpeningTime(fromOpeninig, fromOpeningNew, fromClosingNew);
+            Time fromOpeningMerged = mergeOpeningTime(fromOpening, fromOpeningNew, fromClosingNew);
 
 
             if (fromOpeningMerged.opening != dists[src.openAbsPosition][child.openAbsPosition]) {
@@ -260,7 +270,7 @@ public class Parenthesis {
         return timeFromClosing;
     }
 
-    public void calculateAndVerifyDistToAncestors(Parenthesis src, Time fromOpeninig, Time fromClosing, long[][] dists) {
+    public void calculateAndVerifyDistToAncestors(Parenthesis src, Time fromOpening, Time fromClosing, long[][] dists) {
         if (parent == null || parent.parent == null) {
             return;
         }
@@ -286,7 +296,7 @@ public class Parenthesis {
 
         /******************************/
 
-        Time fromOpeningMerged = mergeOpeningTime(fromOpeninig, fromOpeningNew, fromClosingNew);
+        Time fromOpeningMerged = mergeOpeningTime(fromOpening, fromOpeningNew, fromClosingNew);
 
         if (fromOpeningMerged.opening != dists[src.openAbsPosition][parent.openAbsPosition]) {
             throw new RuntimeException();
@@ -321,6 +331,68 @@ public class Parenthesis {
         timeFromClosing.opening = Math.min(toParentOpening.closing, toParentClosing.closing + parent.fromCloseToOpenTiming);
         timeFromClosing.closing = Math.min(toParentClosing.closing, toParentOpening.closing + parent.fromOpenToCloseTiming);
         return timeFromClosing;
+    }
+
+    public ParenthesisDistTime calculateUpGoingTiming(Parenthesis dest, Time fromOpening, Time fromClosing, Parenthesis src, long[][] dists) {
+        if (this == dest) {
+            return new ParenthesisDistTime(fromOpening, fromClosing);
+        }
+
+        Time fromOpeningNew = countTimeFromOpeningToAncestor();
+        Time fromClosingNew = countTimeFromClosingToAncestor();
+
+        Time fromOpeningMerged = mergeOpeningTime(fromOpening, fromOpeningNew, fromClosingNew);
+
+        if (fromOpeningMerged.opening != dists[src.openAbsPosition][parent.openAbsPosition]) {
+            throw new RuntimeException();
+        }
+
+        if (fromOpeningMerged.closing != dists[src.openAbsPosition][parent.closeAbsPosition]) {
+            throw new RuntimeException();
+        }
+
+        Time fromClosingMerged = mergeClosingTime(fromClosing, fromOpeningNew, fromClosingNew);
+
+        if (fromClosingMerged.opening != dists[src.closeAbsPosition][parent.openAbsPosition]) {
+            throw new RuntimeException();
+        }
+
+        if (fromClosingMerged.closing != dists[src.closeAbsPosition][parent.closeAbsPosition]) {
+            throw new RuntimeException();
+        }
+
+        return parent.calculateUpGoingTiming(dest, fromOpeningMerged, fromClosingMerged, src, dists);
+    }
+
+    public ParenthesisDistTime calculateDownGoingTiming(Parenthesis src, Time fromOpening, Time fromClosing, Parenthesis dest, long[][] dists) {
+        if (this == src) {
+            return new ParenthesisDistTime(fromOpening, fromClosing);
+        }
+
+        Time fromOpeningNew = parent.countTimeFromOpeningToDescendant(this);
+        Time fromClosingNew = parent.countTimeFromClosingToDescendant(this);
+
+        Time fromOpeningMerged = mergeOpeningTime(fromOpeningNew, fromOpening, fromClosing);
+
+        if (fromOpeningMerged.opening != dists[parent.openAbsPosition][dest.openAbsPosition]) {
+            throw new RuntimeException();
+        }
+
+        if (fromOpeningMerged.closing != dists[parent.openAbsPosition][dest.closeAbsPosition]) {
+            throw new RuntimeException();
+        }
+
+        Time fromClosingMerged = mergeClosingTime(fromClosingNew, fromOpening, fromClosing);
+
+        if (fromClosingMerged.opening != dists[parent.closeAbsPosition][dest.openAbsPosition]) {
+            throw new RuntimeException();
+        }
+
+        if (fromClosingMerged.closing != dists[parent.closeAbsPosition][dest.closeAbsPosition]) {
+            throw new RuntimeException();
+        }
+
+        return parent.calculateDownGoingTiming(src, fromOpeningMerged, fromClosingMerged, dest, dists);
     }
 
     /**
@@ -463,6 +535,35 @@ public class Parenthesis {
         for (Parenthesis child : children) {
             child.finalTeleportCalculation();
         }
+    }
+
+    /**
+     * LCA calculation block
+     */
+    public Parenthesis getLca(Parenthesis par) {
+        return par.getLca(buildPathToRoot());
+    }
+
+    private Parenthesis getLca(Set<Parenthesis> path) {
+        return path.contains(this) ? this : parent.getLca(path);
+    }
+
+    private Set<Parenthesis> buildPathToRoot() {
+        Set<Parenthesis> path = (null == parent) ? new HashSet<>() : parent.buildPathToRoot();
+        path.add(this);
+        return path;
+    }
+
+    /**
+     * Time calculation block
+     */
+    public ParenthesisDistTime calculateMinTime(Parenthesis dest) {
+        if (parent == dest.parent) {
+            return new ParenthesisDistTime(parent.countTimeFromInnerOpening(this.positionInParentChildList, dest.positionInParentChildList),
+                    parent.countTimeFromInnerClosing(this.positionInParentChildList, dest.positionInParentChildList));
+        }
+
+        return null;
     }
 
     @Override

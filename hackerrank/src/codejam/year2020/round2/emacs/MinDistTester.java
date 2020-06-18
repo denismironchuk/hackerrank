@@ -42,6 +42,12 @@ public class MinDistTester {
                 par.calculateAndVerifyDistToAncestors(par, new Time(0, par.fromOpenToCloseTiming),
                         new Time(par.fromCloseToOpenTiming, 0), dists);
 
+                par.calculateUpGoingTiming(root, new Time(0, par.fromOpenToCloseTiming),
+                        new Time(par.fromCloseToOpenTiming, 0), par, dists);
+
+                par.calculateDownGoingTiming(root, new Time(0, par.fromOpenToCloseTiming),
+                        new Time(par.fromCloseToOpenTiming, 0), par, dists);
+
                 for (int srcIndex = 0; srcIndex < par.children.size(); srcIndex++) {
                     for (int destIndex = 0; destIndex < par.children.size(); destIndex++) {
                         if (srcIndex == destIndex) {
