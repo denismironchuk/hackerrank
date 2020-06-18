@@ -176,9 +176,32 @@ public class Parenthesis {
         return res;
     }
 
+    private Time mergeOpeningTime(Time fromOpenining1, Time fromOpening2, Time fromClosing2) {
+        Time fromOpeningMerged = new Time();
+
+        fromOpeningMerged.opening = Math.min(fromOpenining1.opening + fromOpening2.opening,
+                fromOpenining1.closing + fromClosing2.opening);
+        fromOpeningMerged.closing = Math.min(fromOpenining1.opening + fromOpening2.closing,
+                fromOpenining1.closing + fromClosing2.closing);
+
+        return fromOpeningMerged;
+    }
+
+    private Time mergeClosingTime(Time fromClosing1, Time fromOpening2, Time fromClosing2) {
+        Time fromClosingMerged = new Time();
+
+        fromClosingMerged.opening = Math.min(fromClosing1.opening + fromOpening2.opening,
+                fromClosing1.closing + fromClosing2.opening);
+        fromClosingMerged.closing = Math.min(fromClosing1.opening + fromOpening2.closing,
+                fromClosing1.closing + fromClosing2.closing);
+
+        return fromClosingMerged;
+    }
+
     public void calculateAndVerifyDistToDescendants(Parenthesis src, Time fromOpeninig, Time fromClosing, long[][] dists) {
         for (Parenthesis child : children) {
             Time fromOpeningNew = countTimeFromOpeningToDescendant(child);
+            Time fromClosingNew = countTimeFromClosingToDescendant(child);
 
             if (fromOpeningNew.opening != dists[openAbsPosition][child.openAbsPosition]) {
                 throw new RuntimeException();
@@ -187,8 +210,6 @@ public class Parenthesis {
             if (fromOpeningNew.closing != dists[openAbsPosition][child.closeAbsPosition]) {
                 throw new RuntimeException();
             }
-
-            Time fromClosingNew = countTimeFromClosingToDescendant(child);
 
             if (fromClosingNew.opening != dists[closeAbsPosition][child.openAbsPosition]) {
                 throw new RuntimeException();
@@ -200,13 +221,8 @@ public class Parenthesis {
 
             /***************************************/
 
-            Time fromOpeningMerged = new Time();
-            Time fromClosingMerged = new Time();
+            Time fromOpeningMerged = mergeOpeningTime(fromOpeninig, fromOpeningNew, fromClosingNew);
 
-            fromOpeningMerged.opening = Math.min(fromOpeninig.opening + fromOpeningNew.opening,
-                    fromOpeninig.closing + fromClosingNew.opening);
-            fromOpeningMerged.closing = Math.min(fromOpeninig.opening + fromOpeningNew.closing,
-                    fromOpeninig.closing + fromClosingNew.closing);
 
             if (fromOpeningMerged.opening != dists[src.openAbsPosition][child.openAbsPosition]) {
                 throw new RuntimeException();
@@ -216,10 +232,7 @@ public class Parenthesis {
                 throw new RuntimeException();
             }
 
-            fromClosingMerged.opening = Math.min(fromClosing.opening + fromOpeningNew.opening,
-                    fromClosing.closing + fromClosingNew.opening);
-            fromClosingMerged.closing = Math.min(fromClosing.opening + fromOpeningNew.closing,
-                    fromClosing.closing + fromClosingNew.closing);
+            Time fromClosingMerged = mergeClosingTime(fromClosing, fromOpeningNew, fromClosingNew);
 
             if (fromClosingMerged.opening != dists[src.closeAbsPosition][child.openAbsPosition]) {
                 throw new RuntimeException();
@@ -253,6 +266,7 @@ public class Parenthesis {
         }
 
         Time fromOpeningNew = countTimeFromOpeningToAncestor();
+        Time fromClosingNew = countTimeFromClosingToAncestor();
 
         if (fromOpeningNew.opening != dists[openAbsPosition][parent.openAbsPosition]) {
             throw new RuntimeException();
@@ -261,8 +275,6 @@ public class Parenthesis {
         if (fromOpeningNew.closing != dists[openAbsPosition][parent.closeAbsPosition]) {
             throw new RuntimeException();
         }
-
-        Time fromClosingNew = countTimeFromClosingToAncestor();
 
         if (fromClosingNew.opening != dists[closeAbsPosition][parent.openAbsPosition]) {
             throw new RuntimeException();
@@ -274,13 +286,7 @@ public class Parenthesis {
 
         /******************************/
 
-        Time fromOpeningMerged = new Time();
-        Time fromClosingMerged = new Time();
-
-        fromOpeningMerged.opening = Math.min(fromOpeninig.opening + fromOpeningNew.opening,
-                fromOpeninig.closing + fromClosingNew.opening);
-        fromOpeningMerged.closing = Math.min(fromOpeninig.opening + fromOpeningNew.closing,
-                fromOpeninig.closing + fromClosingNew.closing);
+        Time fromOpeningMerged = mergeOpeningTime(fromOpeninig, fromOpeningNew, fromClosingNew);
 
         if (fromOpeningMerged.opening != dists[src.openAbsPosition][parent.openAbsPosition]) {
             throw new RuntimeException();
@@ -290,10 +296,7 @@ public class Parenthesis {
             throw new RuntimeException();
         }
 
-        fromClosingMerged.opening = Math.min(fromClosing.opening + fromOpeningNew.opening,
-                fromClosing.closing + fromClosingNew.opening);
-        fromClosingMerged.closing = Math.min(fromClosing.opening + fromOpeningNew.closing,
-                fromClosing.closing + fromClosingNew.closing);
+        Time fromClosingMerged = mergeClosingTime(fromClosing, fromOpeningNew, fromClosingNew);
 
         if (fromClosingMerged.opening != dists[src.closeAbsPosition][parent.openAbsPosition]) {
             throw new RuntimeException();

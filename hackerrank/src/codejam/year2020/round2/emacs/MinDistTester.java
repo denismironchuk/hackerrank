@@ -9,7 +9,7 @@ import java.util.Date;
 public class MinDistTester {
     public static void main(String[] args) {
         while (true) {
-            Parenthesis root = Parenthesis.generateRandomParenthesis(500);
+            Parenthesis root = Parenthesis.generateRandomParenthesis(100);
             Parenthesis[] treeArray = root.buildParenthesisArray();
             String pStr = root.toString();
             pStr = pStr.substring(1, pStr.length() - 1);
