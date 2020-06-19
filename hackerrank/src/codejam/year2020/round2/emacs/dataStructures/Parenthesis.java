@@ -1,9 +1,12 @@
 package codejam.year2020.round2.emacs.dataStructures;
 
+import utils.disjointSet.DisjointSet;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
@@ -430,29 +433,42 @@ public class Parenthesis implements Comparable<Parenthesis> {
     /**
      * LCA calculation block
      */
-    public Parenthesis getLca(Parenthesis par) {
-        return par.getLca(buildPathToRoot());
-    }
+    public void lca(int[] black, Map<Parenthesis, Set<NodesPair>> pairs, DisjointSet dSet, int[] ancestors, Parenthesis[] treeArray) {
+        int nodeNum = openAbsPosition;
+        dSet.makeSet(nodeNum);
+        ancestors[dSet.find(nodeNum)] = nodeNum;
 
-    private Parenthesis getLca(Set<Parenthesis> path) {
-        return path.contains(this) ? this : parent.getLca(path);
-    }
+        for (Parenthesis child : children) {
+            int childNum = child.openAbsPosition;
+            child.lca(black, pairs, dSet, ancestors, treeArray);
+            dSet.unite(dSet.find(nodeNum), dSet.find(childNum));
+            ancestors[dSet.find(nodeNum)] = nodeNum;
+        }
+        black[nodeNum] = 1;
 
-    private Set<Parenthesis> buildPathToRoot() {
-        Set<Parenthesis> path = (null == parent) ? new HashSet<>() : parent.buildPathToRoot();
-        path.add(this);
-        return path;
+        if (null == pairs.get(this)) {
+            return;
+        }
+
+        for (NodesPair pair : pairs.get(this)) {
+            if (black[pair.par1.openAbsPosition] == 1 && black[pair.par2.openAbsPosition] == 1) {
+                if (pair.par1 == this) {
+                    pair.lca = treeArray[ancestors[dSet.find(pair.par2.openAbsPosition)]];
+                } else {
+                    pair.lca = treeArray[ancestors[dSet.find(pair.par1.openAbsPosition)]];
+                }
+            }
+        }
     }
 
     /**
      * Time calculation block
      */
-    public ParenthesisDistTime calculateMinTime(Parenthesis dest) {
+    public ParenthesisDistTime calculateMinTime(Parenthesis dest, Parenthesis lca) {
         if (parent == dest.parent) {
             return new ParenthesisDistTime(parent.countTimeFromInnerOpening(this.positionInParentChildList, dest.positionInParentChildList),
                     parent.countTimeFromInnerClosing(this.positionInParentChildList, dest.positionInParentChildList));
         } else {
-            Parenthesis lca = getLca(dest);
             if (lca.equals(this)) {
                 return dest.calculateDownGoingTiming(this, new Time(0, dest.fromOpenToCloseTiming),
                         new Time(dest.fromCloseToOpenTiming, 0));
