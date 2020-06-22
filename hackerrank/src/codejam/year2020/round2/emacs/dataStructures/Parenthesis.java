@@ -36,6 +36,13 @@ public class Parenthesis implements Comparable<Parenthesis> {
     public Time toParentClosing = new Time();
 
     public int enterTime = -1;
+    public int subtreeCnt = 1;
+
+    public boolean hasHeavyChild = false;
+    public Parenthesis heavyParent = null;
+
+    public PathDecompose path = null;
+    public int indexInPath;
 
     public static Parenthesis generateRandomParenthesis(int pairs) {
         Parenthesis root = new Parenthesis(null);
@@ -149,6 +156,7 @@ public class Parenthesis implements Comparable<Parenthesis> {
         time++;
         for (Parenthesis child : children) {
             time = child.dfs(time);
+            this.subtreeCnt += child.subtreeCnt;
         }
         return time;
     }
@@ -158,6 +166,42 @@ public class Parenthesis implements Comparable<Parenthesis> {
         for (Parenthesis child : children) {
             child.fillTreeSet();
         }
+    }
+
+    public void markHeavyEdges(List<Parenthesis> noHeavyChildNodes) {
+        for (Parenthesis child : children) {
+            if (2 * child.subtreeCnt >= this.subtreeCnt) {
+                this.hasHeavyChild = true;
+                child.heavyParent = this;
+            }
+            child.markHeavyEdges(noHeavyChildNodes);
+        }
+
+        if (!this.hasHeavyChild) {
+            noHeavyChildNodes.add(this);
+        }
+    }
+
+    public void buildHeavyLightDecomposition(PathDecompose path) {
+        if (heavyParent == null) {
+            path.parentPathNode = this.parent;
+        } else {
+            heavyParent.buildHeavyLightDecomposition(path);
+        }
+
+        this.path = path;
+        this.indexInPath = path.nodes.size();
+        path.nodes.add(this);
+    }
+
+    public static List<PathDecompose> buildHeavyLightDecomposition(List<Parenthesis> noHeavyChildNodes) {
+        List<PathDecompose> paths = new ArrayList<>();
+        for (Parenthesis node : noHeavyChildNodes) {
+            PathDecompose path = new PathDecompose();
+            paths.add(path);
+            node.buildHeavyLightDecomposition(path);
+        }
+        return paths;
     }
 
     /**

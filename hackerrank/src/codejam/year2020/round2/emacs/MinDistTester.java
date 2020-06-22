@@ -3,6 +3,7 @@ package codejam.year2020.round2.emacs;
 import codejam.year2020.round2.emacs.dataStructures.NodesPair;
 import codejam.year2020.round2.emacs.dataStructures.Parenthesis;
 import codejam.year2020.round2.emacs.dataStructures.ParenthesisDistTime;
+import codejam.year2020.round2.emacs.dataStructures.PathDecompose;
 import utils.disjointSet.DisjointSet;
 
 import java.util.ArrayList;
@@ -32,6 +33,12 @@ public class MinDistTester {
 
             root.dfs(1);
             root.fillTreeSet();
+
+            /********Heavy-light decomposition block*********/
+            List<Parenthesis> noHeavyChildNodes = new ArrayList();
+            root.markHeavyEdges(noHeavyChildNodes);
+            List<PathDecompose> paths = Parenthesis.buildHeavyLightDecomposition(noHeavyChildNodes);
+            /***********************************************/
 
             Date start2 = new Date();
             root.calculateTiming();
