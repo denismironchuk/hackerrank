@@ -254,82 +254,24 @@ public class Parenthesis implements Comparable<Parenthesis> {
         return res;
     }
 
-    private Time mergeOpeningTime(Time fromOpenining1, Time fromOpening2, Time fromClosing2) {
-        Time fromOpeningMerged = new Time();
-
-        fromOpeningMerged.opening = Math.min(fromOpenining1.opening + fromOpening2.opening,
-                fromOpenining1.closing + fromClosing2.opening);
-        fromOpeningMerged.closing = Math.min(fromOpenining1.opening + fromOpening2.closing,
-                fromOpenining1.closing + fromClosing2.closing);
-
-        return fromOpeningMerged;
-    }
-
-    private Time mergeClosingTime(Time fromClosing1, Time fromOpening2, Time fromClosing2) {
-        Time fromClosingMerged = new Time();
-
-        fromClosingMerged.opening = Math.min(fromClosing1.opening + fromOpening2.opening,
-                fromClosing1.closing + fromClosing2.opening);
-        fromClosingMerged.closing = Math.min(fromClosing1.opening + fromOpening2.closing,
-                fromClosing1.closing + fromClosing2.closing);
-
-        return fromClosingMerged;
-    }
-
-    public Time countTimeFromOpeningToDescendant(Parenthesis child) {
-        Time timeFromOpening = new Time();
-        timeFromOpening.opening = Math.min(child.fromParentOpening.opening, this.fromOpenToCloseTiming + child.fromParentClosing.opening);
-        timeFromOpening.closing = Math.min(child.fromParentOpening.closing, this.fromOpenToCloseTiming + child.fromParentClosing.closing);
-        return timeFromOpening;
-    }
-
-    public Time countTimeFromClosingToDescendant(Parenthesis child) {
-        Time timeFromClosing = new Time();
-        timeFromClosing.opening = Math.min(child.fromParentClosing.opening, this.fromCloseToOpenTiming + child.fromParentOpening.opening);
-        timeFromClosing.closing = Math.min(child.fromParentClosing.closing, this.fromCloseToOpenTiming + child.fromParentOpening.closing);
-        return timeFromClosing;
-    }
-
-    public Time countTimeFromOpeningToAncestor() {
-        Time timeFromOpening = new Time();
-        timeFromOpening.opening = Math.min(toParentOpening.opening, toParentClosing.opening + parent.fromCloseToOpenTiming);
-        timeFromOpening.closing = Math.min(toParentClosing.opening, toParentOpening.opening + parent.fromOpenToCloseTiming);
-        return timeFromOpening;
-    }
-
-    public Time countTimeFromClosingToAncestor() {
-        Time timeFromClosing = new Time();
-        timeFromClosing.opening = Math.min(toParentOpening.closing, toParentClosing.closing + parent.fromCloseToOpenTiming);
-        timeFromClosing.closing = Math.min(toParentClosing.closing, toParentOpening.closing + parent.fromOpenToCloseTiming);
-        return timeFromClosing;
-    }
-
     public ParenthesisDistTime calculateUpGoingTiming(Parenthesis dest, Time fromOpening, Time fromClosing) {
-        if (this == dest) {
-            return new ParenthesisDistTime(fromOpening, fromClosing);
+        PathDecompose currentPath = this.path;
+        if (dest.path == currentPath) {
+            return currentPath.calculateUpGoingTiming(this, dest, fromOpening, fromClosing);
+        } else {
+            ParenthesisDistTime time = currentPath.calculateUpGoingTiming(this, currentPath.parentPathNode, fromOpening, fromClosing);
+            return currentPath.parentPathNode.calculateUpGoingTiming(dest, time.timeFromOpening, time.timeFromClosing);
         }
-
-        Time fromOpeningNew = countTimeFromOpeningToAncestor();
-        Time fromClosingNew = countTimeFromClosingToAncestor();
-
-        Time fromOpeningMerged = mergeOpeningTime(fromOpening, fromOpeningNew, fromClosingNew);
-        Time fromClosingMerged = mergeClosingTime(fromClosing, fromOpeningNew, fromClosingNew);
-
-        return parent.calculateUpGoingTiming(dest, fromOpeningMerged, fromClosingMerged);
     }
 
     public ParenthesisDistTime calculateDownGoingTiming(Parenthesis src, Time fromOpening, Time fromClosing) {
-        if (this == src) {
-            return new ParenthesisDistTime(fromOpening, fromClosing);
+        PathDecompose currentPath = this.path;
+        if (src.path == currentPath) {
+            return currentPath.calculateDownGoingTiming(src, this, fromOpening, fromClosing);
+        } else {
+            ParenthesisDistTime time = currentPath.calculateDownGoingTiming(currentPath.parentPathNode, this, fromOpening, fromClosing);
+            return currentPath.parentPathNode.calculateDownGoingTiming(src, time.timeFromOpening, time.timeFromClosing);
         }
-
-        Time fromOpeningNew = parent.countTimeFromOpeningToDescendant(this);
-        Time fromClosingNew = parent.countTimeFromClosingToDescendant(this);
-
-        Time fromOpeningMerged = mergeOpeningTime(fromOpeningNew, fromOpening, fromClosing);
-        Time fromClosingMerged = mergeClosingTime(fromClosingNew, fromOpening, fromClosing);
-
-        return parent.calculateDownGoingTiming(src, fromOpeningMerged, fromClosingMerged);
     }
 
     /**
@@ -529,16 +471,16 @@ public class Parenthesis implements Comparable<Parenthesis> {
                         lca.countTimeFromInnerClosing(sameLevelStart.positionInParentChildList, sameLevelEnd.positionInParentChildList));
 
                 ParenthesisDistTime time3 = new ParenthesisDistTime(
-                        mergeOpeningTime(time1.timeFromOpening, time2.timeFromOpening, time2.timeFromClosing),
-                        mergeClosingTime(time1.timeFromClosing, time2.timeFromOpening, time2.timeFromClosing)
+                        Time.mergeOpeningTime(time1.timeFromOpening, time2.timeFromOpening, time2.timeFromClosing),
+                        Time.mergeClosingTime(time1.timeFromClosing, time2.timeFromOpening, time2.timeFromClosing)
                 );
 
                 ParenthesisDistTime time4 = dest.calculateDownGoingTiming(sameLevelEnd, new Time(0, dest.fromOpenToCloseTiming),
                         new Time(dest.fromCloseToOpenTiming, 0));
 
                 return new ParenthesisDistTime(
-                        mergeOpeningTime(time3.timeFromOpening, time4.timeFromOpening, time4.timeFromClosing),
-                        mergeClosingTime(time3.timeFromClosing, time4.timeFromOpening, time4.timeFromClosing)
+                        Time.mergeOpeningTime(time3.timeFromOpening, time4.timeFromOpening, time4.timeFromClosing),
+                        Time.mergeClosingTime(time3.timeFromClosing, time4.timeFromOpening, time4.timeFromClosing)
                 );
             }
         }
