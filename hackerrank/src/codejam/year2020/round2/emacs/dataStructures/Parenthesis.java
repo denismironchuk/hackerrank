@@ -185,6 +185,9 @@ public class Parenthesis implements Comparable<Parenthesis> {
     public void buildHeavyLightDecomposition(PathDecompose path) {
         if (heavyParent == null) {
             path.parentPathNode = this.parent;
+            if (this.parent != null) {
+                path.nodes.add(this.parent);
+            }
         } else {
             heavyParent.buildHeavyLightDecomposition(path);
         }
@@ -257,9 +260,9 @@ public class Parenthesis implements Comparable<Parenthesis> {
     public ParenthesisDistTime calculateUpGoingTiming(Parenthesis dest, Time fromOpening, Time fromClosing) {
         PathDecompose currentPath = this.path;
         if (dest.path == currentPath) {
-            return currentPath.calculateUpGoingTiming(this, dest, fromOpening, fromClosing);
+            return currentPath.calculateUpGoingTiming(this.indexInPath, dest.indexInPath, fromOpening, fromClosing);
         } else {
-            ParenthesisDistTime time = currentPath.calculateUpGoingTiming(this, currentPath.parentPathNode, fromOpening, fromClosing);
+            ParenthesisDistTime time = currentPath.calculateUpGoingTiming(this.indexInPath, 0, fromOpening, fromClosing);
             return currentPath.parentPathNode.calculateUpGoingTiming(dest, time.timeFromOpening, time.timeFromClosing);
         }
     }
@@ -267,9 +270,9 @@ public class Parenthesis implements Comparable<Parenthesis> {
     public ParenthesisDistTime calculateDownGoingTiming(Parenthesis src, Time fromOpening, Time fromClosing) {
         PathDecompose currentPath = this.path;
         if (src.path == currentPath) {
-            return currentPath.calculateDownGoingTiming(src, this, fromOpening, fromClosing);
+            return currentPath.calculateDownGoingTiming(src.indexInPath, this.indexInPath, fromOpening, fromClosing);
         } else {
-            ParenthesisDistTime time = currentPath.calculateDownGoingTiming(currentPath.parentPathNode, this, fromOpening, fromClosing);
+            ParenthesisDistTime time = currentPath.calculateDownGoingTiming(0, this.indexInPath, fromOpening, fromClosing);
             return currentPath.parentPathNode.calculateDownGoingTiming(src, time.timeFromOpening, time.timeFromClosing);
         }
     }

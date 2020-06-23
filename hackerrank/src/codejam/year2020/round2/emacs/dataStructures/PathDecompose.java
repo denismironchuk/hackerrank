@@ -62,4 +62,12 @@ public class PathDecompose {
 
         return calculateDownGoingTiming(src, dest.parent, fromOpeningMerged, fromClosingMerged);
     }
+
+    public ParenthesisDistTime calculateUpGoingTiming(int srcIndex, int destIndex, Time fromOpening, Time fromClosing) {
+        return calculateUpGoingTiming(nodes.get(srcIndex), nodes.get(destIndex), fromOpening, fromClosing);
+    }
+
+    public ParenthesisDistTime calculateDownGoingTiming(int srcIndex, int destIndex, Time fromOpening, Time fromClosing) {
+        return calculateDownGoingTiming(nodes.get(srcIndex), nodes.get(destIndex), fromOpening, fromClosing);
+    }
 }
