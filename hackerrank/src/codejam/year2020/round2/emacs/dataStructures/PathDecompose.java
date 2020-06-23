@@ -35,7 +35,7 @@ public class PathDecompose {
         return timeFromClosing;
     }
 
-    public ParenthesisDistTime calculateUpGoingTiming(Parenthesis src, Parenthesis dest, Time fromOpening, Time fromClosing) {
+    private ParenthesisDistTime calculateUpGoingTiming(Parenthesis src, Parenthesis dest, Time fromOpening, Time fromClosing) {
         if (src == dest) {
             return new ParenthesisDistTime(fromOpening, fromClosing);
         }
@@ -49,7 +49,7 @@ public class PathDecompose {
         return calculateUpGoingTiming(src.parent, dest, fromOpeningMerged, fromClosingMerged);
     }
 
-    public ParenthesisDistTime calculateDownGoingTiming(Parenthesis src, Parenthesis dest, Time fromOpening, Time fromClosing) {
+    private ParenthesisDistTime calculateDownGoingTiming(Parenthesis src, Parenthesis dest, Time fromOpening, Time fromClosing) {
         if (dest == src) {
             return new ParenthesisDistTime(fromOpening, fromClosing);
         }
