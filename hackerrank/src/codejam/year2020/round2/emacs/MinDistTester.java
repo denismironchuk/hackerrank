@@ -18,7 +18,7 @@ import java.util.Set;
 public class MinDistTester {
     public static void main(String[] args) {
         while (true) {
-            Parenthesis root = Parenthesis.generateRandomParenthesis(100);
+            Parenthesis root = Parenthesis.generateRandomParenthesis(1000);
             Parenthesis[] treeArray = root.buildParenthesisArray();
             String pStr = root.toString();
             pStr = pStr.substring(1, pStr.length() - 1);
@@ -34,15 +34,16 @@ public class MinDistTester {
             root.dfs(1);
             root.fillTreeSet();
 
+            Date start2 = new Date();
+            root.calculateTiming();
+            Date end2 = new Date();
+
             /********Heavy-light decomposition block*********/
             List<Parenthesis> noHeavyChildNodes = new ArrayList();
             root.markHeavyEdges(noHeavyChildNodes);
             List<PathDecompose> paths = Parenthesis.buildHeavyLightDecomposition(noHeavyChildNodes);
+            System.out.println("Max path len = " + paths.stream().map(p -> p.nodes.size()).max(Integer::compareTo).orElse(-1));
             /***********************************************/
-
-            Date start2 = new Date();
-            root.calculateTiming();
-            Date end2 = new Date();
 
             System.out.println(end2.getTime() - start2.getTime() + "ms");
 

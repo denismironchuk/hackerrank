@@ -3,7 +3,6 @@ package codejam.year2020.round2.emacs.dataStructures;
 import utils.disjointSet.DisjointSet;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -203,6 +202,7 @@ public class Parenthesis implements Comparable<Parenthesis> {
             PathDecompose path = new PathDecompose();
             paths.add(path);
             node.buildHeavyLightDecomposition(path);
+            path.initSegmentTrees();
         }
         return paths;
     }
