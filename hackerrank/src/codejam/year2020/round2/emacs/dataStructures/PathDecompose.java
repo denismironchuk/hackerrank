@@ -68,25 +68,25 @@ public class PathDecompose {
     public ParenthesisDistTime calculateUpGoingTiming(int srcIndex, int destIndex, Time fromOpening, Time fromClosing) {
         //return calculateUpGoingTiming(nodes.get(srcIndex), nodes.get(destIndex), fromOpening, fromClosing);
         if (srcIndex == destIndex) {
-            return new ParenthesisDistTime(fromOpening, fromClosing);
+            return ParenthesisDistTime.getNewInstance(fromOpening, fromClosing);
         }
 
         ParenthesisDistTime timeNew = calculateUpGoingTimingInner(1, 1, nodes.size() - 1, destIndex + 1, srcIndex);
-        Time fromOpeningMerged = Time.mergeOpeningTime(fromOpening, timeNew.timeFromOpening, timeNew.timeFromClosing);
-        Time fromClosingMerged = Time.mergeClosingTime(fromClosing, timeNew.timeFromOpening, timeNew.timeFromClosing);
-        return new ParenthesisDistTime(fromOpeningMerged, fromClosingMerged);
+        Time fromOpeningMerged = Time.mergeOpeningTimeReuse(fromOpening, timeNew.timeFromOpening, timeNew.timeFromClosing);
+        Time fromClosingMerged = Time.mergeOpeningTimeReuse(fromClosing, timeNew.timeFromOpening, timeNew.timeFromClosing);
+        return ParenthesisDistTime.getNewInstance(fromOpeningMerged, fromClosingMerged);
     }
 
     public ParenthesisDistTime calculateDownGoingTiming(int srcIndex, int destIndex, Time fromOpening, Time fromClosing) {
         //return calculateDownGoingTiming(nodes.get(srcIndex), nodes.get(destIndex), fromOpening, fromClosing);
         if (srcIndex == destIndex) {
-            return new ParenthesisDistTime(fromOpening, fromClosing);
+            return ParenthesisDistTime.getNewInstance(fromOpening, fromClosing);
         }
 
         ParenthesisDistTime timeNew = calculateDownGoingTimingInner(1, 0, nodes.size() - 2, srcIndex, destIndex - 1);
-        Time fromOpeningMerged = Time.mergeOpeningTime(timeNew.timeFromOpening, fromOpening, fromClosing);
-        Time fromClosingMerged = Time.mergeClosingTime(timeNew.timeFromClosing, fromOpening, fromClosing);
-        return new ParenthesisDistTime(fromOpeningMerged, fromClosingMerged);
+        Time fromOpeningMerged = Time.mergeOpeningTimeReuse(timeNew.timeFromOpening, fromOpening, fromClosing);
+        Time fromClosingMerged = Time.mergeOpeningTimeReuse(timeNew.timeFromClosing, fromOpening, fromClosing);
+        return ParenthesisDistTime.getNewInstance(fromOpeningMerged, fromClosingMerged);
     }
 
     private ParenthesisDistTime calculateDownGoingTimingInner(int p, int intervalStart, int intervalEnd, int start, int end) {
@@ -103,10 +103,10 @@ public class PathDecompose {
         ParenthesisDistTime time2 = calculateDownGoingTimingInner(p * 2 + 1, middle + 1, intervalEnd, Math.max(middle + 1, start), end);
 
         if (time1 != null && time2 != null) {
-            Time fromOpeningMerged = Time.mergeOpeningTime(time1.timeFromOpening, time2.timeFromOpening, time2.timeFromClosing);
-            Time fromClosingMerged = Time.mergeClosingTime(time1.timeFromClosing, time2.timeFromOpening, time2.timeFromClosing);
+            Time fromOpeningMerged = Time.mergeOpeningTimeReuse(time1.timeFromOpening, time2.timeFromOpening, time2.timeFromClosing);
+            Time fromClosingMerged = Time.mergeOpeningTimeReuse(time1.timeFromClosing, time2.timeFromOpening, time2.timeFromClosing);
 
-            return new ParenthesisDistTime(fromOpeningMerged, fromClosingMerged);
+            return ParenthesisDistTime.getNewInstance(fromOpeningMerged, fromClosingMerged);
         } else {
             return time1 != null ? time1 : time2;
         }
@@ -126,10 +126,10 @@ public class PathDecompose {
         ParenthesisDistTime time2 = calculateUpGoingTimingInner(p * 2 + 1, middle, intervalEnd, Math.max(middle, start), end);
 
         if (time1 != null && time2 != null) {
-            Time fromOpeningMerged = Time.mergeOpeningTime(time2.timeFromOpening, time1.timeFromOpening, time1.timeFromClosing);
-            Time fromClosingMerged = Time.mergeClosingTime(time2.timeFromClosing, time1.timeFromOpening, time1.timeFromClosing);
+            Time fromOpeningMerged = Time.mergeOpeningTimeReuse(time2.timeFromOpening, time1.timeFromOpening, time1.timeFromClosing);
+            Time fromClosingMerged = Time.mergeOpeningTimeReuse(time2.timeFromClosing, time1.timeFromOpening, time1.timeFromClosing);
 
-            return new ParenthesisDistTime(fromOpeningMerged, fromClosingMerged);
+            return ParenthesisDistTime.getNewInstance(fromOpeningMerged, fromClosingMerged);
         } else {
             return time1 != null ? time1 : time2;
         }

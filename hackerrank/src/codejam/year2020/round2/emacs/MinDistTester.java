@@ -6,6 +6,7 @@ import codejam.year2020.round2.emacs.dataStructures.ParenthesisDistTime;
 import codejam.year2020.round2.emacs.dataStructures.PathDecompose;
 import utils.disjointSet.DisjointSet;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -16,20 +17,33 @@ import java.util.Map;
 import java.util.Set;
 
 public class MinDistTester {
-    public static void main(String[] args) {
-        while (true) {
-            Parenthesis root = Parenthesis.generateRandomParenthesis(1000);
-            Parenthesis[] treeArray = root.buildParenthesisArray();
-            String pStr = root.toString();
+    private static final long MAX_PAIRS = 100000l;
+    private static final double PROBABILITY = 0.04;
+    private static final boolean VALIDATE = false;
+    public static final int PAIRS_CNT = 50000;
+
+    public static void main(String[] args) throws IOException {
+        System.in.read();
+        Parenthesis[] treeArray = new Parenthesis[110000];
+        for (int t = 0; t < 100; t++) {
+        //while (true) {
+            Parenthesis root = Parenthesis.generateRandomParenthesis(PAIRS_CNT);
+            int treeArrLen = root.buildParenthesisArray(treeArray);
+
+            StringBuilder builder = new StringBuilder();
+            root.buildString(builder);
+            String pStr = builder.toString();
             pStr = pStr.substring(1, pStr.length() - 1);
             System.out.println(pStr);
 
-            long[][] dists = buildGraphMatrix(treeArray);
-            Date start1 = new Date();
-            countDists(dists);
-            Date end1 = new Date();
-
-            System.out.println(end1.getTime() - start1.getTime() + "ms");
+            long[][] dists = null;
+            if (VALIDATE) {
+                dists = buildGraphMatrix(treeArray, treeArrLen);
+                Date start1 = new Date();
+                countDists(dists);
+                Date end1 = new Date();
+                System.out.println(end1.getTime() - start1.getTime() + "ms");
+            }
 
             root.dfs(1);
             root.fillTreeSet();
@@ -48,27 +62,32 @@ public class MinDistTester {
             System.out.println(end2.getTime() - start2.getTime() + "ms");
 
             List<NodesPair> pairs = new ArrayList<>();
-
-            for (int i = 0; i < treeArray.length; i++) {
+            for (int i = 0; pairs.size() <= MAX_PAIRS && i < treeArrLen; i++) {
                 Parenthesis par1 = treeArray[i];
                 if (par1.closeAbsPosition == i) {
                     continue;
                 }
 
-                for (int j = 0; j < treeArray.length; j++) {
+                for (int j = 0; pairs.size() <= MAX_PAIRS && j < treeArrLen; j++) {
                     if (i == j) {
                         continue;
                     }
 
                     Parenthesis par2 = treeArray[j];
+                    if (par2 == null) {
+                        System.out.println();
+                    }
                     if (par2.closeAbsPosition == j) {
                         continue;
                     }
 
-                    pairs.add(new NodesPair(par1, par2));
+                    if (Math.random() <= PROBABILITY) {
+                        pairs.add(new NodesPair(par1, par2));
+                    }
                 }
             }
 
+            System.out.println("Pairs amount = " + pairs.size());
             Map<Parenthesis, Set<NodesPair>> pairsGrouped = new HashMap<>();
 
             for (NodesPair pair : pairs) {
@@ -88,7 +107,7 @@ public class MinDistTester {
             }
 
             Date start3 = new Date();
-            root.lca(new int[treeArray.length], pairsGrouped, new DisjointSet(treeArray.length), new int[treeArray.length], treeArray);
+            root.lca(new int[treeArrLen], pairsGrouped, new DisjointSet(treeArrLen), new int[treeArrLen], treeArray);
             Date end3 = new Date();
 
             System.out.println("LCA calculation took " + (end3.getTime() - start3.getTime()) + "ms");
@@ -100,32 +119,38 @@ public class MinDistTester {
                 Parenthesis lca = pair.lca;
 
                 ParenthesisDistTime time = par1.calculateMinTime(par2, lca);
-                if (time.timeFromOpening.opening != dists[par1.openAbsPosition][par2.openAbsPosition]) {
-                    throw new RuntimeException();
-                }
-                if (time.timeFromOpening.closing != dists[par1.openAbsPosition][par2.closeAbsPosition]) {
-                    throw new RuntimeException();
-                }
-                if (time.timeFromClosing.opening != dists[par1.closeAbsPosition][par2.openAbsPosition]) {
-                    throw new RuntimeException();
-                }
-                if (time.timeFromClosing.closing != dists[par1.closeAbsPosition][par2.closeAbsPosition]) {
-                    throw new RuntimeException();
+                if (VALIDATE) {
+                    if (time.timeFromOpening.opening != dists[par1.openAbsPosition][par2.openAbsPosition]) {
+                        throw new RuntimeException();
+                    }
+                    if (time.timeFromOpening.closing != dists[par1.openAbsPosition][par2.closeAbsPosition]) {
+                        throw new RuntimeException();
+                    }
+                    if (time.timeFromClosing.opening != dists[par1.closeAbsPosition][par2.openAbsPosition]) {
+                        throw new RuntimeException();
+                    }
+                    if (time.timeFromClosing.closing != dists[par1.closeAbsPosition][par2.closeAbsPosition]) {
+                        throw new RuntimeException();
+                    }
                 }
             }
             Date end4 = new Date();
             System.out.println("Dist calculation = " + (end4.getTime() - start4.getTime()) + "ms");
+
+            //System.in.read();
         }
     }
 
-    private static long[][] buildGraphMatrix(Parenthesis[] treeArray) {
-        long[][] matrix = new long[treeArray.length][treeArray.length];
+    private static long[][] buildGraphMatrix(Parenthesis[] treeArray, int treeArrLen) {
+        long[][] matrix = new long[treeArrLen][treeArrLen];
 
         for (long[] line : matrix) {
             Arrays.fill(line, Long.MAX_VALUE / 2);
         }
 
-        for (Parenthesis par : treeArray) {
+        for (int i = 0; i < treeArrLen; i++) {
+        //for (Parenthesis par : treeArray) {
+            Parenthesis par = treeArray[i];
             matrix[par.openAbsPosition][par.openAbsPosition] = 0;
             matrix[par.openAbsPosition][par.openAbsPosition + 1] = Math.min(matrix[par.openAbsPosition][par.openAbsPosition + 1], par.openTime.toRight);
             if (par.openAbsPosition > 0) {
@@ -134,7 +159,7 @@ public class MinDistTester {
             matrix[par.openAbsPosition][par.closeAbsPosition] = Math.min(par.openTime.teleport, matrix[par.openAbsPosition][par.closeAbsPosition]);
 
             matrix[par.closeAbsPosition][par.closeAbsPosition] = 0;
-            if (par.closeAbsPosition < treeArray.length - 1) {
+            if (par.closeAbsPosition < treeArrLen - 1) {
                 matrix[par.closeAbsPosition][par.closeAbsPosition + 1] = Math.min(par.closeTime.toRight, matrix[par.closeAbsPosition][par.closeAbsPosition + 1]);
             }
             matrix[par.closeAbsPosition][par.closeAbsPosition - 1] = Math.min(par.closeTime.toLeft, matrix[par.closeAbsPosition][par.closeAbsPosition - 1]);

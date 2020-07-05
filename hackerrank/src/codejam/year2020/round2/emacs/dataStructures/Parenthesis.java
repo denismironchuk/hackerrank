@@ -30,7 +30,6 @@ public class Parenthesis implements Comparable<Parenthesis> {
 
     public Time fromParentOpening = new Time();
     public Time fromParentClosing = new Time();
-
     public Time toParentOpening = new Time();
     public Time toParentClosing = new Time();
 
@@ -90,30 +89,38 @@ public class Parenthesis implements Comparable<Parenthesis> {
         }
     }
 
-    public Parenthesis[] buildParenthesisArray() {
-        List<Parenthesis> parArr = new ArrayList<>();
+    public int buildParenthesisArray(Parenthesis[] parArr) {
+        int index = 0;
 
-        this.openAbsPosition = parArr.size();
-        parArr.add(this);
+        this.openAbsPosition = index;
+        parArr[index] = this;
+        index++;
 
         for (Parenthesis child : children) {
-            child.fillParenthesisArray(parArr);
+            index = child.fillParenthesisArray(parArr, index);
         }
 
-        this.closeAbsPosition = parArr.size();
-        parArr.add(this);
+        this.closeAbsPosition = index;
+        parArr[index] = this;
+        index++;
 
-        return parArr.toArray(new Parenthesis[0]);
+        return index;
     }
 
-    private void fillParenthesisArray(List<Parenthesis> parArr) {
-        this.openAbsPosition = parArr.size();
-        parArr.add(this);
+    private int fillParenthesisArray(Parenthesis[] parArr, int index) {
+        this.openAbsPosition = index;
+        parArr[index] = this;
+        index++;
+
         for (Parenthesis child : children) {
-            child.fillParenthesisArray(parArr);
+            index = child.fillParenthesisArray(parArr, index);
         }
-        this.closeAbsPosition = parArr.size();
-        parArr.add(this);
+
+        this.closeAbsPosition = index;
+        parArr[index] = this;
+        index++;
+
+        return index;
     }
 
     private Parenthesis(Parenthesis parent) {
@@ -212,7 +219,7 @@ public class Parenthesis implements Comparable<Parenthesis> {
      * From source opening to dist opening and closing
      */
     public Time countTimeFromInnerOpening(int srcIndex, int destIndex) {
-        Time res = new Time();
+        Time res = Time.getNewInstance();
 
         Parenthesis src = children.get(srcIndex);
         Parenthesis dest = children.get(destIndex);
@@ -237,7 +244,7 @@ public class Parenthesis implements Comparable<Parenthesis> {
      * From source closing to dist opening and closing
      */
     public Time countTimeFromInnerClosing(int srcIndex, int destIndex) {
-        Time res = new Time();
+        Time res = Time.getNewInstance();
 
         Parenthesis src = children.get(srcIndex);
         Parenthesis dest = children.get(destIndex);
@@ -454,8 +461,11 @@ public class Parenthesis implements Comparable<Parenthesis> {
      * Time calculation block
      */
     public ParenthesisDistTime calculateMinTime(Parenthesis dest, Parenthesis lca) {
+        Time.reset();
+        ParenthesisDistTime.reset();
+
         if (parent == dest.parent) {
-            return new ParenthesisDistTime(parent.countTimeFromInnerOpening(this.positionInParentChildList, dest.positionInParentChildList),
+            return ParenthesisDistTime.getNewInstance(parent.countTimeFromInnerOpening(this.positionInParentChildList, dest.positionInParentChildList),
                     parent.countTimeFromInnerClosing(this.positionInParentChildList, dest.positionInParentChildList));
         } else {
             if (lca.equals(this)) {
@@ -470,28 +480,36 @@ public class Parenthesis implements Comparable<Parenthesis> {
                         new Time(fromCloseToOpenTiming, 0));
 
                 Parenthesis sameLevelEnd = lca.childrenTree.floor(dest);
-                ParenthesisDistTime time2 = new ParenthesisDistTime(lca.countTimeFromInnerOpening(sameLevelStart.positionInParentChildList, sameLevelEnd.positionInParentChildList),
+                ParenthesisDistTime time2 = ParenthesisDistTime.getNewInstance(lca.countTimeFromInnerOpening(sameLevelStart.positionInParentChildList, sameLevelEnd.positionInParentChildList),
                         lca.countTimeFromInnerClosing(sameLevelStart.positionInParentChildList, sameLevelEnd.positionInParentChildList));
 
-                ParenthesisDistTime time3 = new ParenthesisDistTime(
-                        Time.mergeOpeningTime(time1.timeFromOpening, time2.timeFromOpening, time2.timeFromClosing),
-                        Time.mergeClosingTime(time1.timeFromClosing, time2.timeFromOpening, time2.timeFromClosing)
+                ParenthesisDistTime time3 = ParenthesisDistTime.getNewInstance(
+                        Time.mergeOpeningTimeReuse(time1.timeFromOpening, time2.timeFromOpening, time2.timeFromClosing),
+                        Time.mergeClosingTimeReuse(time1.timeFromClosing, time2.timeFromOpening, time2.timeFromClosing)
                 );
 
                 ParenthesisDistTime time4 = dest.calculateDownGoingTiming(sameLevelEnd, new Time(0, dest.fromOpenToCloseTiming),
                         new Time(dest.fromCloseToOpenTiming, 0));
 
-                return new ParenthesisDistTime(
-                        Time.mergeOpeningTime(time3.timeFromOpening, time4.timeFromOpening, time4.timeFromClosing),
-                        Time.mergeClosingTime(time3.timeFromClosing, time4.timeFromOpening, time4.timeFromClosing)
+                return ParenthesisDistTime.getNewInstance(
+                        Time.mergeOpeningTimeReuse(time3.timeFromOpening, time4.timeFromOpening, time4.timeFromClosing),
+                        Time.mergeClosingTimeReuse(time3.timeFromClosing, time4.timeFromOpening, time4.timeFromClosing)
                 );
             }
         }
     }
 
-    @Override
+    /*@Override
     public String toString() {
-        return "(" + children.stream().map(Parenthesis::toString).collect(Collectors.joining()) + ")";
+        StringBuilder builder = new StringBuilder();
+        builder.append("(").append(children.stream().map(Parenthesis::toString).collect(Collectors.joining())).append(")");
+        return builder.toString();
+    }*/
+
+    public void buildString(StringBuilder builder) {
+        builder.append("(");
+        children.stream().forEach(p -> p.buildString(builder));
+        builder.append(")");
     }
 
     @Override
