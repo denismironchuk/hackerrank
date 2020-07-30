@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -31,9 +32,15 @@ public class FarVerticles {
         private List<TreeNode> children = new ArrayList<>();
         private int[] dyn;
 
-        public TreeNode(int num, int n) {
+        public TreeNode(int num, int k) {
             this.num = num;
-            this.dyn = new int[n + 1];
+            this.dyn = new int[k + 1];
+        }
+
+        public void clear() {
+            this.parent = null;
+            children.clear();
+            Arrays.fill(dyn, 0);
         }
     }
 
@@ -48,7 +55,7 @@ public class FarVerticles {
 
             for (int i = 1; i <= n; i++) {
                 nodes[i] = new Node(i);
-                treeNodes[i] = new TreeNode(i, n);
+                treeNodes[i] = new TreeNode(i, k);
             }
 
             for (int i = 0; i < n - 1; i++) {
@@ -59,10 +66,20 @@ public class FarVerticles {
                 nodes[v2].addNeighbour(nodes[v1]);
             }
 
-            buildTree(nodes[1]);
-            fillDynTable(treeNodes[1], k);
+            int res = Integer.MAX_VALUE;
 
-            System.out.println(treeNodes[1].dyn[k]);
+            for (int i = 1; i <= n; i++) {
+                for (TreeNode node : treeNodes) {
+                    if (node != null) {
+                        node.clear();
+                    }
+                }
+                buildTree(nodes[i]);
+                fillDynTable(treeNodes[i], k);
+                res = Math.min(res, treeNodes[i].dyn[k]);
+            }
+
+            System.out.println(res);
         }
     }
 
@@ -111,8 +128,8 @@ public class FarVerticles {
             nd.dyn[h1] = min;
         }
 
-        for (int i = 1; i <= k; i++) {
-            nd.dyn[i] = Math.min(nd.dyn[i], nd.dyn[i - 1]);
+        for (int h = 1; h <= k; h++) {
+            nd.dyn[h] = Math.min(nd.dyn[h], nd.dyn[h - 1]);
         }
     }
 }
