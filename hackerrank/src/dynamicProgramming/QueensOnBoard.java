@@ -51,43 +51,30 @@ public class QueensOnBoard {
                     for (Map.Entry<Integer, Set<Integer>> entry : statesMap.entrySet()) {
                         int state = entry.getKey();
                         Set<Integer> stateDescriptions = entry.getValue();
-                        //System.out.println("State = " + flip(Integer.toBinaryString(state)));
 
                         for (int newState = 0; newState < maxState; newState++) {
                             if (validateNewStateCandidate(newState, state, blockedCells[row], m)) {
-                                //System.out.println("newState = " + flip(Integer.toBinaryString(newState)));
                                 for (Integer stateDescription : stateDescriptions) {
-                                    //System.out.println("stateDescription = " + flip(Integer.toBinaryString(stateDescription)));
-                                    //System.out.println("==================");
                                     int mul = 1;
                                     int mulDescr = 1;
                                     int newStateDescr = 0;
-                                    //System.out.println(flip(Integer.toBinaryString(newStateDescr)));
                                     for (int pos = 0; pos < m; pos++) {
                                         if ((newState / mul) % 2 == 1) {
                                             newStateDescr += mulDescr;
-                                            //System.out.println(flip(Integer.toBinaryString(newStateDescr)));
-
                                             newStateDescr += mulDescr * 16;
-                                            //System.out.println(flip(Integer.toBinaryString(newStateDescr)));
-
                                             newStateDescr += mulDescr / 2;
-                                            //System.out.println(flip(Integer.toBinaryString(newStateDescr)));
                                         } else if ((blockedCells[row] / mul % 2) == 0) {
                                             if ((stateDescription / mulDescr) % 2 == 1) {
                                                 newStateDescr += mulDescr;
                                             }
-                                            //System.out.println(flip(Integer.toBinaryString(newStateDescr)));
 
                                             if ((stateDescription / mulDescr / 2) % 2 == 1) {
                                                 newStateDescr += mulDescr * 16;
                                             }
-                                            //System.out.println(flip(Integer.toBinaryString(newStateDescr)));
 
                                             if ((stateDescription / mulDescr / 4) % 2 == 1) {
                                                 newStateDescr += mulDescr / 2;
                                             }
-                                            //System.out.println(flip(Integer.toBinaryString(newStateDescr)));
                                         }
 
                                         mul *= 2;
@@ -98,7 +85,6 @@ public class QueensOnBoard {
                                     nextDescrCnt.put(newStateDescr, newCnt);
 
                                     int consState = consStateDescription(newStateDescr) % maxState;
-                                    //System.out.println("ConsolidatedState = " + flip(Integer.toBinaryString(consState)));
                                     Set<Integer> newStateDescriptions = nextStates.get(consState);
                                     if (newStateDescriptions == null) {
                                         newStateDescriptions = new HashSet<>();
@@ -136,14 +122,6 @@ public class QueensOnBoard {
         }
 
         return state;
-    }
-
-    private static String flip(String s) {
-        StringBuilder res = new StringBuilder();
-        for (int i = s.length() - 1; i >= 0; i--) {
-            res.append(s.charAt(i));
-        }
-        return res.toString();
     }
 
     private static boolean validateNewStateCandidate(int candidateState, int freeCells, int blockedCells, int m) {
