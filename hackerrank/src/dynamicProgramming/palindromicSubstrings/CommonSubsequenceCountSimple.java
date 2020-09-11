@@ -1,4 +1,4 @@
-package dynamicProgramming;
+package dynamicProgramming.palindromicSubstrings;
 
 import java.util.ArrayList;
 import java.util.HashMap;
