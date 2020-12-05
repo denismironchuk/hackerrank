@@ -3,10 +3,13 @@ package kickstart;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 public class LockedDoors {
-    private static int n;
+    private static int n = 1000;
 
     public static void main(String[] args) throws IOException {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
@@ -14,10 +17,11 @@ public class LockedDoors {
             for (int t = 1; t <= T; t++) {
                 StringTokenizer tkn1 = new StringTokenizer(br.readLine());
                 n = Integer.parseInt(tkn1.nextToken());
-                int q = Integer.parseInt(tkn1.nextToken());
+                int Q = Integer.parseInt(tkn1.nextToken());
                 int[] locks = new int[n + 1];
                 locks[0] = Integer.MAX_VALUE;
                 locks[n] = Integer.MAX_VALUE;
+                //fillRandomLocks(locks);
                 StringTokenizer locksTkn = new StringTokenizer(br.readLine());
                 for (int i = 1; i < n; i++) {
                     locks[i] = Integer.parseInt(locksTkn.nextToken());
@@ -33,16 +37,70 @@ public class LockedDoors {
                     maxToLeftIndex[i] = getFirstLeftGreaterIndex(maxTree, locks[i + 1], 0, i);
                     maxToRightIndex[i] = getFirstRightGreaterIndex(maxTree, locks[i - 1], i, n);
                 }
-                System.out.println();
-                int[] roomsTransitions = new int[n];
+                int maxSteps = getLog2(n) + 1;
+                int[][] binDestRooms = new int[n][maxSteps];
+                int[][] binRoomsPassed = new int[n][maxSteps];
                 for (int i = 0; i < n; i++) {
                     if (locks[i] < locks[i + 1]) {
-                        roomsTransitions[i] = maxToLeftIndex[i];
+                        binDestRooms[i][0] = maxToLeftIndex[i];
+                        binRoomsPassed[i][0] = i - binDestRooms[i][0] + 1;
                     } else {
-                        roomsTransitions[i] = maxToRightIndex[i + 1] - 1;
+                        binDestRooms[i][0] = maxToRightIndex[i + 1] - 1;
+                        binRoomsPassed[i][0] = binDestRooms[i][0] - i + 1;
                     }
                 }
+
+                for (int i = 1; i < maxSteps; i++) {
+                    for (int room = 0; room < n; room++) {
+                        binDestRooms[room][i] = binDestRooms[binDestRooms[room][i - 1]][i - 1];
+                        binRoomsPassed[room][i] = binRoomsPassed[binDestRooms[room][i - 1]][i - 1];
+                    }
+                }
+
+                StringBuilder resBuilder = new StringBuilder();
+                resBuilder.append(String.format("Case #%s: ", t));
+                for (int q = 0; q < Q; q++) {
+                    StringTokenizer qTkn = new StringTokenizer(br.readLine());
+                    int s = Integer.parseInt(qTkn.nextToken()) - 1;
+                    int k = Integer.parseInt(qTkn.nextToken());
+                    int resRoom = s;
+                    if (k != 1) {
+                        while (binRoomsPassed[resRoom][0] < k) {
+                            resRoom = binDestRooms[resRoom][0];
+                        }
+
+                        if (resRoom > binDestRooms[resRoom][0]) {
+                            resRoom = resRoom - k + 1;
+                        } else {
+                            resRoom = resRoom + k - 1;
+                        }
+                    }
+
+                    resBuilder.append(resRoom + 1).append(" ");
+                }
+                System.out.println(resBuilder);
             }
+        }
+    }
+
+    private static int getLog2(int n) {
+        int res = 0;
+        int pow = 1;
+        while (pow < n) {
+            res++;
+            pow *= 2;
+        }
+        return res;
+    }
+
+    private static void fillRandomLocks(int[] locks) {
+        Set<Integer> values = new HashSet<>();
+        for (int i = 1; i < n; i++) {
+            int candidate = -1;
+            do {
+                candidate = (int)(1000 * Math.random());
+            } while (values.contains(candidate));
+            locks[i] = candidate;
         }
     }
 
