@@ -3,9 +3,6 @@ package kickstart;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.StringTokenizer;
 
 public class LockedDoors {
@@ -21,7 +18,6 @@ public class LockedDoors {
                 int[] locks = new int[n + 1];
                 locks[0] = Integer.MAX_VALUE;
                 locks[n] = Integer.MAX_VALUE;
-                //fillRandomLocks(locks);
                 StringTokenizer locksTkn = new StringTokenizer(br.readLine());
                 for (int i = 1; i < n; i++) {
                     locks[i] = Integer.parseInt(locksTkn.nextToken());
@@ -66,7 +62,11 @@ public class LockedDoors {
                     int resRoom = s;
                     if (k != 1) {
                         while (binRoomsPassed[resRoom][0] < k) {
-                            resRoom = binDestRooms[resRoom][0];
+                            int stepPow = 1;
+                            while (binRoomsPassed[resRoom][stepPow] < k) {
+                                stepPow++;
+                            }
+                            resRoom = binDestRooms[resRoom][stepPow - 1];
                         }
 
                         if (resRoom > binDestRooms[resRoom][0]) {
@@ -91,17 +91,6 @@ public class LockedDoors {
             pow *= 2;
         }
         return res;
-    }
-
-    private static void fillRandomLocks(int[] locks) {
-        Set<Integer> values = new HashSet<>();
-        for (int i = 1; i < n; i++) {
-            int candidate = -1;
-            do {
-                candidate = (int)(1000 * Math.random());
-            } while (values.contains(candidate));
-            locks[i] = candidate;
-        }
     }
 
     private static int getFirstLeftGreaterIndex(int[] tree, int topLimitValue, int start, int end) {
