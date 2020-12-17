@@ -34,20 +34,16 @@ public class GoldenStoneSimpleSolution {
         private int incomeCnt;
         private int outcome;
 
+        List<Receipt> ingoingReceipts = new ArrayList<>();
+
         public Receipt(int incomeCnt) {
             this.income = new int[incomeCnt];
             this.incomeCnt = incomeCnt;
         }
 
-        public Receipt(int outcome, int[] income) {
-            this.income = income;
-            this.incomeCnt = income.length;
-            this.outcome = outcome;
-        }
-
         public boolean apply(int node, long[][] minEnergy) {
             boolean wasDecreased = false;
-            int energySum = 0;
+            long energySum = 0;
             for (int s = 0; s < incomeCnt; s++) {
                 if (minEnergy[node][income[s]] == Long.MAX_VALUE) {
                     return false;
@@ -56,12 +52,25 @@ public class GoldenStoneSimpleSolution {
                 }
             }
 
-            if (minEnergy[node][outcome] == Long.MAX_VALUE || minEnergy[node][outcome] == -1 || minEnergy[node][outcome] > energySum) {
-                minEnergy[node][outcome] = energySum < LIMIT ? energySum : -1;
+            if (energySum > LIMIT) {
+                energySum = LIMIT;
+            }
+
+            if (minEnergy[node][outcome] == Long.MAX_VALUE || minEnergy[node][outcome] > energySum) {
+                minEnergy[node][outcome] = energySum;
                 wasDecreased = true;
             }
 
             return wasDecreased;
+        }
+
+        public boolean isIngoingReceipt(Receipt receipt) {
+            for (int stone : income) {
+                if (stone == receipt.outcome) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
@@ -124,29 +133,71 @@ public class GoldenStoneSimpleSolution {
                     }
                 }
 
-                boolean atLeastOneDecreased = true;
-                for (int j = 0; atLeastOneDecreased && j < r; j++) {
-                    atLeastOneDecreased = false;
-                    for (Receipt receipt : receipts) {
-                        for (int i = 0; i < n; i++) {
-                            boolean decreased = receipt.apply(i, minEnergy);
-                            if (decreased) {
-                                atLeastOneDecreased = true;
-                                propagateMinEnergy(nodes[i], receipt.outcome, minEnergy);
-                            }
+                for (Receipt receipt : buildReceiptsOrder(receipts)) {
+                    for (int i = 0; i < n; i++) {
+                        boolean decreased = receipt.apply(i, minEnergy);
+                        if (decreased) {
+                            propagateMinEnergy(nodes[i], receipt.outcome, minEnergy);
                         }
                     }
                 }
 
-                long res = Integer.MAX_VALUE;
+                long res = Long.MAX_VALUE;
                 for (int i = 0; i < n; i++) {
-                    if (minEnergy[i][0] != -1 && minEnergy[i][0] < res) {
+                    if (minEnergy[i][0] < res) {
                         res = minEnergy[i][0];
                     }
                 }
+
+                if (res == LIMIT) {
+                    res = -1;
+                }
+
                 System.out.printf("Case #%s: %s\n", t, res);
             }
         }
+    }
+
+    private static List<Receipt> buildReceiptsOrder(List<Receipt> receipts) {
+        for (Receipt rec1 : receipts) {
+            for (Receipt rec2 : receipts) {
+                if (rec1 == rec2) {
+                    continue;
+                }
+                if (rec1.isIngoingReceipt(rec2)) {
+                    rec1.ingoingReceipts.add(rec2);
+                }
+            }
+        }
+
+        Queue<Receipt> receiptsQueue = new LinkedList<>();
+        Set<Receipt> processed = new HashSet<>();
+        List<Receipt> inversedProcessList = new ArrayList<>();
+
+        for (Receipt receipt : receipts) {
+            if (receipt.outcome == 0) {
+                receiptsQueue.add(receipt);
+                processed.add(receipt);
+            }
+        }
+
+        while (!receiptsQueue.isEmpty()) {
+            Receipt receipt = receiptsQueue.poll();
+            inversedProcessList.add(receipt);
+            for (Receipt ingoing : receipt.ingoingReceipts) {
+                if (!processed.contains(ingoing)) {
+                    processed.add(ingoing);
+                    receiptsQueue.add(ingoing);
+                }
+            }
+        }
+
+        List<Receipt> processList = new ArrayList<>();
+        for (int i = inversedProcessList.size() - 1; i >= 0; i--) {
+            processList.add(inversedProcessList.get(i));
+        }
+
+        return processList;
     }
 
     private static boolean propagateMinEnergy(Node node, int stone, long[][] minEnergy) {
@@ -171,8 +222,11 @@ public class GoldenStoneSimpleSolution {
                     q.add(neigh);
                     dists[neigh.num] = dist + 1;
                     long newEnergy = energy + dist + 1;
-                    if (minEnergy[neigh.num][stone] > newEnergy || minEnergy[neigh.num][stone] == Long.MAX_VALUE || minEnergy[neigh.num][stone] == -1) {
-                        minEnergy[neigh.num][stone] = newEnergy < LIMIT ? newEnergy : -1;
+                    if (newEnergy > LIMIT) {
+                        newEnergy = LIMIT;
+                    }
+                    if (minEnergy[neigh.num][stone] > newEnergy || minEnergy[neigh.num][stone] == Long.MAX_VALUE) {
+                        minEnergy[neigh.num][stone] = newEnergy;
                         wasDecreased = true;
                     }
                 }
