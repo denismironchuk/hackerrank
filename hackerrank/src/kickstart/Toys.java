@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -29,14 +28,6 @@ public class Toys {
             } else {
                 return valueCompare;
             }
-        }
-
-        @Override
-        public String toString() {
-            return "{" +
-                    "\"position\":" + position +
-                    ", \"value\":" + value +
-                    '}';
         }
     }
 
@@ -179,7 +170,6 @@ public class Toys {
                 searchNode.setRight(nodeReplace.right);
                 searchNode.setLeft(nodeReplace.left);
                 searchNode.minPositionToy = nodeReplace.minPositionToy;
-                searchNode.validateMinPositionToy();
             } else {
                 if (searchNode.parent.left == searchNode) {
                     searchNode.parent.left = null;
@@ -189,47 +179,6 @@ public class Toys {
             }
 
             searchNode.updateMinPositionToyToTop();
-        }
-
-        public int getSize() {
-            int size = 1;
-
-            if (left != null) {
-                size += left.getSize();
-            }
-
-            if (right != null) {
-                size += right.getSize();
-            }
-
-            return size;
-        }
-
-        public void validateMinPositionToy() {
-            List<Toy> minPosToys = new ArrayList<>();
-            minPosToys.add(this.toy);
-            if (this.left != null) {
-                this.left.validateMinPositionToy();
-                minPosToys.add(this.left.minPositionToy);
-            }
-            if (this.right != null) {
-                this.right.validateMinPositionToy();
-                minPosToys.add(this.right.minPositionToy);
-            }
-            minPosToys.sort(Comparator.comparingInt(toy -> toy.position));
-            if (minPosToys.get(0) != this.minPositionToy) {
-                throw new RuntimeException();
-            }
-        }
-
-        @Override
-        public String toString() {
-            return "{" +
-                    "\"toy\":" + toy +
-                    ", \"rank\":" + rank +
-                    ", \"left\":" + left +
-                    ", \"right\":" + right +
-                    '}';
         }
     }
 
@@ -250,16 +199,6 @@ public class Toys {
                 }
 
                 calculateOptimal(t, n, toyDescr, roundTime, playTime);
-            }
-        }
-    }
-
-    private static void calculateTrivial(int t, int n, long[][] toyDescr, long roundTime, long[] playTime) {
-        int[] processed = new int[n];
-        int breakPos = 0;
-        for (;breakPos < n; breakPos++) {
-            if (roundTime - toyDescr[breakPos][0] < toyDescr[breakPos][1]) {
-                break;
             }
         }
     }
@@ -295,16 +234,16 @@ public class Toys {
         if (infinityFound) {
             System.out.printf("Case #%s: %s INDEFINITELY\n", t, deleteOrder.size());
         } else {
+            long[] playTimeTree = new long[4 * n];
+            initSegmentTree(playTimeTree, playTime, 1, 0, n - 1);
+
             deleteOrder.add(toys.toy);
             long maxTime = -1;
             int maxTimeToys = -1;
 
             for (int i = 0; i < n; i++) {
                 Toy toyToDelete = deleteOrder.get(i);
-                long maxTimeCandidate = roundTime;
-                for (int j = 0; j < toyToDelete.position; j++) {
-                    maxTimeCandidate += playTime[j];
-                }
+                long maxTimeCandidate = roundTime + getSum(playTimeTree, 1, 0, n - 1, 0, toyToDelete.position - 1);
 
                 if (maxTimeCandidate > maxTime) {
                     maxTime = maxTimeCandidate;
@@ -313,66 +252,50 @@ public class Toys {
 
                 roundTime -= playTime[toyToDelete.position];
                 playTime[toyToDelete.position] = 0;
+                update(playTimeTree, 1, 0, n - 1, toyToDelete.position, 0);
             }
 
             System.out.printf("Case #%s: %s %s\n", t, maxTimeToys, maxTime);
         }
     }
 
-    private static void testTreap() {
-        int toysCnt = 10;
-        int maxValue = 5;
-        while (true) {
-            List<Toy> toys = new ArrayList<>();
-            for (int i = 0; i < toysCnt; i++) {
-                toys.add(new Toy(i, (long) (maxValue * Math.random())));
+    private static void initSegmentTree(long[] tree, long[] values, int p, int intervalStart, int intervalEnd) {
+        if (intervalStart == intervalEnd) {
+            tree[p] = values[intervalStart];
+        } else {
+            int middle = (intervalStart + intervalEnd) / 2;
+            initSegmentTree(tree, values, 2 * p, intervalStart, middle);
+            initSegmentTree(tree, values, 2 * p + 1, middle + 1, intervalEnd);
+            tree[p] = tree[2 * p] + tree[2 * p + 1];
+        }
+    }
+
+    private static long getSum(long[] tree, int p, int intervalStart, int intervalEnd, int searchStart, int searchEnd) {
+        if (searchStart > searchEnd) {
+            return 0;
+        }
+
+        if (intervalStart == searchStart && intervalEnd == searchEnd) {
+            return tree[p];
+        } else {
+            int middle = (intervalStart + intervalEnd) / 2;
+            return getSum(tree, 2 * p, intervalStart, middle, searchStart, Math.min(middle, searchEnd)) +
+                    getSum(tree, 2 * p + 1, middle + 1, intervalEnd, Math.max(intervalStart, middle + 1), searchEnd);
+        }
+    }
+
+    private static void update(long[] tree, int p, int intervalStart, int intervalEnd, int updatePos, int updateVal) {
+        if (intervalStart == intervalEnd && intervalStart == updatePos) {
+            tree[p] = updateVal;
+        } else {
+            int middle = (intervalStart + intervalEnd) / 2;
+            if (updatePos >= intervalStart && updatePos <= middle) {
+                update(tree, 2 * p, intervalStart, middle, updatePos, updateVal);
             }
-
-            Treap treap = new Treap(toys.get(0));
-            treap.validateMinPositionToy();
-            for (int i = 1; i < toysCnt; i++) {
-                int initialSize = treap.getSize();
-                treap = treap.add(toys.get(i));
-                treap.validateMinPositionToy();
-                int sizeAfterInsert = treap.getSize();
-
-                if (null == treap.find(toys.get(i))) {
-                    throw new RuntimeException();
-                }
-
-                if (initialSize + 1 != sizeAfterInsert) {
-                    throw new RuntimeException();
-                }
+            if (updatePos >= middle + 1 && updatePos <= intervalEnd) {
+                update(tree, 2 * p + 1, middle + 1, intervalEnd, updatePos, updateVal);
             }
-
-            System.out.println(treap);
-
-            while (treap.getSize() > 1) {
-                int initialSize = treap.getSize();
-                int indexToDelete = (int)(toys.size() * Math.random());
-                Toy toyToDelete = toys.get(indexToDelete);
-
-                toys.remove(indexToDelete);
-                System.out.println("================");
-                System.out.println(toyToDelete);
-
-                if (null == treap.find(toyToDelete)) {
-                    throw new RuntimeException();
-                }
-
-                treap.delete(toyToDelete);
-                treap.validateMinPositionToy();
-                System.out.println(treap);
-                int sizeAfterDelete = treap.getSize();
-
-                if (null != treap.find(toyToDelete)) {
-                    throw new RuntimeException();
-                }
-
-                if (initialSize - 1 != sizeAfterDelete) {
-                    throw new RuntimeException();
-                }
-            }
+            tree[p] = tree[2 * p] + tree[2 * p + 1];
         }
     }
 }
