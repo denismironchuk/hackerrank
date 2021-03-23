@@ -3,41 +3,47 @@ package codejam.year2020.worldFinal;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.StringTokenizer;
 
-public class AdjancentAndConsecutive {
+public class AdjancentAndConsecutiveRandom {
 
     public static void main(String[] args) throws IOException {
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
-            int T = Integer.parseInt(br.readLine());
-            for (int t = 1; t <= T; t++) {
-                int n = Integer.parseInt(br.readLine());
-                int[] gameState = new int[n];
-                boolean firstPlayer = true;
-                boolean firstPlayerWinning = isWinningState(gameState, n, firstPlayer, 1);
-                int errors1 = 0;
-                int errors2 = 0;
-                for (int i = 0; i < n; i++) {
-                    StringTokenizer move = new StringTokenizer(br.readLine());
-                    int tile = Integer.parseInt(move.nextToken());
-                    int pos = Integer.parseInt(move.nextToken()) - 1;
-                    gameState[pos] = tile;
+        int n = 7;
+        PermutationsTest permTest = new PermutationsTest(n);
+        permTest.initAllStates();
 
-                    if (firstPlayer) {
-                        if (firstPlayerWinning && isWinningState(gameState, n, !firstPlayer, 1)) {
-                            errors1++;
-                            firstPlayerWinning = false;
-                        }
-                    } else {
-                        if (!firstPlayerWinning && isWinningState(gameState, n, !firstPlayer, 1)) {
-                            errors2++;
-                            firstPlayerWinning = true;
-                        }
-                    }
+        while (true) {
+            int[] gameState = new int[n];
 
-                    firstPlayer = !firstPlayer;
+            int presentTilesCnt = (int) (Math.random() * (n + 1));
+            Set<Integer> usedTiles = new HashSet<>();
+
+            while (presentTilesCnt != 0) {
+                int pos = (int) (Math.random() * n);
+                while (gameState[pos] != 0) {
+                    pos = (int) (Math.random() * n);
                 }
-                System.out.printf("Case #%s: %s %s\n", t, errors1, errors2);
+                int tile = 1 + (int) (Math.random() * n);
+                while (usedTiles.contains(tile)) {
+                    tile = 1 + (int) (Math.random() * n);
+                }
+
+                gameState[pos] = tile;
+                usedTiles.add(tile);
+                presentTilesCnt--;
+            }
+
+            boolean firstPlayer = Math.random() > 0.5;
+            //int[] gameState = new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0};
+            //boolean firstPlayer = false;
+            System.out.printf("%s %s\n", firstPlayer, Arrays.toString(gameState));
+            boolean winningOptimal = isWinningState(gameState, n, firstPlayer, 1);
+            boolean winningTrivial = permTest.isStateWinning(gameState, firstPlayer);
+            if (winningOptimal != winningTrivial) {
+                throw new RuntimeException();
             }
         }
     }

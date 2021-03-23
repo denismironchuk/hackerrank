@@ -1,18 +1,16 @@
 package codejam.year2020.worldFinal;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class PermutationsTest {
-    static int n = 8;
-    static Map<Long, GameState> allStates = new HashMap<>();
+    private int n;
+    private Map<Long, GameState> allStates = new HashMap<>();
 
-    private static class GameState {
+    private class GameState {
 
         private int[] state;
         private boolean isTerminal;
@@ -49,7 +47,7 @@ public class PermutationsTest {
                         }
 
                         state[pos] = val;
-                        long hash = hashCode(state);
+                        long hash = PermutationsTest.hashCode(state);
                         GameState nextState = allStates.get(hash);
                         if (!nextState.isWinning2) {
                             isWinning1 = true;
@@ -69,7 +67,7 @@ public class PermutationsTest {
                 if (state[pos] != 0) {
                     int val = state[pos];
                     state[pos] = 0;
-                    long hash = hashCode(state);
+                    long hash = PermutationsTest.hashCode(state);
                     ingoingStates.add(hash);
                     if (!allStates.containsKey(hash)) {
                         allStates.put(hash, new GameState(Arrays.copyOf(state, n), false));
@@ -84,20 +82,24 @@ public class PermutationsTest {
         public String toString() {
             return Arrays.toString(state);
         }
-
-        public static long hashCode(int a[]) {
-            if (a == null)
-                return 0;
-
-            long result = 1;
-            for (int element : a)
-                result = 31 * result + element;
-
-            return result;
-        }
     }
 
-    public static void main(String[] args) {
+    public static long hashCode(int a[]) {
+        if (a == null)
+            return 0;
+
+        long result = 1;
+        for (int element : a)
+            result = 31 * result + element;
+
+        return result;
+    }
+
+    public PermutationsTest(int n) {
+        this.n = n;
+    }
+
+    public void initAllStates() {
         Set<Long> curStepStates = new HashSet<>();
         buildAllTerminationStates(new int[n], new int[n + 1], 0, n, curStepStates);
         System.out.println(curStepStates.size());
@@ -111,17 +113,15 @@ public class PermutationsTest {
             System.out.println(curStepStates.size());
         }
         System.out.println(allStates.size());
-        long player2WinningStates = allStates.values().stream().filter(state -> state.isWinning2).count();
-        long player1WinningStates = allStates.values().stream().filter(state -> state.isWinning1).count();
-        System.out.println("============================");
-        System.out.println(player1WinningStates);
-        System.out.println(player2WinningStates);
-        allStates.values().stream().filter(state -> state.isWinning1 && state.isWinning2).forEach(state -> System.out.println(state));
     }
 
-    private static void buildAllTerminationStates(int[] perm, int[] usedVals, int pos, int n, Set<Long> terminationStates) {
+    public static void main(String[] args) {
+        new PermutationsTest(8).initAllStates();
+    }
+
+    private void buildAllTerminationStates(int[] perm, int[] usedVals, int pos, int n, Set<Long> terminationStates) {
         if (pos == n) {
-            long hash = GameState.hashCode(perm);
+            long hash = hashCode(perm);
             terminationStates.add(hash);
             allStates.put(hash, new GameState(Arrays.copyOf(perm, n), true));
             return;
@@ -135,6 +135,15 @@ public class PermutationsTest {
                 perm[pos] = 0;
                 usedVals[val] = 0;
             }
+        }
+    }
+
+    public boolean isStateWinning(int[] state, boolean firstPlayer) {
+        GameState gameState = allStates.get(hashCode(state));
+        if (firstPlayer) {
+            return gameState.isWinning1;
+        } else {
+            return gameState.isWinning2;
         }
     }
 }
