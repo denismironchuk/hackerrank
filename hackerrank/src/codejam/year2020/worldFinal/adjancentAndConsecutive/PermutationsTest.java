@@ -1,4 +1,4 @@
-package codejam.year2020.worldFinal;
+package codejam.year2020.worldFinal.adjancentAndConsecutive;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -116,7 +116,7 @@ public class PermutationsTest {
     }
 
     public static void main(String[] args) {
-        new PermutationsTest(8).initAllStates();
+        new PermutationsTest(9).initAllStates();
     }
 
     private void buildAllTerminationStates(int[] perm, int[] usedVals, int pos, int n, Set<Long> terminationStates) {

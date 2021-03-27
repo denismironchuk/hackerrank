@@ -1,22 +1,18 @@
-package codejam.year2020.worldFinal;
+package codejam.year2020.worldFinal.adjancentAndConsecutive;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.StringTokenizer;
 
 public class AdjancentAndConsecutiveRandom {
 
-    public static void main(String[] args) throws IOException {
-        int n = 7;
+    public static void main(String[] args) {
+        int n = 6;
         PermutationsTest permTest = new PermutationsTest(n);
         permTest.initAllStates();
 
         while (true) {
-            int[] gameState = new int[n];
+            /*int[] gameState = new int[n];
 
             int presentTilesCnt = (int) (Math.random() * (n + 1));
             Set<Integer> usedTiles = new HashSet<>();
@@ -36,9 +32,9 @@ public class AdjancentAndConsecutiveRandom {
                 presentTilesCnt--;
             }
 
-            boolean firstPlayer = Math.random() > 0.5;
-            //int[] gameState = new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0};
-            //boolean firstPlayer = false;
+            boolean firstPlayer = Math.random() > 0.5;*/
+            int[] gameState = new int[] {0, 2, 0, 0, 0, 0};
+            boolean firstPlayer = false;
             System.out.printf("%s %s\n", firstPlayer, Arrays.toString(gameState));
             boolean winningOptimal = isWinningState(gameState, n, firstPlayer, 1);
             boolean winningTrivial = permTest.isStateWinning(gameState, firstPlayer);
@@ -69,27 +65,8 @@ public class AdjancentAndConsecutiveRandom {
             if (has2Cons) {
                 return true;
             }
-            //Case 2
-            if (addOneTileToWin(state, usedVals, n)) {
-                return true;
-            }
 
-            //Case 3
-            if (has3AdjancentEmptyAnd3ConsecutiveFree(state, usedVals, n)) {
-                return true;
-            }
-
-            //Case 4
-            if (dontHave2AdjancentEmpty(state, n)) {
-                return false;
-            }
-
-            //Case 4
-            if (dontHave2ConsecutiveFree(usedVals, n)) {
-                return false;
-            }
-
-            if (depth < 3) {
+            if (depth < 4) {
                 //Brootforce
                 if (brootforce(state, n, firstPlayer, depth, usedVals)) {
                     return true;
@@ -106,7 +83,7 @@ public class AdjancentAndConsecutiveRandom {
                 return false;
             }
 
-            if (depth < 4) {
+            if (depth < 5) {
                 if (brootforce(state, n, firstPlayer, depth, usedVals)) {
                     return true;
                 }
