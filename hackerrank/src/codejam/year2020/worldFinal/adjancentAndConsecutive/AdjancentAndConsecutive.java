@@ -3,13 +3,16 @@ package codejam.year2020.worldFinal.adjancentAndConsecutive;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
 public class AdjancentAndConsecutive {
     private static int n;
     private static Map<Long, Boolean> states1;
+    private static Map<Long, Map<Long, Boolean>> states1Opt;
     private static Map<Long, Boolean> states2;
 
     private static class GameState {
@@ -19,6 +22,8 @@ public class AdjancentAndConsecutive {
         private int[] freeValues;
         int[] usedVals = new int[n + 1];
         int usedValsCnt = 0;
+
+        long[] optHashes = new long[2];
 
         public GameState(int[] state) {
             this.state = state;
@@ -48,69 +53,116 @@ public class AdjancentAndConsecutive {
                     freePos++;
                 }
             }
+
+            List<Integer> consPositionsLen = new ArrayList<>();
+            int len = 1;
+            for (int i = 1; i < freeCnt; i++) {
+                if (freePositions[i] == freePositions[i - 1] + 1) {
+                    len++;
+                } else {
+                    consPositionsLen.add(len);
+                    len = 1;
+                }
+            }
+            consPositionsLen.add(len);
+
+            //approach from editorial
+            List<Integer> consValsLen = new ArrayList<>();
+            len = 1;
+            for (int i = 1; i < freeCnt; i++) {
+                if (freeValues[i] == freeValues[i - 1] + 1) {
+                    len++;
+                } else {
+                    consValsLen.add(len);
+                    len = 1;
+                }
+            }
+            consValsLen.add(len);
+
+            consPositionsLen.sort(Integer::compare);
+            consValsLen.sort(Integer::compare);
+
+            if (consPositionsLen.get(consPositionsLen.size() - 1) > 2) {
+                List<Integer> tmp = consPositionsLen;
+                consPositionsLen = consValsLen;
+                consValsLen = tmp;
+            }
+            optHashes[0] = hashCode(consPositionsLen);
+            optHashes[1] = hashCode(consValsLen);
         }
 
         public boolean isWinning(boolean forPlayer1) {
-            long hash = hashCode(this.state);
+            //long hash = hashCode(this.state);
             boolean has2Cons = alreadyHas2Consecutive();
             if (forPlayer1) {
-                if (states1.containsKey(hash)) {
+                /*if (states1.containsKey(hash)) {
                     return states1.get(hash);
-                } else if (usedValsCnt == n && !has2Cons) {
-                    states1.put(hash, false);
+                } else */if (usedValsCnt == n && !has2Cons) {
+                    //states1.put(hash, false);
+                    return false;
                 } else if (has2Cons) {
-                    states1.put(hash, true);
+                    //states1.put(hash, true);
+                    return true;
                 } else if (addOneTileToWin()) {
-                    states1.put(hash, true);
+                    //states1.put(hash, true);
+                    return true;
                 } else if (has3AdjancentEmptyAnd3ConsecutiveFree()) {
-                    states1.put(hash, true);
+                    //states1.put(hash, true);
+                    return true;
                 } else if (dontHave2AdjancentEmpty()) {
-                    states1.put(hash, false);
+                    //states1.put(hash, false);
+                    return false;
                 } else if (dontHave2ConsecutiveFree()) {
-                    states1.put(hash, false);
+                    //states1.put(hash, false);
+                    return false;
                 } else {
-                    boolean isWinning = false;
-                    for (int i = 0; !isWinning && i < freeCnt; i++) {
-                        for (int j = 0; !isWinning && j < freeCnt; j++) {
-                            this.state[freePositions[i]] = freeValues[j];
-                            long nextHash = hashCode(this.state);
-                            boolean nextState;
+                    if (!states1Opt.containsKey(optHashes[0]) || !states1Opt.get(optHashes[0]).containsKey(optHashes[1])) {
+                        boolean isWinning = false;
+                        for (int i = 0; !isWinning && i < freeCnt; i++) {
+                            for (int j = 0; !isWinning && j < freeCnt; j++) {
+                                this.state[freePositions[i]] = freeValues[j];
+                                long nextHash = hashCode(this.state);
+                                boolean nextState;
 
-                            if (states2.containsKey(nextHash)) {
-                                nextState = states2.get(nextHash);
-                            } else {
-                                nextState = new GameState(state).isWinning(false);
-                            }
+                                if (states2.containsKey(nextHash)) {
+                                    nextState = states2.get(nextHash);
+                                } else {
+                                    nextState = new GameState(state).isWinning(false);
+                                }
 
-                            this.state[freePositions[i]] = 0;
+                                this.state[freePositions[i]] = 0;
 
-                            if (!nextState) {
-                                isWinning = true;
+                                if (!nextState) {
+                                    isWinning = true;
+                                }
                             }
                         }
+                        //states1.put(hash, isWinning);
+                        if (!states1Opt.containsKey(optHashes[0])) {
+                            states1Opt.put(optHashes[0], new HashMap<>());
+                        }
+                        states1Opt.get(optHashes[0]).put(optHashes[1], isWinning);
                     }
-                    states1.put(hash, isWinning);
+                    return states1Opt.get(optHashes[0]).get(optHashes[1]);
                 }
 
-                return states1.get(hash);
+                //return states1.get(hash);
             } else {
-                if (usedValsCnt == n && !has2Cons) {
-                    states2.put(hash, true);
+                /*if (states2.containsKey(hash)) {
+                    return states2.get(hash);
+                } else */if (usedValsCnt == n && !has2Cons) {
+                    //states2.put(hash, true);
+                    return true;
                 } else if (has2Cons) {
-                    states2.put(hash, false);
+                    //states2.put(hash, false);
+                    return false;
                 } else {
                     boolean isWinning = false;
                     for (int i = 0; !isWinning && i < freeCnt; i++) {
                         for (int j = 0; !isWinning && j < freeCnt; j++) {
                             this.state[freePositions[i]] = freeValues[j];
-                            long nextHash = hashCode(this.state);
-                            boolean nextState;
-
-                            if (states1.containsKey(nextHash)) {
-                                nextState = states1.get(nextHash);
-                            } else {
-                                nextState = new GameState(state).isWinning(true);
-                            }
+                            //long nextHash = hashCode(this.state);
+                            boolean nextState = new GameState(state).isWinning(true);
 
                             this.state[freePositions[i]] = 0;
 
@@ -119,10 +171,11 @@ public class AdjancentAndConsecutive {
                             }
                         }
                     }
-                    states2.put(hash, isWinning);
+                    //states2.put(hash, isWinning);
+                    return isWinning;
                 }
 
-                return states2.get(hash);
+                //return states2.get(hash);
             }
         }
 
@@ -211,6 +264,17 @@ public class AdjancentAndConsecutive {
             return false;
         }
 
+        public static long hashCode(List<Integer> a) {
+            if (a == null)
+                return 0;
+
+            long result = 1;
+            for (int element : a)
+                result = 31 * result + element;
+
+            return result;
+        }
+
         public static long hashCode(int a[]) {
             if (a == null)
                 return 0;
@@ -228,6 +292,7 @@ public class AdjancentAndConsecutive {
             int T = Integer.parseInt(br.readLine());
             for (int t = 1; t <= T; t++) {
                 states1 = new HashMap<>();
+                states1Opt = new HashMap<>();
                 states2 = new HashMap<>();
                 n = Integer.parseInt(br.readLine());
                 int[] gameState = new int[n];
