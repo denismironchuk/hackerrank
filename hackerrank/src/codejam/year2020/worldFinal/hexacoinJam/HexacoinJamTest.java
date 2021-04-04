@@ -19,8 +19,7 @@ public class HexacoinJamTest {
 
         long res = 0;
 
-        int start = n == 1 ? lowerLimit[0] : Math.max(lowerLimit[0] - 1, 0);
-        for (int sum = start; sum <= upperLimit[0]; sum++) {
+        for (int sum = lowerLimit[0]; sum <= upperLimit[0]; sum++) {
             res += countSums(0, sum, lowerLimit, upperLimit);
         }
 
@@ -46,7 +45,7 @@ public class HexacoinJamTest {
         return res;
     }
 
-    private static long countSums(int position, int sum, int[] lowerLimit, int[] upperLimit) {
+    /*private static long countSums(int position, int sum, int[] lowerLimit, int[] upperLimit) {
         if (position == n - 1) {
             if (sum < maxDigit) {
                 return sum + 1;
@@ -92,8 +91,75 @@ public class HexacoinJamTest {
         }
 
         return res;
-    }
+    }*/
 
+    private static long countSums(int position, int sum, int[] lowerLimit, int[] upperLimit) {
+        long res = 0;
+
+        if (sum == upperLimit[position]) {
+            for (int j = 0; j <= sum; j++) {
+                if (j >= maxDigit || sum - j >= maxDigit) {
+                    continue;
+                }
+
+                for (int k = 0; k <= upperLimit[position + 1]; k++) {
+                    res += countSums(position + 1, k, lowerLimit, upperLimit);
+                }
+            }
+
+            for (int j = 0; j <= sum - 1; j++) {
+                if (j >= maxDigit || sum - 1 - j >= maxDigit) {
+                    continue;
+                }
+
+                for (int k = maxDigit; k <= upperLimit[position + 1] + maxDigit; k++) {
+                    res += countSums(position + 1, k, lowerLimit, upperLimit);
+                }
+            }
+        } else if (sum == lowerLimit[position]) {
+            for (int j = 0; j <= sum; j++) {
+                if (j >= maxDigit || sum - j >= maxDigit) {
+                    continue;
+                }
+
+                for (int k = lowerLimit[position + 1]; k < maxDigit; k++) {
+                    res += countSums(position + 1, k, lowerLimit, upperLimit);
+                }
+            }
+
+            for (int j = 0; j <= sum - 1; j++) {
+                if (j >= maxDigit || sum - 1 - j >= maxDigit) {
+                    continue;
+                }
+
+                for (int k = lowerLimit[position + 1] + maxDigit; k <= 2 * (maxDigit - 1); k++) {
+                    res += countSums(position + 1, k, lowerLimit, upperLimit);
+                }
+            }
+        } else {
+            for (int j = 0; j <= sum; j++) {
+                if (j >= maxDigit || sum - j >= maxDigit) {
+                    continue;
+                }
+
+                for (int k = 0; k < maxDigit; k++) {
+                    res += countSums(position + 1, k, lowerLimit, upperLimit);
+                }
+            }
+
+            for (int j = 0; j <= sum - 1; j++) {
+                if (j >= maxDigit || sum - 1 - j >= maxDigit) {
+                    continue;
+                }
+
+                for (int k = maxDigit; k <= 2 * (maxDigit - 1); k++) {
+                    res += countSums(position + 1, k, lowerLimit, upperLimit);
+                }
+            }
+        }
+
+        return res;
+    }
 
     private static long fastPow(int n, int p) {
         if (p == 0) {
