@@ -1,20 +1,26 @@
 package codejam.year2020.worldFinal.hexacoinJam;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class SplitToSumInterval {
 
-    private static int n = 5;
-    private static long maxDigit = 16;
+    private static int n = 4;
+    private static int maxDigit = 6;
 
-    private static long[] generateNumber() {
-        long[] num = new long[n];
+    private static int[] generateNumber() {
+        int[] num = new int[n];
         for (int i = 0; i < n; i++) {
-            num[i] = (long)(Math.random() * maxDigit);
+            num[i] = (int)(Math.random() * maxDigit);
         }
         return num;
     }
 
-    private static long[] generateNumberGreaterOrEqualThan(long[] num) {
-        long[] greaterNum = new long[n];
+    private static int[] generateNumberGreaterOrEqualThan(int[] num) {
+        int[] greaterNum = new int[n];
         boolean isGreater = false;
         for (int i = 0; i < n; i++) {
             if (isGreater) {
@@ -28,14 +34,21 @@ public class SplitToSumInterval {
         return greaterNum;
     }
 
-    private static void printNum(long[] num) {
+    private static void printNum(int[] num) {
         for (int i = 0; i < n; i++) {
             System.out.printf("%2d ", num[i]);
         }
         System.out.println();
     }
 
-    private static long convertToDec(long[] num) {
+    private static void printPerm(int[] perm) {
+        for (int i = 0; i < maxDigit; i++) {
+            System.out.printf("%2d ", perm[i]);
+        }
+        System.out.println();
+    }
+
+    private static long convertToDec(int[] num) {
         long res = 0;
         for (int i = 0; i < n; i++) {
             res *= maxDigit;
@@ -44,32 +57,67 @@ public class SplitToSumInterval {
         return res;
     }
 
+    private static int[] applyPermutationToNumber(int[] perm, int[] num) {
+        int[] newNum = new int[n];
+
+        for (int i = 0; i < n; i++) {
+            newNum[i] = perm[num[i]];
+        }
+
+        return newNum;
+    }
+
+    private static void buildAllPermutations(int pos, Set<Integer> usedVals, int[] permutation, List<int[]> allPerms) {
+        if (pos == maxDigit) {
+            allPerms.add(Arrays.copyOf(permutation, maxDigit));
+            return;
+        }
+
+        for (int i = 0; i < maxDigit; i++) {
+            if (usedVals.contains(i)) {
+                continue;
+            }
+
+            permutation[pos] = i;
+            usedVals.add(i);
+            buildAllPermutations(pos + 1, usedVals, permutation, allPerms);
+            usedVals.remove(i);
+        }
+    }
+
     public static void main(String[] args) {
+        List<int[]> allPerms = new ArrayList<>();
+        buildAllPermutations(0, new HashSet<>(), new int[maxDigit], allPerms);
+
         while (true) {
-            long[] start = generateNumber();
-            long[] end = generateNumberGreaterOrEqualThan(start);
+            int[] start = generateNumber();
+            int[] end = generateNumberGreaterOrEqualThan(start);
 
-            //long[] start = new long[] {5, 15, 2, 12, 2};
-            //long[] end = new long[] {6, 15, 2, 12, 2};
+            int[] num1 = generateNumber();
+            int[] num2 = generateNumber();
 
-            //int[] start = new int[] {1, 0, 15};
-            //int[] end = new int[] {3, 15, 15};
+            /*int[] start = new int[] {2, 0};
+            int[] end = new int[] {4, 1};
+
+            int[] num1 = new int[] {3, 1};
+            int[] num2 = new int[] {0, 0};*/
 
             printNum(start);
             printNum(end);
+            System.out.println("=====Numbers=====");
+            printNum(num1);
+            printNum(num2);
 
-            long res = countSplits(0, start, end, false);
+            int[] permutation = new int[maxDigit];
+            Arrays.fill(permutation, -1);
+            int[] reversePermutation = new int[maxDigit];
+            Arrays.fill(reversePermutation, -1);
+            long res = countPermutations(0, start, end, num1, num2, permutation, reversePermutation, false);
 
             System.out.println(res);
 
-            long resTrivial = 0;
+            long resTrivial = countTrivial(num1, num2, start, end, allPerms);
 
-            long lowerDec = convertToDec(start);
-            long upperDec = convertToDec(end);
-
-            for (long i = lowerDec; i <= upperDec; i++) {
-                resTrivial += i + 1;
-            }
             System.out.println(resTrivial);
 
             if (res != resTrivial) {
@@ -78,21 +126,108 @@ public class SplitToSumInterval {
         }
     }
 
-    public static long countSplits(int pos, long[] start, long[] end, boolean setAllStartToZero) {
-        long tmpStartGlobal = start[pos];
+    private static long countTrivial(int[] num1, int[] num2, int[] start, int[] end, List<int[]> allPerms) {
+        long res = 0;
+        for (int[] perm : allPerms) {
+            long permedNum1 = convertToDec(applyPermutationToNumber(perm, num1));
+            long permedNum2 = convertToDec(applyPermutationToNumber(perm, num2));
+
+            long startDec = convertToDec(start);
+            long endDec = convertToDec(end);
+
+            if (permedNum1 + permedNum2 >= startDec && permedNum1 + permedNum2 <= endDec) {
+                res++;
+            }
+        }
+        return res;
+    }
+
+    private static long getFreeValsFactorial(int[] permutation) {
+        int freeCnt = 0;
+        for (int p : permutation) {
+            if (p == -1) {
+                freeCnt++;
+            }
+        }
+
+        long fact = 1;
+        for (int i = 1; i <= freeCnt; i++) {
+            fact *= i;
+        }
+        return fact;
+    }
+
+    private static boolean isValidPair(int val1, int val2, int substVal1, int substVal2, int[] permutation, int[] reversePermutation) {
+        if (reversePermutation[substVal1] != -1 && reversePermutation[substVal1] != val1) {
+            return false;
+        }
+
+        if (reversePermutation[substVal2] != -1 && reversePermutation[substVal2] != val2) {
+            return false;
+        }
+
+        if (val1 == val2 && substVal1 != substVal2) {
+            return false;
+        }
+
+        if (val1 != val2 && substVal1 == substVal2) {
+            return false;
+        }
+
+        if (permutation[val1] != -1 && substVal1 != permutation[val1]) {
+            return false;
+        }
+
+        if (permutation[val2] != -1 && substVal2 != permutation[val2]) {
+            return false;
+        }
+
+        if (permutation[val1] != -1 && permutation[val2] != -1
+                && !(substVal1 == permutation[val1] && substVal2 == permutation[val2])) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static long countPermutations(int pos, int[] start, int[] end, int[] num1, int[] num2, int[] permutation, int[] reversePermutation, boolean setAllStartToZero) {
+        int tmpStartGlobal = start[pos];
+
         if (setAllStartToZero) {
             start[pos] = 0;
         }
         long res = 0;
 
         if (pos == n - 1) {
-            for (long limit = start[pos]; limit <= end[pos]; limit++) {
+            for (int limit = start[pos]; limit <= end[pos]; limit++) {
                 for (int sum = 0; sum <= limit; sum++) {
                     if (sum >= maxDigit || limit - sum >= maxDigit) {
                         continue;
                     }
 
-                    res++;
+                    if (!isValidPair(num1[pos], num2[pos], sum, limit - sum, permutation, reversePermutation)) {
+                        continue;
+                    }
+
+                    int perm1Tmp = permutation[num1[pos]];
+                    int perm2Tmp = permutation[num2[pos]];
+
+                    int revPerm1Tmp = reversePermutation[sum];
+                    int revPerm2Tmp = reversePermutation[limit - sum];
+
+                    permutation[num1[pos]] = sum;
+                    permutation[num2[pos]] = limit - sum;
+
+                    reversePermutation[sum] = num1[pos];
+                    reversePermutation[limit - sum] = num2[pos];
+
+                    res+= getFreeValsFactorial(permutation);
+
+                    permutation[num1[pos]] = perm1Tmp;
+                    permutation[num2[pos]] = perm2Tmp;
+
+                    reversePermutation[sum] = revPerm1Tmp;
+                    reversePermutation[limit - sum] = revPerm2Tmp;
                 }
             }
         } else {
@@ -102,8 +237,12 @@ public class SplitToSumInterval {
                         continue;
                     }
 
-                    long startTmp = start[pos + 1];
-                    long endTmp = end[pos + 1];
+                    if (!isValidPair(num1[pos], num2[pos], sum, start[pos] - 1 - sum, permutation, reversePermutation)) {
+                        continue;
+                    }
+
+                    int startTmp = start[pos + 1];
+                    int endTmp = end[pos + 1];
 
                     start[pos + 1] += maxDigit;
 
@@ -113,7 +252,25 @@ public class SplitToSumInterval {
                         end[pos + 1] = 2 * maxDigit;
                     }
 
-                    res += countSplits(pos + 1, start, end, setAllStartToZero);
+                    int perm1Tmp = permutation[num1[pos]];
+                    int perm2Tmp = permutation[num2[pos]];
+
+                    int revPerm1Tmp = reversePermutation[sum];
+                    int revPerm2Tmp = reversePermutation[start[pos] - 1 - sum];
+
+                    permutation[num1[pos]] = sum;
+                    permutation[num2[pos]] = start[pos] - 1 - sum;
+
+                    reversePermutation[sum] = num1[pos];
+                    reversePermutation[start[pos] - 1 - sum] = num2[pos];
+
+                    res += countPermutations(pos + 1, start, end, num1, num2, permutation, reversePermutation, setAllStartToZero);
+
+                    permutation[num1[pos]] = perm1Tmp;
+                    permutation[num2[pos]] = perm2Tmp;
+
+                    reversePermutation[sum] = revPerm1Tmp;
+                    reversePermutation[start[pos] - 1 - sum] = revPerm2Tmp;
 
                     start[pos + 1] = startTmp;
                     end[pos + 1] = endTmp;
@@ -125,8 +282,12 @@ public class SplitToSumInterval {
                     continue;
                 }
 
-                long startTmp = start[pos + 1];
-                long endTmp = end[pos + 1];
+                if (!isValidPair(num1[pos], num2[pos], sum, start[pos] - sum, permutation, reversePermutation)) {
+                    continue;
+                }
+
+                int startTmp = start[pos + 1];
+                int endTmp = end[pos + 1];
 
                 if (start[pos] == end[pos]) {
                     //Do nothing
@@ -136,25 +297,64 @@ public class SplitToSumInterval {
                     end[pos + 1] = 2 * maxDigit;
                 }
 
-                res += countSplits(pos + 1, start, end, setAllStartToZero);
+                int perm1Tmp = permutation[num1[pos]];
+                int perm2Tmp = permutation[num2[pos]];
+
+                int revPerm1Tmp = reversePermutation[sum];
+                int revPerm2Tmp = reversePermutation[start[pos] - sum];
+
+                permutation[num1[pos]] = sum;
+                permutation[num2[pos]] = start[pos] - sum;
+
+                reversePermutation[sum] = num1[pos];
+                reversePermutation[start[pos] - sum] = num2[pos];
+
+                res += countPermutations(pos + 1, start, end, num1, num2, permutation, reversePermutation, setAllStartToZero);
+
+                permutation[num1[pos]] = perm1Tmp;
+                permutation[num2[pos]] = perm2Tmp;
+
+                reversePermutation[sum] = revPerm1Tmp;
+                reversePermutation[start[pos] - sum] = revPerm2Tmp;
 
                 start[pos + 1] = startTmp;
                 end[pos + 1] = endTmp;
             }
 
-            for (long limit = start[pos] + 1; limit < end[pos] - 1; limit++) {
+            for (int limit = start[pos] + 1; limit < end[pos] - 1; limit++) {
                 for (int sum = 0; sum <= limit; sum++) {
                     if (sum >= maxDigit || limit - sum >= maxDigit) {
                         continue;
                     }
 
-                    long startTmp = start[pos + 1];
-                    long endTmp = end[pos + 1];
+                    if (!isValidPair(num1[pos], num2[pos], sum, limit - sum, permutation, reversePermutation)) {
+                        continue;
+                    }
 
-                    //start[pos + 1] = 0;
+                    int startTmp = start[pos + 1];
+                    int endTmp = end[pos + 1];
+
                     end[pos + 1] = 2 * maxDigit;
 
-                    res += countSplits(pos + 1, start, end, true);
+                    int perm1Tmp = permutation[num1[pos]];
+                    int perm2Tmp = permutation[num2[pos]];
+
+                    int revPerm1Tmp = reversePermutation[sum];
+                    int revPerm2Tmp = reversePermutation[limit - sum];
+
+                    permutation[num1[pos]] = sum;
+                    permutation[num2[pos]] = limit - sum;
+
+                    reversePermutation[sum] = num1[pos];
+                    reversePermutation[limit - sum] = num2[pos];
+
+                    res += countPermutations(pos + 1, start, end, num1, num2, permutation, reversePermutation, true);
+
+                    permutation[num1[pos]] = perm1Tmp;
+                    permutation[num2[pos]] = perm2Tmp;
+
+                    reversePermutation[sum] = revPerm1Tmp;
+                    reversePermutation[limit - sum] = revPerm2Tmp;
 
                     start[pos + 1] = startTmp;
                     end[pos + 1] = endTmp;
@@ -167,13 +367,34 @@ public class SplitToSumInterval {
                         continue;
                     }
 
-                    long startTmp = start[pos + 1];
-                    long endTmp = end[pos + 1];
+                    if (!isValidPair(num1[pos], num2[pos], sum, end[pos] - 1 - sum, permutation, reversePermutation)) {
+                        continue;
+                    }
 
-                    //start[pos + 1] = 0;
+                    int startTmp = start[pos + 1];
+                    int endTmp = end[pos + 1];
+
                     end[pos + 1] += maxDigit;
 
-                    res += countSplits(pos + 1, start, end, true);
+                    int perm1Tmp = permutation[num1[pos]];
+                    int perm2Tmp = permutation[num2[pos]];
+
+                    int revPerm1Tmp = reversePermutation[sum];
+                    int revPerm2Tmp = reversePermutation[end[pos] - 1 - sum];
+
+                    permutation[num1[pos]] = sum;
+                    permutation[num2[pos]] = end[pos] - 1 - sum;
+
+                    reversePermutation[sum] = num1[pos];
+                    reversePermutation[end[pos] - 1 - sum] = num2[pos];
+
+                    res += countPermutations(pos + 1, start, end, num1, num2, permutation, reversePermutation, true);
+
+                    permutation[num1[pos]] = perm1Tmp;
+                    permutation[num2[pos]] = perm2Tmp;
+
+                    reversePermutation[sum] = revPerm1Tmp;
+                    reversePermutation[end[pos] - 1 - sum] = revPerm2Tmp;
 
                     start[pos + 1] = startTmp;
                     end[pos + 1] = endTmp;
@@ -186,12 +407,32 @@ public class SplitToSumInterval {
                         continue;
                     }
 
-                    long startTmp = start[pos + 1];
-                    long endTmp = end[pos + 1];
+                    if (!isValidPair(num1[pos], num2[pos], sum, end[pos] - sum, permutation, reversePermutation)) {
+                        continue;
+                    }
 
-                    //start[pos + 1] = 0;
+                    int startTmp = start[pos + 1];
+                    int endTmp = end[pos + 1];
 
-                    res += countSplits(pos + 1, start, end, true);
+                    int perm1Tmp = permutation[num1[pos]];
+                    int perm2Tmp = permutation[num2[pos]];
+
+                    int revPerm1Tmp = reversePermutation[sum];
+                    int revPerm2Tmp = reversePermutation[end[pos] - sum];
+
+                    reversePermutation[sum] = num1[pos];
+                    reversePermutation[end[pos] - sum] = num2[pos];
+
+                    permutation[num1[pos]] = sum;
+                    permutation[num2[pos]] = end[pos] - sum;
+
+                    res += countPermutations(pos + 1, start, end, num1, num2, permutation, reversePermutation, true);
+
+                    permutation[num1[pos]] = perm1Tmp;
+                    permutation[num2[pos]] = perm2Tmp;
+
+                    reversePermutation[sum] = revPerm1Tmp;
+                    reversePermutation[end[pos] - sum] = revPerm2Tmp;
 
                     start[pos + 1] = startTmp;
                     end[pos + 1] = endTmp;
