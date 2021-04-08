@@ -10,11 +10,39 @@ public class SplitToSumInterval {
 
     private static int n = 5;
     private static int maxDigit = 16;
+    private static long[] FACTS = new long[] {
+            1l,
+            1l,
+            1l * 2l,
+            1l * 2l * 3l,
+            1l * 2l * 3l * 4l,
+            1l * 2l * 3l * 4l * 5l,
+            1l * 2l * 3l * 4l * 5l * 6l,
+            1l * 2l * 3l * 4l * 5l * 6l * 7l,
+            1l * 2l * 3l * 4l * 5l * 6l * 7l * 8l,
+            1l * 2l * 3l * 4l * 5l * 6l * 7l * 8l * 9l,
+            1l * 2l * 3l * 4l * 5l * 6l * 7l * 8l * 9l * 10l,
+            1l * 2l * 3l * 4l * 5l * 6l * 7l * 8l * 9l * 10l * 11l,
+            1l * 2l * 3l * 4l * 5l * 6l * 7l * 8l * 9l * 10l * 11l * 12l,
+            1l * 2l * 3l * 4l * 5l * 6l * 7l * 8l * 9l * 10l * 11l * 12l * 13l,
+            1l * 2l * 3l * 4l * 5l * 6l * 7l * 8l * 9l * 10l * 11l * 12l * 13l * 14l,
+            1l * 2l * 3l * 4l * 5l * 6l * 7l * 8l * 9l * 10l * 11l * 12l * 13l * 14l * 15l,
+            1l * 2l * 3l * 4l * 5l * 6l * 7l * 8l * 9l * 10l * 11l * 12l * 13l * 14l * 15l * 16l,
+    };
+    private static long itrCnt = 0;
 
     private static int[] generateNumber() {
         int[] num = new int[n];
         for (int i = 0; i < n; i++) {
             num[i] = (int)(Math.random() * maxDigit);
+        }
+        return num;
+    }
+
+    private static int[] generateZeroNumber() {
+        int[] num = new int[n];
+        for (int i = 0; i < n; i++) {
+            num[i] = 0;
         }
         return num;
     }
@@ -90,46 +118,55 @@ public class SplitToSumInterval {
         //buildAllPermutations(0, new HashSet<>(), new int[maxDigit], allPerms);
 
         int cnt = 0;
+        long startTime = System.currentTimeMillis();
         while (true) {
             cnt++;
             if (cnt % 1000 == 0) {
-                System.out.println(cnt);
+                long now = System.currentTimeMillis();
+                System.out.println(now - startTime + "ms");
+                startTime = System.currentTimeMillis();
             }
+
+            int[] zero = generateZeroNumber();
             int[] start = generateNumber();
             int[] end = generateNumberGreaterOrEqualThan(start);
 
             int[] num1 = generateNumber();
             int[] num2 = generateNumber();
 
-            //int[] start = new int[] {4, 13, 7, 8, 7};
-            //int[] end = new int[] {9, 0, 15, 13, 9};
-
-            //int[] num1 = new int[] {1, 2, 3, 4, 5};
-            //int[] num2 = new int[] {1, 6, 7, 8, 9};
-
-            /*printNum(start);
-            printNum(end);
-            System.out.println("=====Numbers=====");
-            printNum(num1);
-            printNum(num2);*/
-
             int[] permutation = new int[maxDigit];
-            Arrays.fill(permutation, -1);
             int[] reversePermutation = new int[maxDigit];
+
+            Arrays.fill(permutation, -1);
             Arrays.fill(reversePermutation, -1);
-            //long startTime = System.currentTimeMillis();
-            long res = countPermutations(0, start, end, num1, num2, permutation, reversePermutation, false);
-            //long endTime = System.currentTimeMillis();
+            /*long res1 = countPermutations(0, start, end, num1, num2, permutation, reversePermutation, false);
+            start[0] += maxDigit;
+            end[0] += maxDigit;
+            Arrays.fill(permutation, -1);
+            Arrays.fill(reversePermutation, -1);
+            long res2 = countPermutations(0, start, end, num1, num2, permutation, reversePermutation, false);*/
 
-            //System.out.println(endTime - startTime + "ms");
+            long res1 = countPermutations(0, start, num1, num2, permutation, reversePermutation, maxDigit);
+            Arrays.fill(permutation, -1);
+            Arrays.fill(reversePermutation, -1);
+            long res2 = countPermutations(0, end, num1, num2, permutation, reversePermutation, maxDigit);
 
-            /*System.out.println(res);
+            start[0] += maxDigit;
+            end[0] += maxDigit;
 
-            long resTrivial = countTrivial(num1, num2, start, end, allPerms);
+            Arrays.fill(permutation, -1);
+            Arrays.fill(reversePermutation, -1);
+            long res3 = countPermutations(0, start, num1, num2, permutation, reversePermutation, maxDigit);
+            Arrays.fill(permutation, -1);
+            Arrays.fill(reversePermutation, -1);
+            long res4 = countPermutations(0, end, num1, num2, permutation, reversePermutation, maxDigit);
 
-            System.out.println(resTrivial);
+            /*long res1 = countPermutations(0, zero, end, num1, num2, permutation, reversePermutation, false);
+            Arrays.fill(permutation, -1);
+            Arrays.fill(reversePermutation, -1);
+            long res2 = countPermutations(0, end, num1, num2, permutation, reversePermutation, maxDigit);
 
-            if (res != resTrivial) {
+            if (res1 != res2) {
                 throw new RuntimeException();
             }*/
         }
@@ -151,6 +188,10 @@ public class SplitToSumInterval {
         return res;
     }
 
+    private static long getFreeValsFactorial(int[] permutation, int freeCnt) {
+        return FACTS[freeCnt];
+    }
+
     private static long getFreeValsFactorial(int[] permutation) {
         int freeCnt = 0;
         for (int p : permutation) {
@@ -163,6 +204,19 @@ public class SplitToSumInterval {
             fact *= i;
         }
         return fact;
+        //return 1;
+    }
+
+    private static boolean isValidSubst(int val, int substVal, int[] permutation, int[] reversePermutation) {
+        if (reversePermutation[substVal] != -1 && reversePermutation[substVal] != val) {
+            return false;
+        }
+
+        if (permutation[val] != -1 && substVal != permutation[val]) {
+            return false;
+        }
+
+        return true;
     }
 
     private static boolean isValidPair(int val1, int val2, int substVal1, int substVal2, int[] permutation, int[] reversePermutation) {
@@ -208,11 +262,7 @@ public class SplitToSumInterval {
 
         if (pos == n - 1) {
             for (int limit = start[pos]; limit <= end[pos]; limit++) {
-                for (int sum = 0; sum <= limit; sum++) {
-                    if (sum >= maxDigit || limit - sum >= maxDigit) {
-                        continue;
-                    }
-
+                for (int sum = Math.max(0, limit - maxDigit + 1); sum <= Math.min(maxDigit - 1, limit); sum++) {
                     if (!isValidPair(num1[pos], num2[pos], sum, limit - sum, permutation, reversePermutation)) {
                         continue;
                     }
@@ -229,7 +279,7 @@ public class SplitToSumInterval {
                     reversePermutation[sum] = num1[pos];
                     reversePermutation[limit - sum] = num2[pos];
 
-                    res+= getFreeValsFactorial(permutation);
+                    res += getFreeValsFactorial(permutation);
 
                     permutation[num1[pos]] = perm1Tmp;
                     permutation[num2[pos]] = perm2Tmp;
@@ -240,11 +290,7 @@ public class SplitToSumInterval {
             }
         } else {
             if (start[pos] > 0) {
-                for (int sum = 0; sum <= start[pos] - 1; sum++) {
-                    if (sum >= maxDigit || start[pos] - 1 - sum >= maxDigit) {
-                        continue;
-                    }
-
+                for (int sum = Math.max(0, start[pos] - maxDigit); sum <= Math.min(maxDigit - 1, start[pos] - 1); sum++) {
                     if (!isValidPair(num1[pos], num2[pos], sum, start[pos] - 1 - sum, permutation, reversePermutation)) {
                         continue;
                     }
@@ -285,11 +331,7 @@ public class SplitToSumInterval {
                 }
             }
 
-            for (int sum = 0; sum <= start[pos]; sum++) {
-                if (sum >= maxDigit || start[pos] - sum >= maxDigit) {
-                    continue;
-                }
-
+            for (int sum = Math.max(0, start[pos] - maxDigit + 1); sum <= Math.min(maxDigit - 1, start[pos]); sum++) {
                 if (!isValidPair(num1[pos], num2[pos], sum, start[pos] - sum, permutation, reversePermutation)) {
                     continue;
                 }
@@ -330,19 +372,11 @@ public class SplitToSumInterval {
             }
 
             for (int limit = start[pos] + 1; limit < end[pos] - 1; limit++) {
-                for (int sum = 0; sum <= limit; sum++) {
-                    if (sum >= maxDigit || limit - sum >= maxDigit) {
-                        continue;
-                    }
+                for (int sum = Math.max(0, limit - maxDigit + 1); sum <= Math.min(maxDigit - 1, limit); sum++) {
 
                     if (!isValidPair(num1[pos], num2[pos], sum, limit - sum, permutation, reversePermutation)) {
                         continue;
                     }
-
-                    int startTmp = start[pos + 1];
-                    int endTmp = end[pos + 1];
-
-                    end[pos + 1] = 2 * maxDigit;
 
                     int perm1Tmp = permutation[num1[pos]];
                     int perm2Tmp = permutation[num2[pos]];
@@ -357,24 +391,17 @@ public class SplitToSumInterval {
                     reversePermutation[limit - sum] = num2[pos];
 
                     res+= getFreeValsFactorial(permutation);
-                    //res += countPermutations(pos + 1, start, end, num1, num2, permutation, reversePermutation, true);
 
                     permutation[num1[pos]] = perm1Tmp;
                     permutation[num2[pos]] = perm2Tmp;
 
                     reversePermutation[sum] = revPerm1Tmp;
                     reversePermutation[limit - sum] = revPerm2Tmp;
-
-                    start[pos + 1] = startTmp;
-                    end[pos + 1] = endTmp;
                 }
             }
 
             if (start[pos] < end[pos] - 1) {
-                for (int sum = 0; sum <= end[pos] - 1; sum++) {
-                    if (sum >= maxDigit || end[pos] - 1 - sum >= maxDigit) {
-                        continue;
-                    }
+                for (int sum = Math.max(0, end[pos] - maxDigit); sum <= Math.min(maxDigit - 1, end[pos] - 1); sum++) {
 
                     if (!isValidPair(num1[pos], num2[pos], sum, end[pos] - 1 - sum, permutation, reversePermutation)) {
                         continue;
@@ -411,10 +438,7 @@ public class SplitToSumInterval {
             }
 
             if (start[pos] < end[pos]) {
-                for (int sum = 0; sum <= end[pos]; sum++) {
-                    if (sum >= maxDigit || end[pos] - sum >= maxDigit) {
-                        continue;
-                    }
+                for (int sum = Math.max(0, end[pos] - maxDigit + 1); sum <= Math.min(maxDigit - 1, end[pos]); sum++) {
 
                     if (!isValidPair(num1[pos], num2[pos], sum, end[pos] - sum, permutation, reversePermutation)) {
                         continue;
@@ -452,6 +476,306 @@ public class SplitToSumInterval {
 
         if (setAllStartToZero) {
             start[pos] = tmpStartGlobal;
+        }
+
+        return res;
+    }
+
+    public static long countPermutations(int pos, int[] end, int[] num1, int[] num2, int[] permutation, int[] reversePermutation, int freeCnt) {
+        long res = 0;
+
+        if (pos == n - 1) {
+            int subst1Start = 0;
+            int subst1End = Math.min(maxDigit - 1, end[pos]);
+
+            if (permutation[num1[pos]] != -1) {
+                if (permutation[num1[pos]] <= subst1End) {
+                    subst1Start = permutation[num1[pos]];
+                    subst1End = permutation[num1[pos]];
+                } else {
+                    subst1Start = 0;
+                    subst1End = -1;
+                }
+            }
+
+            for (int subst1 = subst1Start; subst1 <= subst1End; subst1++) {
+                if (!isValidSubst(num1[pos], subst1, permutation, reversePermutation)) {
+                    continue;
+                }
+
+                int subst2Start = 0;
+                int subst2End = Math.min(maxDigit - 1, end[pos] - subst1);
+
+                if (num1[pos] == num2[pos]) {
+                    if (subst1 <= subst2End) {
+                        subst2Start = subst1;
+                        subst2End = subst1;
+                    } else {
+                        continue;
+                    }
+                }
+
+                for (int subst2 = subst2Start; subst2 <= subst2End; subst2++) {
+                    if (!isValidPair(num1[pos], num2[pos], subst1, subst2, permutation, reversePermutation)) {
+                        continue;
+                    }
+
+                    if (permutation[num1[pos]] == -1) {
+                        freeCnt--;
+                    }
+                    if (permutation[num2[pos]] == -1 && num1[pos] != num2[pos]) {
+                        freeCnt--;
+                    }
+
+                    int perm1Tmp = permutation[num1[pos]];
+                    int perm2Tmp = permutation[num2[pos]];
+
+                    int revPerm1Tmp = reversePermutation[subst1];
+                    int revPerm2Tmp = reversePermutation[subst2];
+
+                    permutation[num1[pos]] = subst1;
+                    permutation[num2[pos]] = subst2;
+
+                    reversePermutation[subst1] = num1[pos];
+                    reversePermutation[subst2] = num2[pos];
+
+                    res+= FACTS[freeCnt];
+
+                    permutation[num1[pos]] = perm1Tmp;
+                    permutation[num2[pos]] = perm2Tmp;
+
+                    reversePermutation[subst1] = revPerm1Tmp;
+                    reversePermutation[subst2] = revPerm2Tmp;
+
+                    if (permutation[num1[pos]] == -1) {
+                        freeCnt++;
+                    }
+                    if (permutation[num2[pos]] == -1 && num1[pos] != num2[pos]) {
+                        freeCnt++;
+                    }
+                }
+            }
+        } else if (end[pos] == 0) {
+            if (isValidPair(num1[pos], num2[pos], 0, 0, permutation, reversePermutation)) {
+                if (permutation[num1[pos]] == -1) {
+                    freeCnt--;
+                }
+                if (permutation[num2[pos]] == -1 && num1[pos] != num2[pos]) {
+                    freeCnt--;
+                }
+
+                int perm1Tmp = permutation[num1[pos]];
+                int perm2Tmp = permutation[num2[pos]];
+
+                int revPerm1Tmp = reversePermutation[0];
+                int revPerm2Tmp = reversePermutation[0];
+
+                reversePermutation[0] = num1[pos];
+                reversePermutation[0] = num2[pos];
+
+                permutation[num1[pos]] = 0;
+                permutation[num2[pos]] = 0;
+
+                res += countPermutations(pos + 1, end, num1, num2, permutation, reversePermutation, freeCnt);
+
+                permutation[num1[pos]] = perm1Tmp;
+                permutation[num2[pos]] = perm2Tmp;
+
+                reversePermutation[0] = revPerm1Tmp;
+                reversePermutation[0] = revPerm2Tmp;
+
+                if (permutation[num1[pos]] == -1) {
+                    freeCnt++;
+                }
+                if (permutation[num2[pos]] == -1 && num1[pos] != num2[pos]) {
+                    freeCnt++;
+                }
+            }
+        } else {
+            int subst1Start = 0;
+            int subst1End = Math.min(maxDigit - 1, end[pos] - 2);
+
+            if (permutation[num1[pos]] != -1) {
+                if (permutation[num1[pos]] <= subst1End) {
+                    subst1Start = permutation[num1[pos]];
+                    subst1End = permutation[num1[pos]];
+                } else {
+                    subst1Start = 0;
+                    subst1End = -1;
+                }
+            }
+
+            for (int subst1 = subst1Start; subst1 <= subst1End; subst1++) {
+                if (!isValidSubst(num1[pos], subst1, permutation, reversePermutation)) {
+                    continue;
+                }
+
+                int subst2Start = 0;
+                int subst2End = Math.min(maxDigit - 1, end[pos] - 2 - subst1);
+
+                if (num1[pos] == num2[pos]) {
+                    if (subst1 <= subst2End) {
+                        subst2Start = subst1;
+                        subst2End = subst1;
+                    } else {
+                        continue;
+                    }
+                }
+
+                for (int subst2 = subst2Start; subst2 <= subst2End; subst2++) {
+                    if (!isValidPair(num1[pos], num2[pos], subst1, subst2, permutation, reversePermutation)) {
+                        continue;
+                    }
+
+                    if (permutation[num1[pos]] == -1) {
+                        freeCnt--;
+                    }
+                    if (permutation[num2[pos]] == -1 && num1[pos] != num2[pos]) {
+                        freeCnt--;
+                    }
+
+                    int perm1Tmp = permutation[num1[pos]];
+                    int perm2Tmp = permutation[num2[pos]];
+
+                    int revPerm1Tmp = reversePermutation[subst1];
+                    int revPerm2Tmp = reversePermutation[subst2];
+
+                    permutation[num1[pos]] = subst1;
+                    permutation[num2[pos]] = subst2;
+
+                    reversePermutation[subst1] = num1[pos];
+                    reversePermutation[subst2] = num2[pos];
+
+                    res += FACTS[freeCnt];
+
+                    permutation[num1[pos]] = perm1Tmp;
+                    permutation[num2[pos]] = perm2Tmp;
+
+                    reversePermutation[subst1] = revPerm1Tmp;
+                    reversePermutation[subst2] = revPerm2Tmp;
+
+                    if (permutation[num1[pos]] == -1) {
+                        freeCnt++;
+                    }
+                    if (permutation[num2[pos]] == -1 && num1[pos] != num2[pos]) {
+                        freeCnt++;
+                    }
+                }
+            }
+
+            if (end[pos] >= 1) {
+                int substStart = Math.max(0, end[pos] - maxDigit);
+                int substEnd = Math.min(maxDigit - 1, end[pos] - 1);
+
+                if (num1[pos] == num2[pos]) {
+                    if ((end[pos] - 1) % 2 == 0) {
+                        substStart = (end[pos] - 1) / 2;
+                        substEnd = (end[pos] - 1) / 2;
+                    } else {
+                        substStart = 0;
+                        substEnd = -1;
+                    }
+                }
+
+                for (int sum = substStart; sum <= substEnd; sum++) {
+                    if (!isValidPair(num1[pos], num2[pos], sum, end[pos] - 1 - sum, permutation, reversePermutation)) {
+                        continue;
+                    }
+
+                    if (permutation[num1[pos]] == -1) {
+                        freeCnt--;
+                    }
+                    if (permutation[num2[pos]] == -1 && num1[pos] != num2[pos]) {
+                        freeCnt--;
+                    }
+
+                    int endTmp = end[pos + 1];
+
+                    end[pos + 1] += maxDigit;
+
+                    int perm1Tmp = permutation[num1[pos]];
+                    int perm2Tmp = permutation[num2[pos]];
+
+                    int revPerm1Tmp = reversePermutation[sum];
+                    int revPerm2Tmp = reversePermutation[end[pos] - 1 - sum];
+
+                    permutation[num1[pos]] = sum;
+                    permutation[num2[pos]] = end[pos] - 1 - sum;
+
+                    reversePermutation[sum] = num1[pos];
+                    reversePermutation[end[pos] - 1 - sum] = num2[pos];
+
+                    res += countPermutations(pos + 1, end, num1, num2, permutation, reversePermutation, freeCnt);
+
+                    permutation[num1[pos]] = perm1Tmp;
+                    permutation[num2[pos]] = perm2Tmp;
+
+                    reversePermutation[sum] = revPerm1Tmp;
+                    reversePermutation[end[pos] - 1 - sum] = revPerm2Tmp;
+
+                    end[pos + 1] = endTmp;
+
+                    if (permutation[num1[pos]] == -1) {
+                        freeCnt++;
+                    }
+                    if (permutation[num2[pos]] == -1 && num1[pos] != num2[pos]) {
+                        freeCnt++;
+                    }
+                }
+            }
+
+            int substStart = Math.max(0, end[pos] - maxDigit + 1);
+            int substEnd = Math.min(maxDigit - 1, end[pos]);
+
+            if (num1[pos] == num2[pos]) {
+                if (end[pos] % 2 == 0) {
+                    substStart = end[pos] / 2;
+                    substEnd = end[pos] / 2;
+                } else {
+                    substStart = 0;
+                    substEnd = -1;
+                }
+            }
+
+            for (int sum = substStart; sum <= substEnd; sum++) {
+                if (!isValidPair(num1[pos], num2[pos], sum, end[pos] - sum, permutation, reversePermutation)) {
+                    continue;
+                }
+
+                if (permutation[num1[pos]] == -1) {
+                    freeCnt--;
+                }
+                if (permutation[num2[pos]] == -1 && num1[pos] != num2[pos]) {
+                    freeCnt--;
+                }
+
+                int perm1Tmp = permutation[num1[pos]];
+                int perm2Tmp = permutation[num2[pos]];
+
+                int revPerm1Tmp = reversePermutation[sum];
+                int revPerm2Tmp = reversePermutation[end[pos] - sum];
+
+                reversePermutation[sum] = num1[pos];
+                reversePermutation[end[pos] - sum] = num2[pos];
+
+                permutation[num1[pos]] = sum;
+                permutation[num2[pos]] = end[pos] - sum;
+
+                res += countPermutations(pos + 1, end, num1, num2, permutation, reversePermutation, freeCnt);
+
+                permutation[num1[pos]] = perm1Tmp;
+                permutation[num2[pos]] = perm2Tmp;
+
+                reversePermutation[sum] = revPerm1Tmp;
+                reversePermutation[end[pos] - sum] = revPerm2Tmp;
+
+                if (permutation[num1[pos]] == -1) {
+                    freeCnt++;
+                }
+                if (permutation[num2[pos]] == -1 && num1[pos] != num2[pos]) {
+                    freeCnt++;
+                }
+            }
         }
 
         return res;
