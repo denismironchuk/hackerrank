@@ -8,8 +8,8 @@ import java.util.Set;
 
 public class SplitToSumInterval {
 
-    private static int n = 4;
-    private static int maxDigit = 6;
+    private static int n = 5;
+    private static int maxDigit = 16;
 
     private static int[] generateNumber() {
         int[] num = new int[n];
@@ -87,34 +87,43 @@ public class SplitToSumInterval {
 
     public static void main(String[] args) {
         List<int[]> allPerms = new ArrayList<>();
-        buildAllPermutations(0, new HashSet<>(), new int[maxDigit], allPerms);
+        //buildAllPermutations(0, new HashSet<>(), new int[maxDigit], allPerms);
 
+        int cnt = 0;
         while (true) {
+            cnt++;
+            if (cnt % 1000 == 0) {
+                System.out.println(cnt);
+            }
             int[] start = generateNumber();
             int[] end = generateNumberGreaterOrEqualThan(start);
 
             int[] num1 = generateNumber();
             int[] num2 = generateNumber();
 
-            /*int[] start = new int[] {2, 0};
-            int[] end = new int[] {4, 1};
+            //int[] start = new int[] {4, 13, 7, 8, 7};
+            //int[] end = new int[] {9, 0, 15, 13, 9};
 
-            int[] num1 = new int[] {3, 1};
-            int[] num2 = new int[] {0, 0};*/
+            //int[] num1 = new int[] {1, 2, 3, 4, 5};
+            //int[] num2 = new int[] {1, 6, 7, 8, 9};
 
-            printNum(start);
+            /*printNum(start);
             printNum(end);
             System.out.println("=====Numbers=====");
             printNum(num1);
-            printNum(num2);
+            printNum(num2);*/
 
             int[] permutation = new int[maxDigit];
             Arrays.fill(permutation, -1);
             int[] reversePermutation = new int[maxDigit];
             Arrays.fill(reversePermutation, -1);
+            //long startTime = System.currentTimeMillis();
             long res = countPermutations(0, start, end, num1, num2, permutation, reversePermutation, false);
+            //long endTime = System.currentTimeMillis();
 
-            System.out.println(res);
+            //System.out.println(endTime - startTime + "ms");
+
+            /*System.out.println(res);
 
             long resTrivial = countTrivial(num1, num2, start, end, allPerms);
 
@@ -122,7 +131,7 @@ public class SplitToSumInterval {
 
             if (res != resTrivial) {
                 throw new RuntimeException();
-            }
+            }*/
         }
     }
 
@@ -149,7 +158,6 @@ public class SplitToSumInterval {
                 freeCnt++;
             }
         }
-
         long fact = 1;
         for (int i = 1; i <= freeCnt; i++) {
             fact *= i;
@@ -348,7 +356,8 @@ public class SplitToSumInterval {
                     reversePermutation[sum] = num1[pos];
                     reversePermutation[limit - sum] = num2[pos];
 
-                    res += countPermutations(pos + 1, start, end, num1, num2, permutation, reversePermutation, true);
+                    res+= getFreeValsFactorial(permutation);
+                    //res += countPermutations(pos + 1, start, end, num1, num2, permutation, reversePermutation, true);
 
                     permutation[num1[pos]] = perm1Tmp;
                     permutation[num2[pos]] = perm2Tmp;
