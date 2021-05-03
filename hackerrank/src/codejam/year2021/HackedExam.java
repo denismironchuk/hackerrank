@@ -4,8 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.StringTokenizer;
 
 public class HackedExam {
@@ -120,11 +118,11 @@ public class HackedExam {
                         ans3[i] = a3Str.charAt(i) == (revert3 ? 'F' : 'T') ? 1 : 0;
                     }
 
-                    //long start = System.currentTimeMillis();
+                    long start = System.currentTimeMillis();
                     Result res = calculate(ans1, ans2, ans3, rightAnswers1, rightAnswers2, rightAnswers3, q);
-                    //long end = System.currentTimeMillis();
+                    long end = System.currentTimeMillis();
                     System.out.printf("Case #%s: %s %s/%s\n", t, res.answers.toString(), res.chisl, res.znam);
-                    //System.out.println(end - start + "ms");
+                    System.out.println(end - start + "ms");
                 }
             }
         }
@@ -132,7 +130,6 @@ public class HackedExam {
 
     private static Result calculate(int[] ans1, int[] ans2, int[] ans3, int rightAnswers1, int rightAnswers2, int rightAnswers3, int questionsCnt) {
         Result output = new Result();
-        //Map<Long, BigInteger> calcRes2 = new HashMap<>();
         BigInteger[][][][] calcRes2 = new BigInteger[questionsCnt][rightAnswers1 + 1][rightAnswers2 + 1][rightAnswers3 + 1];
         BigInteger allPossibleSolutions = countValidPositions(0, ans1, ans2, ans3, rightAnswers1, rightAnswers2, rightAnswers3, calcRes2, questionsCnt);
 
@@ -211,7 +208,6 @@ public class HackedExam {
 
     private static Result calculate(int[] ans1, int[] ans2, int rightAnswers1, int rightAnswers2, int questionsCnt) {
         Result output = new Result();
-        //Map<Long, BigInteger> calcRes2 = new HashMap<>();
         BigInteger[][][] calcRes2 = new BigInteger[questionsCnt][rightAnswers1 + 1][rightAnswers2 + 1];
         BigInteger allPossibleSolutions = countValidPositions(0, ans1, ans2, rightAnswers1, rightAnswers2, calcRes2, questionsCnt);
 
@@ -279,7 +275,6 @@ public class HackedExam {
 
     private static Result calculate(int[] ans1, int rightAnswers1, int questionsCnt) {
         Result output = new Result();
-        //Map<Long, BigInteger> calcRes2 = new HashMap<>();
         BigInteger[][] calcRes2 = new BigInteger[questionsCnt][rightAnswers1 + 1];
         BigInteger allPossibleSolutions = countValidPositions(0, ans1, rightAnswers1, calcRes2, questionsCnt);
 
@@ -335,17 +330,6 @@ public class HackedExam {
         return output;
     }
 
-    public static long hashCode(long a[]) {
-        if (a == null)
-            return 0;
-
-        long result = 1;
-        for (long element : a)
-            result = 499 * result + element;
-
-        return result;
-    }
-
     private static BigInteger countValidPositions(int pos, int[] ans1, int[] ans2, int[] ans3, int rightAnswers1,
                                                   int rightAnswers2, int rightAnswers3, BigInteger[][][][] calcRes, int questionsCnt) {
         if (pos > questionsCnt - 1) {
@@ -361,10 +345,6 @@ public class HackedExam {
             return BigInteger.ZERO;
         }
 
-        /*long hashCode = hashCode(new long[] {pos, rightAnswers1, rightAnswers2, rightAnswers3});
-        if (calcRes.get(hashCode) != null) {
-            return calcRes.get(hashCode);
-        }*/
         if (calcRes[pos][rightAnswers1][rightAnswers2][rightAnswers3] != null) {
             return calcRes[pos][rightAnswers1][rightAnswers2][rightAnswers3];
         }
@@ -401,7 +381,6 @@ public class HackedExam {
             res = res.add(countValidPositions(pos + 1, ans1, ans2, ans3, nextRightAnswers1, nextRightAnswers2, nextRightAnswers3, calcRes, questionsCnt));
         }
 
-        //calcRes.put(hashCode, res);
         calcRes[pos][rightAnswers1][rightAnswers2][rightAnswers3] = res;
         return res;
     }
@@ -410,7 +389,6 @@ public class HackedExam {
                                                   int rightAnswers2, BigInteger[][][] calcRes, int questionsCnt) {
         if (pos > questionsCnt - 1) {
             return rightAnswers1 == 0 && rightAnswers2 == 0 ? BigInteger.ONE : BigInteger.ZERO;
-            //return BigInteger.ONE;
         }
 
         if (rightAnswers1 > questionsCnt - pos || rightAnswers2 > questionsCnt - pos) {
@@ -421,10 +399,6 @@ public class HackedExam {
             return BigInteger.ZERO;
         }
 
-        /*long hashCode = hashCode(new long[] {pos, rightAnswers1, rightAnswers2});
-        if (calcRes.get(hashCode) != null) {
-            return calcRes.get(hashCode);
-        }*/
         if (calcRes[pos][rightAnswers1][rightAnswers2] != null) {
             return calcRes[pos][rightAnswers1][rightAnswers2];
         }
@@ -457,7 +431,6 @@ public class HackedExam {
             res = res.add(countValidPositions(pos + 1, ans1, ans2, nextRightAnswers1, nextRightAnswers2, calcRes, questionsCnt));
         }
 
-        //calcRes.put(hashCode, res);
         calcRes[pos][rightAnswers1][rightAnswers2] = res;
         return res;
     }
@@ -476,11 +449,6 @@ public class HackedExam {
         if (rightAnswers1 < 0) {
             return BigInteger.ZERO;
         }
-
-        /*long hashCode = hashCode(new long[] {pos, rightAnswers1});
-        if (calcRes.get(hashCode) != null) {
-            return calcRes.get(hashCode);
-        }*/
 
         if (calcRes[pos][rightAnswers1] != null) {
             return calcRes[pos][rightAnswers1];
@@ -510,7 +478,6 @@ public class HackedExam {
             res = res.add(countValidPositions(pos + 1, ans1, nextRightAnswers1, calcRes, questionsCnt));
         }
 
-        //calcRes.put(hashCode, res);
         calcRes[pos][rightAnswers1] = res;
         return res;
     }
