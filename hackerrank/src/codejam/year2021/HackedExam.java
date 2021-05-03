@@ -8,6 +8,10 @@ import java.util.StringTokenizer;
 
 public class HackedExam {
 
+    private static BigInteger[][][][] calcRes3 = new BigInteger[120][61][61][61];
+    private static BigInteger[][][] calcRes2 = new BigInteger[120][61][61];
+    private static BigInteger[][] calcRes1 = new BigInteger[120][61];
+
     private static class Result {
         private StringBuilder answers = new StringBuilder();
         private BigInteger chisl = BigInteger.ZERO;
@@ -17,6 +21,7 @@ public class HackedExam {
     public static void main(String[] args) throws IOException {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
             int T = Integer.parseInt(br.readLine());
+
             for (int t = 1; t <= T; t++) {
                 StringTokenizer tkn = new StringTokenizer(br.readLine());
                 int n = Integer.parseInt(tkn.nextToken());
@@ -42,6 +47,11 @@ public class HackedExam {
 
                     //long start = System.currentTimeMillis();
                     Result res = calculate(ans1, rightAnswers1, q);
+                    for (int i1 = 0; i1 < 120; i1++) {
+                        for (int i2 = 0; i2 <= 60; i2++) {
+                            calcRes1[i1][i2] = null;
+                        }
+                    }
                     //long end = System.currentTimeMillis();
                     System.out.printf("Case #%s: %s %s/%s\n", t, res.answers.toString(), res.chisl, res.znam);
                     //System.out.println(end - start + "ms");
@@ -76,6 +86,13 @@ public class HackedExam {
 
                     //long start = System.currentTimeMillis();
                     Result res = calculate(ans1, ans2, rightAnswers1, rightAnswers2, q);
+                    for (int i1 = 0; i1 < 120; i1++) {
+                        for (int i2 = 0; i2 <= 60; i2++) {
+                            for (int i3 = 0; i3 <= 60; i3++) {
+                                calcRes2[i1][i2][i3] = null;
+                            }
+                        }
+                    }
                     //long end = System.currentTimeMillis();
                     System.out.printf("Case #%s: %s %s/%s\n", t, res.answers.toString(), res.chisl, res.znam);
                     //System.out.println(end - start + "ms");
@@ -118,11 +135,20 @@ public class HackedExam {
                         ans3[i] = a3Str.charAt(i) == (revert3 ? 'F' : 'T') ? 1 : 0;
                     }
 
-                    long start = System.currentTimeMillis();
+                    //long start = System.currentTimeMillis();
                     Result res = calculate(ans1, ans2, ans3, rightAnswers1, rightAnswers2, rightAnswers3, q);
-                    long end = System.currentTimeMillis();
+                    for (int i1 = 0; i1 < 120; i1++) {
+                        for (int i2 = 0; i2 <= 60; i2++) {
+                            for (int i3 = 0; i3 <= 60; i3++) {
+                                for (int i4 = 0; i4 <= 60; i4++) {
+                                    calcRes3[i1][i2][i3][i4] = null;
+                                }
+                            }
+                        }
+                    }
+                    //long end = System.currentTimeMillis();
                     System.out.printf("Case #%s: %s %s/%s\n", t, res.answers.toString(), res.chisl, res.znam);
-                    System.out.println(end - start + "ms");
+                    //System.out.println(end - start + "ms");
                 }
             }
         }
@@ -130,8 +156,7 @@ public class HackedExam {
 
     private static Result calculate(int[] ans1, int[] ans2, int[] ans3, int rightAnswers1, int rightAnswers2, int rightAnswers3, int questionsCnt) {
         Result output = new Result();
-        BigInteger[][][][] calcRes2 = new BigInteger[questionsCnt][rightAnswers1 + 1][rightAnswers2 + 1][rightAnswers3 + 1];
-        BigInteger allPossibleSolutions = countValidPositions(0, ans1, ans2, ans3, rightAnswers1, rightAnswers2, rightAnswers3, calcRes2, questionsCnt);
+        BigInteger allPossibleSolutions = countValidPositions(0, ans1, ans2, ans3, rightAnswers1, rightAnswers2, rightAnswers3, calcRes3, questionsCnt);
 
         BigInteger chisl = BigInteger.ZERO;
 
@@ -163,14 +188,14 @@ public class HackedExam {
             int nextRightAnswers2 = ans2[0] == 0 ? rightAnswers2 : rightAnswers2 - 1;
             int nextRightAnswers3 = ans3[0] == 0 ? rightAnswers3 : rightAnswers3 - 1;
 
-            BigInteger candidate1 = countValidPositions(1, ans1, ans2, ans3, nextRightAnswers1, nextRightAnswers2, nextRightAnswers3, calcRes2, questionsCnt);
+            BigInteger candidate1 = countValidPositions(1, ans1, ans2, ans3, nextRightAnswers1, nextRightAnswers2, nextRightAnswers3, calcRes3, questionsCnt);
 
             //Suppose answer is False
             nextRightAnswers1 = ans1[0] == 1 ? rightAnswers1 : rightAnswers1 - 1;
             nextRightAnswers2 = ans2[0] == 1 ? rightAnswers2 : rightAnswers2 - 1;
             nextRightAnswers3 = ans3[0] == 1 ? rightAnswers3 : rightAnswers3 - 1;
 
-            BigInteger candidate2 = countValidPositions(1, ans1, ans2, ans3, nextRightAnswers1, nextRightAnswers2, nextRightAnswers3, calcRes2, questionsCnt);
+            BigInteger candidate2 = countValidPositions(1, ans1, ans2, ans3, nextRightAnswers1, nextRightAnswers2, nextRightAnswers3, calcRes3, questionsCnt);
 
             if (candidate1.compareTo(candidate2) == 1) {
                 chisl = chisl.add(candidate1);
@@ -208,7 +233,6 @@ public class HackedExam {
 
     private static Result calculate(int[] ans1, int[] ans2, int rightAnswers1, int rightAnswers2, int questionsCnt) {
         Result output = new Result();
-        BigInteger[][][] calcRes2 = new BigInteger[questionsCnt][rightAnswers1 + 1][rightAnswers2 + 1];
         BigInteger allPossibleSolutions = countValidPositions(0, ans1, ans2, rightAnswers1, rightAnswers2, calcRes2, questionsCnt);
 
         BigInteger chisl = BigInteger.ZERO;
@@ -275,8 +299,7 @@ public class HackedExam {
 
     private static Result calculate(int[] ans1, int rightAnswers1, int questionsCnt) {
         Result output = new Result();
-        BigInteger[][] calcRes2 = new BigInteger[questionsCnt][rightAnswers1 + 1];
-        BigInteger allPossibleSolutions = countValidPositions(0, ans1, rightAnswers1, calcRes2, questionsCnt);
+        BigInteger allPossibleSolutions = countValidPositions(0, ans1, rightAnswers1, calcRes1, questionsCnt);
 
         BigInteger chisl = BigInteger.ZERO;
 
@@ -298,12 +321,12 @@ public class HackedExam {
             //Suppose answer is True
             int nextRightAnswers1 = ans1[0] == 0 ? rightAnswers1 : rightAnswers1 - 1;
 
-            BigInteger candidate1 = countValidPositions(1, ans1, nextRightAnswers1, calcRes2, questionsCnt);
+            BigInteger candidate1 = countValidPositions(1, ans1, nextRightAnswers1, calcRes1, questionsCnt);
 
             //Suppose answer is False
             nextRightAnswers1 = ans1[0] == 1 ? rightAnswers1 : rightAnswers1 - 1;
 
-            BigInteger candidate2 = countValidPositions(1, ans1, nextRightAnswers1, calcRes2, questionsCnt);
+            BigInteger candidate2 = countValidPositions(1, ans1, nextRightAnswers1, calcRes1, questionsCnt);
 
             if (candidate1.compareTo(candidate2) == 1) {
                 chisl = chisl.add(candidate1);
@@ -334,7 +357,6 @@ public class HackedExam {
                                                   int rightAnswers2, int rightAnswers3, BigInteger[][][][] calcRes, int questionsCnt) {
         if (pos > questionsCnt - 1) {
             return rightAnswers1 == 0 && rightAnswers2 == 0 && rightAnswers3 == 0 ? BigInteger.ONE : BigInteger.ZERO;
-            //return BigInteger.ONE;
         }
 
         if (rightAnswers1 > questionsCnt - pos || rightAnswers2 > questionsCnt - pos || rightAnswers3 > questionsCnt - pos) {
@@ -439,7 +461,6 @@ public class HackedExam {
                                                   BigInteger[][] calcRes, int questionsCnt) {
         if (pos > questionsCnt - 1) {
             return rightAnswers1 == 0 ? BigInteger.ONE : BigInteger.ZERO;
-            //return BigInteger.ONE;
         }
 
         if (rightAnswers1 > questionsCnt - pos) {
