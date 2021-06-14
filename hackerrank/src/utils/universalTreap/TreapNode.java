@@ -116,16 +116,54 @@ public class TreapNode<T extends Comparable, R> {
     public TreapNode<T, R> add(T x) {
         TreapNode<T, R>[] splitRes = split(x);
         TreapNode<T, R> newNode = new TreapNode<>(x, aggregationContext);
-        return splitRes[0].merge(newNode).merge(splitRes[1]);
+
+        TreapNode<T, R> res = null;
+
+        if (splitRes[0] != null) {
+            res = splitRes[0].merge(newNode);
+        }
+
+        if (res == null) {
+            res = newNode.merge(splitRes[1]);
+        } else {
+            res = res.merge(splitRes[1]);
+        }
+
+        return res;
     }
 
     public TreapNode<T, R> erase(T x) {
         if (x.compareTo(this.x) == 0) {
+            if (this.left == null && this.right == null) {
+                return null;
+            } else if (this.left == null) {
+                return this.right;
+            } else if (this.right == null) {
+                return this.left;
+            }
             return this.left.merge(this.right);
         } else if (x.compareTo(this.x) == 1) {
-            return this.right.erase(x);
+            this.right = this.right.erase(x);
+            return this;
         } else {
-            return this.left.erase(x);
+            this.left = this.left.erase(x);
+            return this;
+        }
+    }
+
+    public TreapNode<T, R> getMinNode() {
+        if (this.left == null) {
+            return this;
+        } else {
+            return this.left.getMinNode();
+        }
+    }
+
+    public TreapNode<T, R> getMaxNode() {
+        if (this.right == null) {
+            return this;
+        } else {
+            return this.right.getMaxNode();
         }
     }
 
