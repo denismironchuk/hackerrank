@@ -2,7 +2,7 @@ package utils.universalTreap;
 
 public class TreapNode<T extends Comparable, R> {
 
-    private TreapUniversal<T, R> treapContext;
+    private AggregationContext<T, R> aggregationContext;
 
     private T x;
     private int y;
@@ -12,22 +12,24 @@ public class TreapNode<T extends Comparable, R> {
 
     private R treeAggregatedValue;
 
-    public TreapNode(final T x, final TreapUniversal<T, R> treapContext) {
+    public TreapNode(final T x, final AggregationContext<T, R> aggregationContext) {
         this.x = x;
         this.y = (int)(Math.random() * Integer.MAX_VALUE);
-        this.treapContext = treapContext;
+        this.aggregationContext = aggregationContext;
 
-        if (treapContext.getInitValSupplier() != null) {
-            this.treeAggregatedValue = treapContext.getInitValSupplier().apply(this);
+        if (aggregationContext != null) {
+            this.treeAggregatedValue = aggregationContext.getInitValSupplier().apply(this);
         }
     }
 
-    public TreapNode(final T x, final int y, final TreapNode<T, R> left, final TreapNode<T, R> right) {
+    public TreapNode(final T x, final int y, final TreapNode<T, R> left, final TreapNode<T, R> right, final AggregationContext<T, R> aggregationContext) {
         this.x = x;
         this.y = y;
 
         this.right = right;
         this.left = left;
+
+        this.aggregationContext = aggregationContext;
     }
 
     public T getX() {
@@ -43,7 +45,9 @@ public class TreapNode<T extends Comparable, R> {
     }
 
     private void recalculateAggregation() {
-        this.treeAggregatedValue = treapContext.getAggregationFunction().apply(this);
+        if (aggregationContext != null) {
+            this.treeAggregatedValue = aggregationContext.getAggregationFunction().apply(this);
+        }
     }
 
     public TreapNode<T, R> merge(TreapNode<T, R> r) {
@@ -60,7 +64,7 @@ public class TreapNode<T extends Comparable, R> {
                 newTreap.recalculateAggregation();
             }
 
-            res = new TreapNode<>(this.x, this.y, this.left, newTreap);
+            res = new TreapNode<>(this.x, this.y, this.left, newTreap, aggregationContext);
         } else {
             TreapNode<T, R> newTreap = r.left == null ? this : this.merge(r.left);
 
@@ -68,7 +72,7 @@ public class TreapNode<T extends Comparable, R> {
                 newTreap.recalculateAggregation();
             }
 
-            res = new TreapNode<>(r.x, r.y, newTreap, r.right);
+            res = new TreapNode<>(r.x, r.y, newTreap, r.right, aggregationContext);
         }
 
         res.recalculateAggregation();
@@ -82,18 +86,18 @@ public class TreapNode<T extends Comparable, R> {
 
         if (x.compareTo(this.x) == -1) {
             if (this.left == null) {
-                newRight = new TreapNode<>(this.x, this.y, this.left, this.right);
+                newRight = new TreapNode<>(this.x, this.y, this.left, this.right, aggregationContext);
             } else {
                 TreapNode<T, R>[] splitResult = this.left.split(x);
                 newLeft = splitResult[0];
-                newRight = new TreapNode<>(this.x, this.y, splitResult[1], this.right);
+                newRight = new TreapNode<>(this.x, this.y, splitResult[1], this.right, aggregationContext);
             }
         } else {
             if (this.right == null) {
-                newLeft = new TreapNode<>(this.x, this.y, this.left, this.right);
+                newLeft = new TreapNode<>(this.x, this.y, this.left, this.right, aggregationContext);
             } else {
                 TreapNode<T, R>[] splitResult = this.right.split(x);
-                newLeft = new TreapNode<>(this.x, this.y, this.left, splitResult[0]);
+                newLeft = new TreapNode<>(this.x, this.y, this.left, splitResult[0], aggregationContext);
                 newRight = splitResult[1];
             }
         }
@@ -111,7 +115,7 @@ public class TreapNode<T extends Comparable, R> {
 
     public TreapNode<T, R> add(T x) {
         TreapNode<T, R>[] splitRes = split(x);
-        TreapNode<T, R> newNode = new TreapNode<>(x, treapContext);
+        TreapNode<T, R> newNode = new TreapNode<>(x, aggregationContext);
         return splitRes[0].merge(newNode).merge(splitRes[1]);
     }
 
