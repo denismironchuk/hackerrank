@@ -231,8 +231,8 @@ public class RabbitHouse {
             return root.getMaxNode();
         }
 
-        public void setAggregationConfig(final Function<utils.universalTreap.TreapNode<T, R>, R> initValSupplier,
-                                         final Function<utils.universalTreap.TreapNode<T, R>, R> aggregationFunction) {
+        public void setAggregationConfig(final Function<TreapNode<T, R>, R> initValSupplier,
+                                         final Function<TreapNode<T, R>, R> aggregationFunction) {
             this.aggregationContext = new AggregationContext(initValSupplier, aggregationFunction);
         }
     }
@@ -273,7 +273,7 @@ public class RabbitHouse {
                     res += processNeighbour(cell, cell.getBelow(line, r, c), treap);
                 }
 
-                System.out.printf("Case #%s: %s", t, res);
+                System.out.printf("Case #%s: %s\n", t, res);
             }
         }
     }
