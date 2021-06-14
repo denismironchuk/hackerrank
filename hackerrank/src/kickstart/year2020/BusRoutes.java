@@ -1,4 +1,4 @@
-package kickstart;
+package kickstart.year2020;
 
 import java.io.BufferedReader;
 import java.io.IOException;
