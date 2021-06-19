@@ -30,6 +30,8 @@ public class TreapNode<T extends Comparable, R> {
         this.left = left;
 
         this.aggregationContext = aggregationContext;
+
+        recalculateAggregation();
     }
 
     public T getX() {
@@ -144,9 +146,11 @@ public class TreapNode<T extends Comparable, R> {
             return this.left.merge(this.right);
         } else if (x.compareTo(this.x) == 1) {
             this.right = this.right.erase(x);
+            recalculateAggregation();
             return this;
         } else {
             this.left = this.left.erase(x);
+            recalculateAggregation();
             return this;
         }
     }
