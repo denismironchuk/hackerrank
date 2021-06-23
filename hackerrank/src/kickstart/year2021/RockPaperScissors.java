@@ -1,31 +1,32 @@
 package kickstart.year2021;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+
 public class RockPaperScissors {
     private static int ROUNDS = 60;
-    private static int DAYS = 200;
 
-    public static void main(String[] args) {
-        double[] w_s = new double[DAYS];
-        double[] e_s = new double[DAYS];
-
-        double avgRes = 0;
-        double avgW = 0;
-        double avgE = 0;
-
-        for (int i = 0; i < DAYS; i++) {
-            w_s[i] = 50 + Math.random() * 900;
-            e_s[i] = Math.random() * w_s[i];
-
-            avgRes = (avgRes * i + dynProg(w_s[i], e_s[i])) / (i + 1);
-
-            avgW = (avgW * i + w_s[i]) / (i + 1);
-            avgE = (avgE * i + e_s[i]) / (i + 1);
+    public static void main(String[] args) throws IOException {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
+            int T = Integer.parseInt(br.readLine());
+            int X = Integer.parseInt(br.readLine());
+            for (int t = 1; t <= T; t++) {
+                StringTokenizer tkn = new StringTokenizer(br.readLine());
+                double w = Double.parseDouble(tkn.nextToken());
+                double e = Double.parseDouble(tkn.nextToken());
+                char[] moves = dynProg(w, e);
+                StringBuilder movesStr = new StringBuilder();
+                for (int i = 1; i <= ROUNDS; i++) {
+                    movesStr.append(moves[i]);
+                }
+                System.out.printf("Case #%s: %s\n", t, movesStr);
+            }
         }
-        System.out.println(avgRes);
-        System.out.println(dynProg(avgW, avgE));
     }
 
-    private static double dynProg(double w, double e) {
+    private static char[] dynProg(double w, double e) {
         // index 1 - rock count, index 2 - paper count, index 3 - scissors count
         double[][][] maxExpect = new double[ROUNDS + 1][ROUNDS + 1][ROUNDS + 1];
         maxExpect[1][0][0] = (w + e) / 3;
@@ -111,45 +112,6 @@ public class RockPaperScissors {
             }
         }
 
-        /*for (int round = 1; round <= ROUNDS; round++) {
-            System.out.printf("%s", moves[round]);
-        }
-        System.out.println();*/
-        return maxExpectScore;
-    }
-
-    private static double greedy(double w, double e) {
-        System.out.print("R");
-        int rockCnt = 1;
-        int paperCnt = 0;
-        int scissorsCnt = 0;
-
-        double res = (w + e) / 3;
-
-        for (int round = 2; round <= ROUNDS; round++) {
-            double scissorsProb = (double) paperCnt / (double)(round - 1);
-            double rockProb = (double) scissorsCnt / (double)(round - 1);
-            double paperProb = (double) rockCnt / (double)(round - 1);
-
-            double rockCandidate = w * scissorsProb + e * rockProb;
-            double paperCandidate = w * rockProb + e * paperProb;
-            double scissorsCandidate = w * paperProb + e * scissorsProb;
-
-            if (rockCandidate > paperCandidate && rockCandidate > scissorsCandidate) {
-                res += rockCandidate;
-                rockCnt++;
-                System.out.print("R");
-            } else if (paperCandidate > rockCandidate && paperCandidate > scissorsCandidate) {
-                res += paperCandidate;
-                paperCnt++;
-                System.out.print("P");
-            } else {
-                res += scissorsCandidate;
-                scissorsCnt++;
-                System.out.print("S");
-            }
-        }
-        System.out.println();
-        return res;
+        return moves;
     }
 }
