@@ -50,33 +50,66 @@ public class BinarySearchGame {
                     }
                 }
 
-                long res = 0;
-                for (int i = 0; i < fastPow(2, repeatedCnt); i++) {
-                    int[] mask = new int[repeatedCnt];
-                    int greaterCnt = 0;
-                    int i_ = i;
-                    int pos = 0;
-                    while (i_ != 0) {
-                        mask[pos] = i_ % 2;
-                        i_ /= 2;
-                        if (mask[pos] == 1) {
-                            greaterCnt++;
+                long[] f_k = new long[(int) n + 2 + 1];
+
+                for (int k = 1; k <= n + 2; k++) {
+                    for (int i = 0; i < fastPow(2, repeatedCnt); i++) {
+                        int[] mask = new int[repeatedCnt];
+                        int greaterCnt = 0;
+                        int i_ = i;
+                        int pos = 0;
+                        while (i_ != 0) {
+                            mask[pos] = i_ % 2;
+                            i_ /= 2;
+                            if (mask[pos] == 1) {
+                                greaterCnt++;
+                            }
+                            pos++;
                         }
-                        pos++;
-                    }
 
-                    for (int k = 1; k <= m; k++) {
                         long combCnt = greaterResultCombCnt(mask, repeatedCards, k);
-                        res += (((combCnt * fastPowMod(k - 1, repeatedCnt - greaterCnt)) % MOD) * fastPowMod(m - k + 1, greaterCnt)) % MOD;
-                        res %= MOD;
+                        f_k[k] += (((combCnt * fastPowMod(k - 1, repeatedCnt - greaterCnt)) % MOD) * fastPowMod(m - k + 1, greaterCnt)) % MOD;
+                        f_k[k] %= MOD;
                     }
-                }
-                res *= fastPowMod(m, notPresentCnt);
-                res %= MOD;
 
+                    f_k[k] *= fastPowMod(m, notPresentCnt);
+                    f_k[k] %= MOD;
+                }
+
+                long[] g_x = new long[(int) n + 2 + 1];
+                g_x[1] = f_k[1];
+                for (int i = 2; i <= n + 2; i++) {
+                    g_x[i] = (g_x[i - 1] + f_k[i]) % MOD;
+                }
+
+                long res = m > n + 2 ? calcApproximation(g_x, m) : g_x[(int) m];
                 System.out.printf("Case #%s: %s\n", t, res);
             }
         }
+    }
+
+    private static long calcApproximation(long[] g_x, long m) {
+        long res = 0;
+
+        for (int i = 1; i <= n + 2; i++) {
+            long chisl = 1;
+            long znam = 1;
+            for (int j = 1; j <= n + 2; j++) {
+                if (j == i) {
+                    continue;
+                }
+                chisl *= (MOD + m - j) % MOD;
+                chisl %= MOD;
+                znam *= (MOD + i - j) % MOD;
+                znam %= MOD;
+            }
+
+            long drod = (chisl * fastPowMod(znam, MOD - 2)) % MOD;
+            res += (g_x[i] * drod) % MOD;
+            res %= MOD;
+        }
+
+        return res;
     }
 
     private static long greaterResultCombCnt(int[] mask, Map<Integer, Integer> repeatedCards, int k) {
