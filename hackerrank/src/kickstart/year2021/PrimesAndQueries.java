@@ -3,6 +3,7 @@ package kickstart.year2021;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigInteger;
 import java.util.StringTokenizer;
 
 public class PrimesAndQueries {
@@ -15,36 +16,37 @@ public class PrimesAndQueries {
                 int n = Integer.parseInt(tkn1.nextToken());
                 int q = Integer.parseInt(tkn1.nextToken());
                 long p = Long.parseLong(tkn1.nextToken());
-                long[] a = new long[n];
+
                 long[] dividedByPrime = new long[n];
                 long[] notDividedByPrime = new long[n];
+                long[] notDividedByPrimeNonZeroVal = new long[n];
+                long[] notDividedByPrimeSquare = new long[n];
+
+                long[] dividedByPrimeTree = new long[4 * n];
+                long[] notDividedByPrimeTree = new long[4 * n];
+                long[] notDividedByPrimeNonZeroValTree = new long[4 * n];
+                long[] notDividedByPrimeSquareTree = new long[4 * n];
 
                 StringTokenizer tkn2 = new StringTokenizer(br.readLine());
                 for (int i = 0; i < n; i++) {
-                    a[i] = Long.parseLong(tkn2.nextToken());
-                    if (a[i] % p == 0) {
-                        long tmp = a[i];
-                        while (tmp % p == 0) {
-                            dividedByPrime[i]++;
-                            tmp /= p;
-                        }
+                    long val = Long.parseLong(tkn2.nextToken());
+                    if (val % p == 0) {
+                        dividedByPrime[i] = getPrimePow(val, p);
                     } else {
-                        long tmp = a[i] / p;
-                        if (tmp != 0) {
-                            notDividedByPrime[i] = 1;
-                            while (tmp % p == 0) {
-                                notDividedByPrime[i]++;
-                                tmp /= p;
-                            }
+                        notDividedByPrime[i] = getPrimePow(val - val % p, p);
+                        if (notDividedByPrime[i] != 0) {
+                            notDividedByPrimeNonZeroVal[i] = 1;
+
+                            BigInteger bigVal = BigInteger.valueOf(val);
+                            notDividedByPrimeSquare[i] = bigVal.multiply(bigVal).subtract(BigInteger.ONE).getLowestSetBit();
                         }
                     }
                 }
 
-                long[] dividedByPrimeTree = new long[4 * n];
-                long[] notDividedByPrimeTree = new long[4 * n];
-
                 buildTree(dividedByPrime, dividedByPrimeTree, 1, 0, n - 1);
                 buildTree(notDividedByPrime, notDividedByPrimeTree, 1, 0, n - 1);
+                buildTree(notDividedByPrimeNonZeroVal, notDividedByPrimeNonZeroValTree, 1, 0, n - 1);
+                buildTree(notDividedByPrimeSquare, notDividedByPrimeSquareTree, 1, 0, n - 1);
 
                 StringBuilder resBuilder = new StringBuilder();
                 for (int i = 0; i < q; i++) {
@@ -53,40 +55,66 @@ public class PrimesAndQueries {
                     if (type == 1) {
                         int pos = Integer.parseInt(qTkn.nextToken()) - 1;
                         long val = Long.parseLong(qTkn.nextToken());
-                        update(dividedByPrimeTree, 1, pos,0, 0, n - 1);
-                        update(notDividedByPrimeTree, 1, pos,0, 0, n - 1);
+                        update(dividedByPrimeTree, 1, pos, 0, 0, n - 1);
+                        update(notDividedByPrimeTree, 1, pos, 0, 0, n - 1);
+                        update(notDividedByPrimeNonZeroValTree, 1, pos, 0, 0, n - 1);
+                        update(notDividedByPrimeSquareTree, 1, pos, 0, 0, n - 1);
+
                         if (val % p == 0) {
-                            long tmp = val;
-                            long pow = 0;
-                            while (tmp % p == 0) {
-                                pow++;
-                                tmp /= p;
-                            }
+                            long pow = getPrimePow(val, p);
                             update(dividedByPrimeTree, 1, pos, pow, 0, n - 1);
                         } else {
-                            long tmp = val / p;
-                            long pow = 0;
-                            if (tmp != 0) {
-                                pow = 1;
-                                while (tmp % p == 0) {
-                                    pow++;
-                                    tmp /= p;
-                                }
-                            }
+                            long pow = getPrimePow(val - val % p, p);
                             update(notDividedByPrimeTree, 1, pos, pow, 0, n - 1);
+                            if (pow != 0) {
+                                update(notDividedByPrimeNonZeroValTree, 1, pos, 1, 0, n - 1);
+
+                                BigInteger bigVal = BigInteger.valueOf(val);
+                                int sqrPow = bigVal.multiply(bigVal).subtract(BigInteger.ONE).getLowestSetBit();
+                                update(notDividedByPrimeSquareTree, 1, pos, sqrPow, 0, n - 1);
+                            }
                         }
                     } else {
                         long s = Long.parseLong(qTkn.nextToken());
                         int l = Integer.parseInt(qTkn.nextToken()) - 1;
                         int r = Integer.parseInt(qTkn.nextToken()) - 1;
-                        long res = s * getSum(dividedByPrimeTree, 1, l, r, 0, n - 1) +
-                                getSum(notDividedByPrimeTree, 1, l, r, 0, n - 1);
-                        resBuilder.append(res).append(" ");
+                        if (p != 2 || s % 2 == 1) {
+                            long res = s * getSum(dividedByPrimeTree, 1, l, r, 0, n - 1) +
+                                    getSum(notDividedByPrimeTree, 1, l, r, 0, n - 1) +
+                                    getSum(notDividedByPrimeNonZeroValTree, 1, l, r, 0, n - 1) * getPrimePow(s, p);
+                            resBuilder.append(res).append(" ");
+                        } else {
+                            long res = s * getSum(dividedByPrimeTree, 1, l, r, 0, n - 1);
+
+                            long pow = 0;
+                            while (s % 4 == 0) {
+                                pow++;
+                                s /= 2;
+                            }
+
+                            res += getSum(notDividedByPrimeSquareTree, 1, l, r, 0, n - 1) +
+                                    getSum(notDividedByPrimeNonZeroValTree, 1, l, r, 0, n - 1) * pow;
+
+                            resBuilder.append(res).append(" ");
+                        }
                     }
                 }
                 System.out.printf("Case #%s: %s\n", t, resBuilder);
             }
         }
+    }
+
+    private static long getPrimePow(long a, long p) {
+        if (a < p) {
+            return 0;
+        }
+
+        long pow = 0;
+        while (a % p == 0) {
+            pow++;
+            a /= p;
+        }
+        return pow;
     }
 
     private static long getSum(long[] tree, int p, int intrStart, int intrEnd, int start, int end) {
