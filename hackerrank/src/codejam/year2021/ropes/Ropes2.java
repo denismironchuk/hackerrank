@@ -14,6 +14,7 @@ public class Ropes2 {
 
     private static int oneSideTreesCnt = 8;
     private static List<Line> allLines = new ArrayList<>();
+    //index 0 - right, index 1 - left
     private static Line[][] allLinesMatrix = new Line[oneSideTreesCnt][oneSideTreesCnt];
 
     private static class Line {
@@ -29,6 +30,14 @@ public class Ropes2 {
 
         public long getHash() {
             return hash;
+        }
+
+        public Line getHorizontalFlip() {
+            return allLinesMatrix[oneSideTreesCnt - 1 - rightTree][oneSideTreesCnt - 1 - leftTree];
+        }
+
+        public Line getVerticalFlip() {
+            return allLinesMatrix[leftTree][rightTree];
         }
 
         @Override
@@ -76,6 +85,30 @@ public class Ropes2 {
             }
             return hash;
         }
+
+        public long getHorizontalFlipHash() {
+            long hash = 0;
+            for (Line l : lines.values()) {
+                hash += l.getHorizontalFlip().hash;
+            }
+            return hash;
+        }
+
+        public long getVerticalFlipHash() {
+            long hash = 0;
+            for (Line l : lines.values()) {
+                hash += l.getVerticalFlip().hash;
+            }
+            return hash;
+        }
+
+        public long getDoubleFlipHash() {
+            long hash = 0;
+            for (Line l : lines.values()) {
+                hash += l.getVerticalFlip().getHorizontalFlip().hash;
+            }
+            return hash;
+        }
     }
 
     public static void main(String[] args) throws IOException {
@@ -95,7 +128,7 @@ public class Ropes2 {
         Map<Long, Integer> combinationScore = new HashMap<>();
 
         long startTime = System.currentTimeMillis();
-        processState(new Combination(), combinationScore, true, true);
+        processState(new Combination(), combinationScore, true);
         long endTime = System.currentTimeMillis();
         System.out.println(endTime - startTime + "ms");
 
@@ -123,6 +156,8 @@ public class Ropes2 {
 
                 currentState.addLine(bestChoiseLine);*/
 
+                //----------------------------------------
+
                 System.out.println("Please enter your move...");
                 boolean isValidLine = false;
                 Line line = null;
@@ -140,6 +175,8 @@ public class Ropes2 {
                 System.out.println("Score = " + score);
 
                 currentState.addLine(line);
+
+                //----------------------------------------
 
                 Line bestChoiseLine = null;
                 int bestChoiseScore = Integer.MAX_VALUE;
@@ -165,17 +202,14 @@ public class Ropes2 {
         System.out.println();
     }
 
-    private static void processState(Combination state, Map<Long, Integer> combinationScore, boolean firstPlayer, boolean print) {
+    private static void processState(Combination state, Map<Long, Integer> combinationScore, boolean firstPlayer) {
         int score = firstPlayer ? Integer.MIN_VALUE : Integer.MAX_VALUE;
         for (Line line : allLines) {
-            /*if (print) {
-                System.out.println(line);
-            }*/
             if (state.canAdd(line)) {
                 long nextStateHash = state.getHash() + line.getHash();
                 if (!combinationScore.containsKey(nextStateHash)) {
                     state.addLine(line);
-                    processState(state, combinationScore, !firstPlayer, false);
+                    processState(state, combinationScore, !firstPlayer);
                     state.removeLine(line);
                 }
                 int scoreToAdd = state.getIntercectingLines(line);
@@ -192,5 +226,8 @@ public class Ropes2 {
             score = 0;
         }
         combinationScore.put(state.getHash(), score);
+        combinationScore.put(state.getHorizontalFlipHash(), score);
+        combinationScore.put(state.getVerticalFlipHash(), score);
+        combinationScore.put(state.getDoubleFlipHash(), score);
     }
 }
