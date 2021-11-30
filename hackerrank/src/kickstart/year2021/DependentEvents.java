@@ -47,6 +47,17 @@ public class DependentEvents {
                     probs[i][1] = (Long.parseLong(tkn.nextToken()) * MIL_INVERSE) % MOD;
                 }
 
+                long[][][] accumulativeProbs = new long[n][2][2];
+                accumulativeProbs[0][0][0] = 1;
+                accumulativeProbs[0][1][1] = 1;
+                int[] processed = new int[n];
+                processed[0] = 1;
+                for (int v = 1; v < n; v++) {
+                    if (processed[v] == 0) {
+                        buildProbabilityOnRoot(v, parents, probs, accumulativeProbs, processed);
+                    }
+                }
+
                 StringBuilder results = new StringBuilder();
                 for (int i = 0; i < q; i++) {
                     StringTokenizer tkn = new StringTokenizer(br.readLine());
@@ -82,15 +93,7 @@ public class DependentEvents {
                             currState = parents[currState];
                         }
 
-                        currState = top;
-                        long[][] matr2 = new long[][] {{1, 0}, {0, 1}};
-                        while (currState != 0) {
-                            long[][] prevMatr = new long[][] {{probs[currState][0], (MOD + 1 - probs[currState][0]) % MOD}, {probs[currState][1], (MOD + 1 - probs[currState][1]) % MOD}};
-                            matr2 = matrMul(prevMatr, matr2);
-                            currState = parents[currState];
-                        }
-
-                        long[][] res1 = matrMul(new long[][] {{probs[0][0], (MOD + 1 - probs[0][0]) % MOD}}, matr2);
+                        long[][] res1 = matrMul(new long[][] {{probs[0][0], (MOD + 1 - probs[0][0]) % MOD}}, accumulativeProbs[top]);
 
                         results.append((res1[0][0] * matr1[0][0]) % MOD).append(" ");
                     } else {
@@ -113,15 +116,7 @@ public class DependentEvents {
                             currState = parents[currState];
                         }
 
-                        currState = lca;
-                        long[][] commonMatr = new long[][] {{1, 0}, {0, 1}};
-                        while (currState != 0) {
-                            long[][] prevMatr = new long[][] {{probs[currState][0], (MOD + 1 - probs[currState][0]) % MOD}, {probs[currState][1], (MOD + 1 - probs[currState][1]) % MOD}};
-                            commonMatr = matrMul(prevMatr, commonMatr);
-                            currState = parents[currState];
-                        }
-
-                        long[][] res1 = matrMul(new long[][] {{probs[0][0], (MOD + 1 - probs[0][0]) % MOD}}, commonMatr);
+                        long[][] res1 = matrMul(new long[][] {{probs[0][0], (MOD + 1 - probs[0][0]) % MOD}}, accumulativeProbs[lca]);
 
                         long res = ((((res1[0][0] * matrU[0][0]) % MOD) * matrV[0][0]) % MOD + (((res1[0][1] * matrU[1][0]) % MOD) * matrV[1][0]) % MOD) % MOD;
 
@@ -144,5 +139,20 @@ public class DependentEvents {
             }
         }
         return res;
+    }
+
+    //Don't forget to set unity matrix to accumulativeProbs[0]
+    private static void buildProbabilityOnRoot(int v, int[] parents, long[][] probs, long[][][] accumulativeProbs, int[] processed) {
+        if (v == 0) {
+            return;
+        }
+
+        if (processed[parents[v]] == 0) {
+            buildProbabilityOnRoot(parents[v], parents, probs, accumulativeProbs, processed);
+        }
+
+        accumulativeProbs[v] = matrMul(accumulativeProbs[parents[v]],
+                new long[][] {{probs[v][0], (MOD + 1 - probs[v][0]) % MOD}, {probs[v][1], (MOD + 1 - probs[v][1]) % MOD}});
+        processed[v] = 1;
     }
 }
