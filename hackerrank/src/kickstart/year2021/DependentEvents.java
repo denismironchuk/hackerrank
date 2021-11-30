@@ -76,13 +76,11 @@ public class DependentEvents {
                         long[][] matr1 = new long[][] {{1, 0}, {0, 1}};
                         int currState = bottom;
 
-                        while (parents[currState] != top) {
+                        while (currState != top) {
                             long[][] prevMatr = new long[][] {{probs[currState][0], (MOD + 1 - probs[currState][0]) % MOD}, {probs[currState][1], (MOD + 1 - probs[currState][1]) % MOD}};
                             matr1 = matrMul(prevMatr, matr1);
                             currState = parents[currState];
                         }
-
-                        long[][] afterLca = new long[][] {{probs[currState][0], (MOD + 1 - probs[currState][0]) % MOD}};
 
                         currState = top;
                         long[][] matr2 = new long[][] {{1, 0}, {0, 1}};
@@ -93,33 +91,27 @@ public class DependentEvents {
                         }
 
                         long[][] res1 = matrMul(new long[][] {{probs[0][0], (MOD + 1 - probs[0][0]) % MOD}}, matr2);
-                        long[][] res2 = matrMul(afterLca, matr1);
 
-                        results.append((res1[0][0] * res2[0][0]) % MOD).append(" ");
+                        results.append((res1[0][0] * matr1[0][0]) % MOD).append(" ");
                     } else {
                         long[][] matrU = new long[][] {{1, 0}, {0, 1}};
                         int currState = u;
 
-                        while (parents[currState] != lca) {
+                        while (currState != lca) {
                             long[][] prevMatr = new long[][] {{probs[currState][0], (MOD + 1 - probs[currState][0]) % MOD}, {probs[currState][1], (MOD + 1 - probs[currState][1]) % MOD}};
                             matrU = matrMul(prevMatr, matrU);
                             currState = parents[currState];
                         }
 
-                        long[][] afterLca1U = new long[][] {{probs[currState][0], (MOD + 1 - probs[currState][0]) % MOD}};
-                        long[][] afterLca0U = new long[][] {{probs[currState][1], (MOD + 1 - probs[currState][1]) % MOD}};
 
                         long[][] matrV = new long[][] {{1, 0}, {0, 1}};
                         currState = v;
 
-                        while (parents[currState] != lca) {
+                        while (currState != lca) {
                             long[][] prevMatr = new long[][] {{probs[currState][0], (MOD + 1 - probs[currState][0]) % MOD}, {probs[currState][1], (MOD + 1 - probs[currState][1]) % MOD}};
                             matrV = matrMul(prevMatr, matrV);
                             currState = parents[currState];
                         }
-
-                        long[][] afterLca1V = new long[][] {{probs[currState][0], (MOD + 1 - probs[currState][0]) % MOD}};
-                        long[][] afterLca0V = new long[][] {{probs[currState][1], (MOD + 1 - probs[currState][1]) % MOD}};
 
                         currState = lca;
                         long[][] commonMatr = new long[][] {{1, 0}, {0, 1}};
@@ -130,13 +122,8 @@ public class DependentEvents {
                         }
 
                         long[][] res1 = matrMul(new long[][] {{probs[0][0], (MOD + 1 - probs[0][0]) % MOD}}, commonMatr);
-                        long[][] res2 = matrMul(afterLca1U, matrU);
-                        long[][] res3 = matrMul(afterLca1V, matrV);
 
-                        long[][] res4 = matrMul(afterLca0U, matrU);
-                        long[][] res5 = matrMul(afterLca0V, matrV);
-
-                        long res = (((((res1[0][0] * res2[0][0]) % MOD) * res3[0][0]) % MOD) + ((((res1[0][1] * res4[0][0]) % MOD) * res5[0][0]) % MOD)) % MOD;
+                        long res = ((((res1[0][0] * matrU[0][0]) % MOD) * matrV[0][0]) % MOD + (((res1[0][1] * matrU[1][0]) % MOD) * matrV[1][0]) % MOD) % MOD;
 
                         results.append(res).append(" ");
                     }
