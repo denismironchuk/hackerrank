@@ -3,15 +3,51 @@ package kickstart.year2021;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 public class DependentEvents {
 
     private static final long MOD = 1000000000 + 7;
     private static final long MIL_INVERSE = fastPow(1000000, MOD - 2);
+
+    private static class Pair {
+        private int num;
+        private int u;
+        private int v;
+        private int lca = -1;
+
+        public Pair(int num, int u, int v) {
+            this.num = num;
+            this.u = u;
+            this.v = v;
+        }
+    }
+
+    static class Node {
+        private int num;
+        private List<Node> neighbours = new ArrayList<>();
+
+        public Node(final int num) {
+            this.num = num;
+        }
+
+        public void addNeighbour(Node neigh) {
+            neighbours.add(neigh);
+        }
+
+        public int getNum() {
+            return num;
+        }
+
+        public List<Node> getNeighbours() {
+            return neighbours;
+        }
+    }
 
     private static long fastPow(long v, long p) {
         if (p == 0) {
@@ -39,14 +75,19 @@ public class DependentEvents {
                 long k = Long.parseLong(br.readLine());
                 probs[0][0] = (k * MIL_INVERSE) % MOD;
                 parents[0] = -1;
+                Node[] nodes = new Node[n];
+                nodes[0] = new Node(0);
                 for (int i = 1; i < n; i++) {
                     StringTokenizer tkn = new StringTokenizer(br.readLine());
                     int parent = Integer.parseInt(tkn.nextToken()) - 1;
                     parents[i] = parent;
                     probs[i][0] = (Long.parseLong(tkn.nextToken()) * MIL_INVERSE) % MOD;
                     probs[i][1] = (Long.parseLong(tkn.nextToken()) * MIL_INVERSE) % MOD;
+                    nodes[i] = new Node(i);
                     if (probs[i][0] == probs[i][1]) {
                         parents[i] = -1;
+                    } else {
+                        nodes[parents[i]].addNeighbour(nodes[i]);
                     }
                 }
 
@@ -62,25 +103,42 @@ public class DependentEvents {
                     }
                 }
 
-                StringBuilder results = new StringBuilder();
+                List<Pair> pairs = new ArrayList<>();
+                Map<Integer, List<Pair>> pairsMap = new HashMap<>();
                 for (int i = 0; i < q; i++) {
                     StringTokenizer tkn = new StringTokenizer(br.readLine());
                     int u = Integer.parseInt(tkn.nextToken()) - 1;
                     int v = Integer.parseInt(tkn.nextToken()) - 1;
+                    Pair pair = new Pair(i, u, v);
+                    pairs.add(pair);
+                    if (!pairsMap.containsKey(u)) {
+                        pairsMap.put(u, new ArrayList<>());
+                    }
+                    if (!pairsMap.containsKey(v)) {
+                        pairsMap.put(v, new ArrayList<>());
+                    }
+                    pairsMap.get(u).add(pair);
+                    pairsMap.get(v).add(pair);
+                }
+
+                int[] processed = new int[n];
+                int[] black = new int[n];
+                int[] ancestors = new int[n];
+                DisjointSet dSet = new DisjointSet(n);
+
+                for (int i = 0; i < n; i++) {
+                    if (processed[i] == 0) {
+                        lca(nodes[i], processed, black, pairsMap, dSet, ancestors);
+                    }
+                }
+
+                StringBuilder results = new StringBuilder();
+                for (Pair pair : pairs) {
+                    int u = pair.u;
+                    int v = pair.v;
                     if (subtreeRoot[u] == subtreeRoot[v]) {
                         int root = subtreeRoot[u];
-                        Set<Integer> pathToRoot = new HashSet<>();
-                        int currentNode = u;
-                        while (currentNode != root) {
-                            pathToRoot.add(currentNode);
-                            currentNode = parents[currentNode];
-                        }
-                        pathToRoot.add(currentNode);
-
-                        int lca = v;
-                        while (!pathToRoot.contains(lca)) {
-                            lca = parents[lca];
-                        }
+                        int lca = pair.lca;
 
                         if (lca == u || lca == v) {
                             int top = lca;
@@ -112,6 +170,39 @@ public class DependentEvents {
                     }
                 }
                 System.out.printf("Case #%s: %s\n", t, results);
+            }
+        }
+    }
+
+    private static void lca(Node nd, int[] processed, int[] black, Map<Integer, List<Pair>> pairs, DisjointSet dSet, int[] ancestors) {
+        int nodeNum = nd.getNum();
+        processed[nodeNum] = 1;
+        dSet.makeSet(nodeNum);
+        ancestors[dSet.find(nodeNum)] = nodeNum;
+
+        for (Node child : nd.getNeighbours()) {
+            int childNum = child.getNum();
+            if (processed[childNum] == 0) {
+                lca(child, processed, black, pairs, dSet, ancestors);
+                dSet.unite(dSet.find(nodeNum), dSet.find(childNum));
+                ancestors[dSet.find(nodeNum)] = nodeNum;
+            }
+        }
+        black[nodeNum] = 1;
+
+        if (null == pairs.get(nodeNum)) {
+            return;
+        }
+
+        for (Pair pair : pairs.get(nodeNum)) {
+            if (pair.u == nodeNum) {
+                if (black[pair.v] == 1) {
+                    pair.lca = ancestors[dSet.find(pair.v)];
+                }
+            } else {
+                if (black[pair.u] == 1) {
+                    pair.lca = ancestors[dSet.find(pair.u)];
+                }
             }
         }
     }
@@ -165,5 +256,42 @@ public class DependentEvents {
         inverse(accumulativeProbs[v], inverseAcc[v]);
         processed[v] = processed[parents[v]];
         return processed[v];
+    }
+
+    public static class DisjointSet {
+        private int[] parents;
+        private int[] rank;
+
+        public DisjointSet(int n) {
+            parents = new int[n];
+            rank = new int[n];
+        }
+
+        public void makeSet(int x) {
+            parents[x] = x;
+        }
+
+        public int find(int x) {
+            if (parents[x] == x) {
+                return x;
+            } else {
+                parents[x] = find(parents[x]);
+                return parents[x];
+            }
+        }
+
+        public void unite(int x, int y) {
+            int px = find(x);
+            int py = find(y);
+
+            if (rank[px] > rank[py]) {
+                parents[py] = px;
+            } else {
+                parents[px] = py;
+                if (rank[px] == rank[py]) {
+                    rank[py]++;
+                }
+            }
+        }
     }
 }
