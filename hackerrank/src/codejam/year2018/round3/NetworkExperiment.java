@@ -28,6 +28,10 @@ public class NetworkExperiment {
             neighbours.add(nd);
         }
 
+        public void removeNeighbour(Node nd) {
+            neighbours.remove(nd);
+        }
+
         @Override
         public String toString() {
             return num + " : " + neighbours.stream().map(nd -> String.valueOf(nd.num)).collect(Collectors.joining(" "));
@@ -35,7 +39,9 @@ public class NetworkExperiment {
     }
 
     public static void main(String[] args) {
-        Node[] nodes = new Node[N];
+        int graphsCnt = buildAllGraphs();
+        System.out.println(graphsCnt);
+        /*Node[] nodes = new Node[N];
 
         while (true) {
             for (int i = 0; i < N; i++) {
@@ -103,71 +109,135 @@ public class NetworkExperiment {
                 continue;
             }
 
-            Map<Integer, Integer> hashCnt = new HashMap<>();
-            for (Node nd : nodes) {
-                int[] invariant = buildInvariant(nd);
-                //System.out.println(Arrays.stream(invariant).mapToObj(String::valueOf).collect(Collectors.joining(" ")));
-                //System.out.println(Arrays.hashCode(invariant));
-                hashCnt.merge(Arrays.hashCode(invariant), 1, (oldVal, newVal) -> oldVal + 1);
-            }
+            Set<Integer> restoredNodes = new HashSet<>();
+            boolean hasUniqueHash = true;
 
-            boolean hasUniqueHash = hashCnt.values().stream().anyMatch(v -> v == 1);
+            while (restoredNodes.size() != N && hasUniqueHash) {
+                hasUniqueHash = false;
+                Map<Integer, Integer> hashCnt = new HashMap<>();
+                Map<Integer, List<Integer>> hashNodes = new HashMap<>();
+
+                for (Node nd : nodes) {
+                    if (restoredNodes.contains(nd.num)) {
+                        continue;
+                    }
+
+                    int invariant = buildInvariant(nd, restoredNodes);
+                    hashCnt.merge(invariant, 1, (oldVal, newVal) -> oldVal + 1);
+                    if (!hashNodes.containsKey(invariant)) {
+                        hashNodes.put(invariant, new ArrayList<>());
+                    }
+                    hashNodes.get(invariant).add(nd.num);
+                }
+
+
+                for (Map.Entry<Integer, Integer> entry : hashCnt.entrySet()) {
+                    int hash = entry.getKey();
+                    if (entry.getValue() == 1) {
+                        restoredNodes.add(hashNodes.get(hash).get(0));
+                        hasUniqueHash = true;
+                    }
+                }
+            }
 
             if (hasUniqueHash) {
                 break;
+            } else {
+                System.out.println(restoredNodes.size());
             }
         }
 
-        Map<Integer, Integer> hashCnt = new HashMap<>();
-        Map<Integer, List<Integer>> hashNodes = new HashMap<>();
-        for (Node nd : nodes) {
-            int[] invariant = buildInvariant(nd);
-            System.out.println(Arrays.stream(invariant).mapToObj(String::valueOf).collect(Collectors.joining(" ")));
-            //System.out.println(Arrays.hashCode(invariant));
-            int hash = Arrays.hashCode(invariant);
-            hashCnt.merge(hash, 1, (oldVal, newVal) -> oldVal + 1);
-            if (!hashNodes.containsKey(hash)) {
-                hashNodes.put(hash, new ArrayList<>());
-            }
-            hashNodes.get(hash).add(nd.num);
-        }
-
-        int uniqueNodeNum = -1;
-        for (Map.Entry<Integer, Integer> entry : hashCnt.entrySet()) {
-            int hash = entry.getKey();
-            if (entry.getValue() == 1) {
-                uniqueNodeNum = hashNodes.get(hash).get(0);
-                break;
-            }
-        }
-
-        System.out.println(uniqueNodeNum);
-
-        for (Node nd : nodes[uniqueNodeNum].neighbours) {
-            int[] invariant = buildInvariant(nd);
-            System.out.println(Arrays.stream(invariant).mapToObj(String::valueOf).collect(Collectors.joining(" ")));
-        }
-
-        System.out.println("=================");
-
-        for (Node nd : nodes) {
-            if (nodes[uniqueNodeNum].neighbours.contains(nd) || nd.num == uniqueNodeNum) {
-                continue;
-            }
-            int[] invariant = buildInvariant(nd);
-            System.out.println(Arrays.stream(invariant).mapToObj(String::valueOf).collect(Collectors.joining(" ")));
-        }
-
-        System.out.println("SUCESS!!!!");
+        System.out.println("SUCESS!!!!");*/
     }
 
-    private static int[] buildInvariant(Node nd) {
-        return buildInvariant(nd, new int[N]);
+    private static int canBeRestored(Node[] nodes) {
+        Set<Integer> restoredNodes = new HashSet<>();
+        boolean hasUniqueHash = true;
+
+        while (restoredNodes.size() != N && hasUniqueHash) {
+            hasUniqueHash = false;
+            Map<Integer, Integer> hashCnt = new HashMap<>();
+            Map<Integer, List<Integer>> hashNodes = new HashMap<>();
+
+            for (Node nd : nodes) {
+                if (restoredNodes.contains(nd.num)) {
+                    continue;
+                }
+
+                int invariant = buildInvariant(nd, restoredNodes);
+                hashCnt.merge(invariant, 1, (oldVal, newVal) -> oldVal + 1);
+                if (!hashNodes.containsKey(invariant)) {
+                    hashNodes.put(invariant, new ArrayList<>());
+                }
+                hashNodes.get(invariant).add(nd.num);
+            }
+
+
+            for (Map.Entry<Integer, Integer> entry : hashCnt.entrySet()) {
+                int hash = entry.getKey();
+                if (entry.getValue() == 1) {
+                    restoredNodes.add(hashNodes.get(hash).get(0));
+                    hasUniqueHash = true;
+                }
+            }
+        }
+
+        return restoredNodes.size();
     }
 
-    private static int[] buildInvariant(Node nd, int[] processed) {
+    private static int buildAllGraphs() {
+        Node[] nodes = new Node[10];
+        for (int i = 0; i < 10; i++) {
+            nodes[i] = new Node(i);
+        }
+        for (int i = 2; i <= 5; i++) {
+            nodes[0].addNeighbour(nodes[i]);
+            nodes[i].addNeighbour(nodes[0]);
+
+            nodes[1].addNeighbour(nodes[i + 4]);
+            nodes[i + 4].addNeighbour(nodes[1]);
+        }
+
+        return addEdges(2, 2, nodes);
+    }
+
+    private static int addEdges(int currNodeIndex, int lastAddedNode, Node[] nodes) {
+        if (nodes[currNodeIndex].neighbours.size() == 4) {
+            if (currNodeIndex == 9) {
+                /*if (canBeRestored(nodes)) {
+                    for (Node nd : nodes) {
+                        System.out.println(nd);
+                    }
+                    System.out.println("===============");
+                }*/
+                int res = canBeRestored(nodes);
+                if (res > 2) {
+                    System.out.println(res);
+                }
+                return 1;
+            } else {
+                return addEdges(currNodeIndex + 1, currNodeIndex + 1, nodes);
+            }
+        } else {
+            int res = 0;
+            for (int i = lastAddedNode + 1; i < 10; i++) {
+                if (nodes[i].neighbours.size() == 4) {
+                    continue;
+                }
+                nodes[currNodeIndex].addNeighbour(nodes[i]);
+                nodes[i].addNeighbour(nodes[currNodeIndex]);
+                res += addEdges(currNodeIndex, i, nodes);
+                nodes[currNodeIndex].removeNeighbour(nodes[i]);
+                nodes[i].removeNeighbour(nodes[currNodeIndex]);
+            }
+            return res;
+        }
+    }
+
+    private static int buildInvariant(Node nd, Set<Integer> restoredNodes) {
         int[] invariant = new int[N];
         Queue<Node> q = new LinkedList<>();
+        int[] processed = new int[N];
         int[] dist = new int[N];
 
         q.add(nd);
@@ -185,7 +255,13 @@ public class NetworkExperiment {
             }
         }
 
-        return invariant;
+        for (int i = 0; i < N; i++) {
+            if (!restoredNodes.contains(i)) {
+                dist[i] = 0;
+            }
+        }
+
+        return Arrays.hashCode(new int[] {Arrays.hashCode(invariant), Arrays.hashCode(dist)});
 
     }
 }
