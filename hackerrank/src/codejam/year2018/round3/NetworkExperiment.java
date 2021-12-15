@@ -201,6 +201,30 @@ public class NetworkExperiment {
         return addEdges(2, 2, nodes);
     }
 
+    private static int pivotCounts(Node[] nodes) {
+        int res = 0;
+        for (int i = 0; i < N - 1; i++) {
+            for (int j = i + 1; j < N; j++) {
+                if (nodes[i].neighbours.contains(nodes[j])) {
+                    continue;
+                }
+
+                boolean hasCommon = false;
+                for (Node neigh : nodes[i].neighbours) {
+                    if (nodes[j].neighbours.contains(neigh)) {
+                        hasCommon = true;
+                        break;
+                    }
+                }
+                if (!hasCommon) {
+                    //System.out.println(i + " " + j);
+                    res++;
+                }
+            }
+        }
+        return res;
+    }
+
     private static int addEdges(int currNodeIndex, int lastAddedNode, Node[] nodes) {
         if (nodes[currNodeIndex].neighbours.size() == 4) {
             if (currNodeIndex == 9) {
@@ -210,9 +234,38 @@ public class NetworkExperiment {
                     }
                     System.out.println("===============");
                 }*/
-                int res = canBeRestored(nodes);
+                /*int res = canBeRestored(nodes);
                 if (res > 2) {
                     System.out.println(res);
+                }*/
+                int sepCnt = pivotCounts(nodes);
+                if (sepCnt == 1) {
+                    List<Integer> n1 = new ArrayList<>();
+                    List<Integer> n2 = new ArrayList<>();
+                    for (int i = 2; i < N; i++) {
+                        if (i < 6) {
+                            int cnt = 0;
+                            for (Node neigh : nodes[i].neighbours) {
+                                if (neigh.num < 6 && neigh.num > 1) {
+                                    cnt++;
+                                }
+                            }
+                            n1.add(cnt);
+                        } else {
+                            int cnt = 0;
+                            for (Node neigh : nodes[i].neighbours) {
+                                if (neigh.num >= 6) {
+                                    cnt++;
+                                }
+                            }
+                            n2.add(cnt);
+                        }
+                    }
+                    String s = n1 + " : " + n2;
+                    System.out.println(n1 + " : " + n2);
+                    if (s.equals("[2, 1, 1, 0] : [1, 1, 1, 1]")) {
+                        System.out.println();
+                    }
                 }
                 return 1;
             } else {
