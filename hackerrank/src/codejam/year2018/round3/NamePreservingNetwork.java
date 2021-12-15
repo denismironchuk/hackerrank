@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -14,6 +15,7 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 public class NamePreservingNetwork {
@@ -134,7 +136,7 @@ public class NamePreservingNetwork {
                                 continue;
                             }
 
-                            int invariant = buildInvariant(nd, restoredNodes);
+                            int invariant = buildInvariant(nd, restoredNodes, nodes);
                             hashCnt.merge(invariant, 1, (oldVal, newVal) -> oldVal + 1);
                             if (!hashNodes.containsKey(invariant)) {
                                 hashNodes.put(invariant, new ArrayList<>());
@@ -171,15 +173,15 @@ public class NamePreservingNetwork {
                     }
                 }
 
-                System.out.println("=============");
+                /*System.out.println("=============");
                 for (Node nd : nodes) {
                     for (Node neigh : nd.neighbours) {
                         if (nd.num < neigh.num) {
-                            System.out.println((((nd.num + 1) % N) + 1) + " " + (((neigh.num + 1) % N) + 1));
+                            System.out.println((((nd.num + 2) % N) + 1) + " " + (((neigh.num + 2) % N) + 1));
                         }
                     }
                 }
-                System.out.println("=============");
+                System.out.println("=============");*/
 
                 int resp1 = Integer.parseInt(br.readLine());
                 if (resp1 == -1) {
@@ -209,14 +211,13 @@ public class NamePreservingNetwork {
                             continue;
                         }
 
-                        int invariant = buildInvariant(nd, restoredNodes);
+                        int invariant = buildInvariant(nd, restoredNodes, respNet);
                         hashCnt.merge(invariant, 1, (oldVal, newVal) -> oldVal + 1);
                         if (!hashNodes.containsKey(invariant)) {
                             hashNodes.put(invariant, new ArrayList<>());
                         }
                         hashNodes.get(invariant).add(nd.num);
                     }
-
 
                     for (Map.Entry<Integer, Integer> entry : hashCnt.entrySet()) {
                         int hash = entry.getKey();
@@ -225,18 +226,19 @@ public class NamePreservingNetwork {
                             restoredNodes.add(hashNodeIndex);
                             Node hashNode = respNet[hashNodeIndex];
                             hashMap.get(hash).assignedNode = hashNode;
+                            hashNode.hash = hash;
                         }
                     }
                 }
                 System.out.println(Arrays.stream(nodes)
-                        .map(nd -> nd.assignedNode.num)
+                        .map(nd -> nd.assignedNode.num + 1)
                         .map(String::valueOf)
                         .collect(Collectors.joining(" ")));
             }
         }
     }
 
-    private static int buildInvariant(Node nd, Set<Integer> restoredNodes) {
+    private static int buildInvariant(Node nd, Set<Integer> restoredNodes, Node[] nodes) {
         int[] invariant = new int[N];
         Queue<Node> q = new LinkedList<>();
         int[] processed = new int[N];
@@ -257,12 +259,18 @@ public class NamePreservingNetwork {
             }
         }
 
-        for (int i = 0; i < N; i++) {
-            if (!restoredNodes.contains(i)) {
-                dist[i] = 0;
+        TreeSet<Node> restoredSorted = new TreeSet<>(Comparator.comparing(node -> node.hash));
+        for (Integer resNodeIndex : restoredNodes) {
+            if (restoredSorted.contains(nodes[resNodeIndex])) {
+                throw new RuntimeException();
             }
+            restoredSorted.add(nodes[resNodeIndex]);
+        }
+        List<Integer> distsSortedByHash = new ArrayList<>();
+        for (Node node : restoredSorted) {
+            distsSortedByHash.add(dist[node.num]);
         }
 
-        return Arrays.hashCode(new int[] {Arrays.hashCode(invariant), Arrays.hashCode(dist)});
+        return Arrays.hashCode(new int[] {Arrays.hashCode(invariant), distsSortedByHash.hashCode()});
     }
 }
