@@ -15,7 +15,7 @@ public class GoGophersSet1 {
     private static final Random RND = new Random();
 
     private int attempts = 0;
-    private int GOPHERS_CNT = 2;
+    private int GOPHERS_CNT = 25;
     private List<Integer> TASTES;
     private List<Integer> TASTES_USED;
 
@@ -26,6 +26,8 @@ public class GoGophersSet1 {
             for (int t = 0; t < T; t++) {
                 attempts = 0;
                 TASTES = new ArrayList<>();
+                TASTES.add(MIN_VAL);
+                TASTES.add(MAX_VAL);
                 TASTES_USED = new ArrayList<>();
                 while (TASTES.size() != GOPHERS_CNT) {
                     int candidate = RND.nextInt(1000000) + 1;
@@ -35,7 +37,7 @@ public class GoGophersSet1 {
                 }
                 System.out.println(TASTES);
 
-                int minTaste = find1GopherValue(MIN_VAL, MAX_VAL, br) + 1;
+                int minTaste = find1GopherValue(MIN_VAL, MAX_VAL, br);
 
                 System.out.println(minTaste);
 
@@ -99,7 +101,7 @@ public class GoGophersSet1 {
             return start;
         }
 
-        int middle = 1 + (start + end) / 2;
+        int middle = (start + end) / 2;
         int gophCnt = 0;
         for (int i = 0; i < 2 * MAX_GOPHERS; i++) {
             gophCnt += checkIfGopherWillEatLocal(middle, br);
@@ -107,9 +109,9 @@ public class GoGophersSet1 {
         }
 
         if (gophCnt == 0) {
-            return find1GopherValue(middle, end, br);
+            return find1GopherValue(middle + 1, end, br);
         } else {
-            return find1GopherValue(start, middle - 1, br);
+            return find1GopherValue(start, middle, br);
         }
     }
 
