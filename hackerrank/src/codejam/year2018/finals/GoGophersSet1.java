@@ -3,6 +3,7 @@ package codejam.year2018.finals;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -15,22 +16,20 @@ public class GoGophersSet1 {
     private static final Random RND = new Random();
 
     private int attempts = 0;
-    private int GOPHERS_CNT = 25;
+    private int GOPHERS_CNT = 13;
     private List<Integer> TASTES;
     private List<Integer> TASTES_USED;
 
     private void run() throws IOException {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
             int T = 1;//Integer.parseInt(br.readLine());
-            int s = 100000;//Integer.parseInt(br.readLine());
             for (int t = 0; t < T; t++) {
+                int s = 100000;//Integer.parseInt(br.readLine());
                 attempts = 0;
                 TASTES = new ArrayList<>();
-                TASTES.add(MIN_VAL);
-                TASTES.add(MAX_VAL);
                 TASTES_USED = new ArrayList<>();
                 while (TASTES.size() != GOPHERS_CNT) {
-                    int candidate = RND.nextInt(1000000) + 1;
+                    int candidate = RND.nextInt(MAX_VAL) + 1;
                     if (!TASTES.contains(candidate)) {
                         TASTES.add(candidate);
                     }
@@ -75,7 +74,7 @@ public class GoGophersSet1 {
         for (int i = attempts + 1; i <= s; i++) {
             build.append(snackTaste).append("\n");
         }
-        System.out.println(build);
+        System.out.print(build.toString());
         int[] observed = new int[s + 1];
         for (int i = attempts + 1; i <= s; i++) {
             observed[i] = Integer.parseInt(br.readLine());
