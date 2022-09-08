@@ -3,9 +3,7 @@ package kickstart.year2022;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.StringTokenizer;
 
 public class HamiltonianTour {
@@ -27,17 +25,22 @@ public class HamiltonianTour {
                     map[i] = br.readLine().toCharArray();
                 }
                 fullMap = new char[r * 2][c * 2];
+                int freeCllCnt = 0;
                 for (int row = 0; row < r; row++) {
                     for (int col = 0; col < c; col++) {
+                        if (map[row][col] == '*') {
+                            freeCllCnt += 4;
+                        }
                         fullMap[row * 2][col * 2] = map[row][col];
                         fullMap[row * 2 + 1][col * 2] = map[row][col];
                         fullMap[row * 2][col * 2 + 1] = map[row][col];
                         fullMap[row * 2 + 1][col * 2 + 1] = map[row][col];
                     }
                 }
-                List<int[]> fullPath = new ArrayList<>();
+                StringBuilder fullPath = new StringBuilder();
                 buildPath(0, 0, 0, new int[r][c], new LinkedList<>(), fullPath);
-                System.out.println();
+                String path = fullPath.substring(1) + 'W';
+                System.out.printf("Case #%s: %s\n", t, freeCllCnt == path.length() ? path : "IMPOSSIBLE");
             }
         }
     }
@@ -63,10 +66,11 @@ public class HamiltonianTour {
 
     private static final int[][] MOVES = new int[][] {{0, -1},{1, 0},{0, 1},{-1, 0}};
     private static final int[] DIRS = new int[] {3, 0, 1, 2};
+    private static final char[] DIRS_LABES = new char[] {'S', 'E', 'N', 'W'};
 
-    private static boolean buildPath(int curRow, int curCol, int dir, int[][] processed, LinkedList<int[]> linearPath, List<int[]> fullPath) {
+    private static boolean buildPath(int curRow, int curCol, int dir, int[][] processed, LinkedList<int[]> linearPath, StringBuilder fullPath) {
         fullMap[curRow][curCol] = '#';
-        fullPath.add(new int[] {curRow, curCol});
+        fullPath.append(DIRS_LABES[dir]);
         processed[curRow / 2][curCol / 2] = 1;
 
         if (linearPath.size() == 0 || linearPath.getLast()[0] != curRow / 2 || linearPath.getLast()[1] != curCol / 2) {
@@ -88,7 +92,7 @@ public class HamiltonianTour {
             int nextRow = curRow + rowMove;
             int nextCol = curCol + colMove;
 
-            if (nextRow >= 0 && nextRow < r * 2 && nextCol >= 0 && nextCol < c * 2 && fullMap[nextRow][nextCol] == '.') {
+            if (nextRow >= 0 && nextRow < r * 2 && nextCol >= 0 && nextCol < c * 2 && fullMap[nextRow][nextCol] == '*') {
                 if (processed[nextRow / 2][nextCol / 2] == 0 || (lastCell[0] == nextRow / 2 && lastCell[1] == nextCol / 2)) {
                     boolean res = buildPath(nextRow, nextCol, DIRS[(i + dir) % 4], processed, linearPath, fullPath);
                     if (!res) {
@@ -106,9 +110,9 @@ public class HamiltonianTour {
     private static boolean isFullCell(int row, int col) {
         int rowGroup = row / 2;
         int colGroup = col / 2;
-        return fullMap[rowGroup * 2][colGroup * 2] != '.' &&
-        fullMap[rowGroup * 2 + 1][colGroup * 2] != '.' &&
-        fullMap[rowGroup * 2][colGroup * 2 + 1] != '.' &&
-        fullMap[rowGroup * 2 + 1][colGroup * 2 + 1] != '.';
+        return fullMap[rowGroup * 2][colGroup * 2] != '*' &&
+        fullMap[rowGroup * 2 + 1][colGroup * 2] != '*' &&
+        fullMap[rowGroup * 2][colGroup * 2 + 1] != '*' &&
+        fullMap[rowGroup * 2 + 1][colGroup * 2 + 1] != '*';
     }
 }
