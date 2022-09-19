@@ -3,9 +3,6 @@ package kickstart.year2022;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.stream.Collectors;
 
 public class PalindromicDeletions {
     public static final long MOD = 1000000000 + 7;
