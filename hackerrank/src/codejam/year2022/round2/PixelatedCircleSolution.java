@@ -24,25 +24,28 @@ public class PixelatedCircleSolution {
 
                 int[][] radiusBoard = new int[2 * R + 1][2 * R + 1];
                 for (int r = 0; r <= R; r++) {
-                    for (int x = -r; x <= r; x++) {
+                    for (int x = 0; x <= r; x++) {
                         double xD = x;
                         double rD = r;
                         int y = (int) Math.round(Math.sqrt(rD * rD - xD * xD));
                         radiusBoard[x + R][y + R] = 1;
-                        radiusBoard[x + R][-y + R] = 1;
-                        radiusBoard[y + R][x + R] = 1;
-                        radiusBoard[-y + R][x + R] = 1;
                     }
                 }
                 int res = 0;
-                for (int i = 0; i < 2 * R + 1; i++) {
-                    for (int j = 0; j < 2 * R + 1; j++) {
-                        if (fullBoard[i][j] != radiusBoard[i][j]) {
+                int diagMisMatch = 0;
+                for (int x = 0; x <= R; x++) {
+                    if (fullBoard[x + R][x + R] != radiusBoard[x + R][x + R]) {
+                        diagMisMatch++;
+                    }
+                }
+                for (int x = 0; x <= R; x++) {
+                    for (int y = x + 1; y <= R; y++) {
+                        if (fullBoard[x + R][y + R] != radiusBoard[x + R][y + R]) {
                             res++;
                         }
                     }
                 }
-                System.out.printf("Case #%s: %s\n", t, res);
+                System.out.printf("Case #%s: %s\n", t, 8 * res + 4 * diagMisMatch);
             }
         }
     }
