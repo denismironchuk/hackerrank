@@ -8,11 +8,11 @@ import java.util.*;
 public class DuckDuckGeese {
 
     private static class Interval {
-        private int startPos;
-        private int stopPos;
+        private long startPos;
+        private long stopPos;
         private boolean canBeGoose;
 
-        public Interval(int startPos, int stopPos, boolean canBeGoose) {
+        public Interval(long startPos, long stopPos, boolean canBeGoose) {
             this.startPos = startPos;
             this.stopPos = stopPos;
             this.canBeGoose = canBeGoose;
@@ -39,67 +39,75 @@ public class DuckDuckGeese {
                 for (int i = 0; i < n; i++) {
                     hatColors[i] = Integer.parseInt(tkn3.nextToken()) - 1;
                 }
-                List<Interval> intervals = new ArrayList<>();
-                Interval currentInterval = new Interval(0, 0, false);
-                intervals.add(currentInterval);
+                long res = 0;
+                for (int startPos = 0; startPos < n; startPos++) {
+                    List<Interval> intervals = new ArrayList<>();
+                    Interval currentInterval = new Interval(startPos, startPos, false);
+                    intervals.add(currentInterval);
 
-                Set<Integer> reachedMin = new HashSet<>();
-                Map<Integer, Integer> remainToMin = new HashMap<>();
-                Map<Integer, Integer> remainToMax = new HashMap<>();
+                    Set<Integer> reachedMin = new HashSet<>();
+                    Map<Integer, Integer> remainToMin = new HashMap<>();
+                    Map<Integer, Integer> remainToMax = new HashMap<>();
 
-                int curRemainToMin = colorLowLimit[hatColors[0]] - 1;
-                if (curRemainToMin <= 0) {
-                    reachedMin.add(hatColors[0]);
-                } else {
-                    remainToMin.put(hatColors[0], curRemainToMin);
-                }
+                    int curRemainToMin = colorLowLimit[hatColors[startPos]] - 1;
+                    if (curRemainToMin <= 0) {
+                        reachedMin.add(hatColors[startPos]);
+                    } else {
+                        remainToMin.put(hatColors[startPos], curRemainToMin);
+                    }
 
-                boolean canStart = true;
-                int curRemainToMax = colorUpLimit[hatColors[0]] - 1;
-                if (curRemainToMax == -1) {
-                    canStart = false;
-                } else {
-                    remainToMax.put(hatColors[0], curRemainToMax);
-                }
+                    boolean canStart = true;
+                    int curRemainToMax = colorUpLimit[hatColors[startPos]] - 1;
+                    if (curRemainToMax == -1) {
+                        canStart = false;
+                    } else {
+                        remainToMax.put(hatColors[startPos], curRemainToMax);
+                    }
 
-                if (canStart) {
-                    for (int pos = 1; pos < n - 1; pos++) {
-                        if (!reachedMin.contains(hatColors[pos])) {
-                            curRemainToMin = remainToMin.containsKey(hatColors[pos]) ?
-                                    remainToMin.get(hatColors[pos]) - 1 : colorLowLimit[hatColors[pos]] - 1;
-                            if (curRemainToMin <= 0) {
-                                remainToMin.remove(hatColors[pos]);
-                                reachedMin.add(hatColors[pos]);
-                            } else {
-                                remainToMin.put(hatColors[pos], curRemainToMin);
+                    if (canStart) {
+                        for (int pos = (startPos + 1) % n; pos != (startPos - 1 + n) % n; pos = (pos + 1) % n) {
+                            if (!reachedMin.contains(hatColors[pos])) {
+                                curRemainToMin = remainToMin.containsKey(hatColors[pos]) ?
+                                        remainToMin.get(hatColors[pos]) - 1 : colorLowLimit[hatColors[pos]] - 1;
+                                if (curRemainToMin <= 0) {
+                                    remainToMin.remove(hatColors[pos]);
+                                    reachedMin.add(hatColors[pos]);
+                                } else {
+                                    remainToMin.put(hatColors[pos], curRemainToMin);
+                                }
                             }
-                        }
 
-                        curRemainToMax = remainToMax.containsKey(hatColors[pos]) ?
-                                remainToMax.get(hatColors[pos]) - 1 : colorUpLimit[hatColors[pos]] - 1;
-                        if (curRemainToMax == -1) {
-                            break;
-                        } else {
-                            remainToMax.put(hatColors[pos], curRemainToMax);
-                        }
-
-                        if (remainToMin.isEmpty()) {
-                            if (currentInterval.canBeGoose == false) {
-                                currentInterval = new Interval(pos, pos, true);
-                                intervals.add(currentInterval);
+                            curRemainToMax = remainToMax.containsKey(hatColors[pos]) ?
+                                    remainToMax.get(hatColors[pos]) - 1 : colorUpLimit[hatColors[pos]] - 1;
+                            if (curRemainToMax == -1) {
+                                break;
                             } else {
-                                currentInterval.stopPos++;
+                                remainToMax.put(hatColors[pos], curRemainToMax);
                             }
-                        } else {
-                            if (currentInterval.canBeGoose == true) {
-                                currentInterval = new Interval(pos, pos, false);
-                                intervals.add(currentInterval);
+
+                            if (remainToMin.isEmpty()) {
+                                if (currentInterval.canBeGoose == false) {
+                                    currentInterval = new Interval(pos, pos, true);
+                                    intervals.add(currentInterval);
+                                } else {
+                                    currentInterval.stopPos++;
+                                }
                             } else {
-                                currentInterval.stopPos++;
+                                if (currentInterval.canBeGoose == true) {
+                                    currentInterval = new Interval(pos, pos, false);
+                                    intervals.add(currentInterval);
+                                } else {
+                                    currentInterval.stopPos++;
+                                }
                             }
                         }
                     }
+
+                    res += intervals.stream().filter(interval -> interval.canBeGoose)
+                            .map(interval -> interval.stopPos - interval.startPos + 1)
+                            .reduce(0l, (a, b) -> a + b);
                 }
+                System.out.printf("Case #%s: %s\n", t, res);
             }
         }
     }
