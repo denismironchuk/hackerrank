@@ -4,10 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
-import java.util.stream.IntStream;
 
 public class SchedulingAMeeting {
-
     private static class Meeting {
         private int startTime;
         private int endTime;
@@ -94,44 +92,118 @@ public class SchedulingAMeeting {
                     continue;
                 }
                 Iterator<LeadsMeetings> itr = leadsMeetings.iterator();
-                int res = IntStream.range(0, k - freeLeadsCnt)
-                        .mapToObj(i -> itr.next().meetingCnt).reduce(0, (a, b) -> a + b);
+                TreeSet<LeadsMeetings> firstLeadsMeeting = new TreeSet<>();
+                TreeSet<LeadsMeetings> remainLeadsMeetings = new TreeSet<>();
+                int minMeetings = 0;
+                int index = 0;
+                while (itr.hasNext()) {
+                    LeadsMeetings leadMeetings = itr.next();
+                    if (index < k - freeLeadsCnt) {
+                        firstLeadsMeeting.add(leadMeetings);
+                        minMeetings+=leadMeetings.meetingCnt;
+                    } else {
+                        remainLeadsMeetings.add(leadMeetings);
+                    }
+                    index++;
+                }
+                int res = minMeetings;
 
                 for (int startTime = 1; startTime + x <= d; startTime++) {
                     List<Meeting> endingMeetings = endPoints.get(startTime);
+                    boolean changed = false;
                     if (endingMeetings != null) {
+                        changed = true;
                         for (Meeting startingMeeting : endingMeetings) {
                             LeadsMeetings leadsMeeting = leadsMeetingList[startingMeeting.techLead];
+                            boolean firstContain = firstLeadsMeeting.contains(leadsMeeting);
                             leadsMeetings.remove(leadsMeeting);
+                            firstLeadsMeeting.remove(leadsMeeting);
+                            remainLeadsMeetings.remove(leadsMeeting);
                             leadsMeeting.meetingCnt--;
-                            leadsMeetings.add(leadsMeeting);
+                            if (leadsMeeting.meetingCnt != 0) {
+                                leadsMeetings.add(leadsMeeting);
+                                if (firstContain) {
+                                    firstLeadsMeeting.add(leadsMeeting);
+                                    minMeetings--;
+                                } else {
+                                    remainLeadsMeetings.add(leadsMeeting);
+                                }
+
+                                minMeetings = rebalance(firstLeadsMeeting, remainLeadsMeetings, minMeetings);
+                            } else {
+                                if (firstContain) {
+                                    minMeetings--;
+                                } else if (!firstLeadsMeeting.isEmpty()) {
+                                    LeadsMeetings last = firstLeadsMeeting.last();
+                                    firstLeadsMeeting.remove(last);
+                                    remainLeadsMeetings.add(last);
+                                    minMeetings-=last.meetingCnt;
+                                }
+                            }
                         }
                     }
                     List<Meeting> startingMeetings = startPoints.get(startTime + x - 1);
                     if (startingMeetings != null) {
+                        changed = true;
                         for (Meeting startingMeeting : startingMeetings) {
                             LeadsMeetings leadsMeeting = leadsMeetingList[startingMeeting.techLead];
+                            boolean firstContain = firstLeadsMeeting.contains(leadsMeeting);
+                            boolean remainContain = remainLeadsMeetings.contains(leadsMeeting);
                             leadsMeetings.remove(leadsMeeting);
+                            firstLeadsMeeting.remove(leadsMeeting);
+                            remainLeadsMeetings.remove(leadsMeeting);
                             leadsMeeting.meetingCnt++;
                             leadsMeetings.add(leadsMeeting);
+                            if (firstContain) {
+                                minMeetings++;
+                                firstLeadsMeeting.add(leadsMeeting);
+                                minMeetings = rebalance(firstLeadsMeeting, remainLeadsMeetings, minMeetings);
+                            } else if (remainContain) {
+                                remainLeadsMeetings.add(leadsMeeting);
+                            } else {
+                                remainLeadsMeetings.add(leadsMeeting);
+
+                                LeadsMeetings firstInRemain = remainLeadsMeetings.first();
+                                firstLeadsMeeting.add(firstInRemain);
+                                remainLeadsMeetings.remove(firstInRemain);
+                                minMeetings += firstInRemain.meetingCnt;
+
+                                minMeetings = rebalance(firstLeadsMeeting, remainLeadsMeetings, minMeetings);
+                            }
                         }
                     }
 
-                    busyLeadsCnt = leadsMeetings.size();
-                    freeLeadsCnt = n - busyLeadsCnt;
-                    if (freeLeadsCnt >= k) {
-                        res = 0;
-                        break;
-                    }
+                    if (changed) {
+                        busyLeadsCnt = leadsMeetings.size();
+                        freeLeadsCnt = n - busyLeadsCnt;
+                        if (freeLeadsCnt >= k) {
+                            res = 0;
+                            break;
+                        }
 
-                    Iterator<LeadsMeetings> itr1 = leadsMeetings.iterator();
-                    int candidate = IntStream.range(0, k - freeLeadsCnt)
-                            .mapToObj(i -> itr1.next().meetingCnt).reduce(0, (a, b) -> a + b);
-                    res = Math.min(candidate, res);
+                        res = Math.min(minMeetings, res);
+                    }
                 }
 
                 System.out.printf("Case #%s: %s\n", t, res);
             }
         }
+    }
+
+    private static int rebalance(TreeSet<LeadsMeetings> firstLeadsMeeting, TreeSet<LeadsMeetings> remainLeadsMeetings, int minMeetings) {
+        if (firstLeadsMeeting.isEmpty() || remainLeadsMeetings.isEmpty()) {
+            return minMeetings;
+        }
+        LeadsMeetings lastInFirst = firstLeadsMeeting.last();
+        LeadsMeetings firstInRemain = remainLeadsMeetings.first();
+        if (lastInFirst.compareTo(firstInRemain) == 1) {
+            firstLeadsMeeting.remove(lastInFirst);
+            remainLeadsMeetings.remove(firstInRemain);
+            firstLeadsMeeting.add(firstInRemain);
+            remainLeadsMeetings.add(lastInFirst);
+            minMeetings -=lastInFirst.meetingCnt;
+            minMeetings +=firstInRemain.meetingCnt;
+        }
+        return minMeetings;
     }
 }
