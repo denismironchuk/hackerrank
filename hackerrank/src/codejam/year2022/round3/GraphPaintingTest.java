@@ -6,7 +6,7 @@ import java.util.Set;
 
 public class GraphPaintingTest {
 
-    private static final int N = 1000;
+    private static final int N = 100000;
     private static final int COLORS =6;
 
     private static class Node {
@@ -56,43 +56,18 @@ public class GraphPaintingTest {
             }
 
             for (Node node : nodes) {
-                Set<Integer> colors = occupiedColours(node);
-                if (colors.size() == COLORS) {
-                    throw new RuntimeException("I can't assign colors correctly");
-                }
+                Set<Integer> colors = new HashSet<>();
+                getOutgoingColors(node, 3, colors);
+                colors.addAll(node.inColors);
+
                 int color = 0;
                 for (; colors.contains(color); color++) ;
                 node.color = color;
-                addIngoingColor(node, color, 2);
+                addIngoingColor(node, color, 3);
             }
 
             //System.out.println();
         }
-    }
-
-    private static Set<Integer> occupiedColours(Node n) {
-        Set<Integer> res = new HashSet<>();
-        getOutgoingColors(n, 2, res);
-
-        Set<Node> nodeForIngoing = new HashSet<>();
-        nodeForIngoing.add(n);
-        //getIngoingColors(nodeForIngoing, 2, res);
-        res.addAll(n.inColors);
-        res.remove(-1);
-        return res;
-    }
-
-    private static void getIngoingColors(Set<Node> nodes, int level, Set<Integer> colors) {
-        if (level == 0) {
-            return;
-        }
-
-        Set<Node> nextNodes = new HashSet<>();
-        for (Node node : nodes) {
-            colors.add(node.color);
-            nextNodes.addAll(node.inNodes);
-        }
-        getIngoingColors(nextNodes, level - 1, colors);
     }
 
     private static void addIngoingColor(Node n, int color, int level) {

@@ -3,8 +3,12 @@ package codejam.year2022.round3;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
@@ -21,6 +25,8 @@ public class MascotMaze {
 
         private int color = -1;
 
+        private int inCount = 0;
+
         public Node(int index) {
             this.index = index;
         }
@@ -31,41 +37,68 @@ public class MascotMaze {
             int T = Integer.parseInt(br.readLine());
             for (int t = 1; t <= T; t++) {
                 int n = Integer.parseInt(br.readLine());
-                Node[] nodes = new Node[n];
+                List<Node> nodes = new ArrayList<>();
                 for (int i = 0; i < n; i++) {
-                    nodes[i] = new Node(i);
+                    nodes.add(new Node(i));
                 }
                 StringTokenizer tknLeft = new StringTokenizer(br.readLine());
                 StringTokenizer tknRight = new StringTokenizer(br.readLine());
                 for (int i = 0; i < n; i++) {
                     int left = Integer.parseInt(tknLeft.nextToken()) - 1;
                     int right = Integer.parseInt(tknRight.nextToken()) - 1;
-                    nodes[i].left = nodes[left];
-                    nodes[i].right = nodes[right];
+                    nodes.get(i).left = nodes.get(left);
+                    nodes.get(i).right = nodes.get(right);
+                }
+
+                for (Node node : nodes) {
+                    node.left.inCount++;
+                    node.right.inCount++;
+
+                    node.left.right.inCount++;
+                    node.left.left.inCount++;
+
+                    node.right.right.inCount++;
+                    node.right.left.inCount++;
                 }
 
                 boolean impossible = false;
-                for (int i = 0; i < n; i++) {
-                    if (nodes[i].left.left == nodes[i] || nodes[i].left.right == nodes[i]
-                            || nodes[i].right.left == nodes[i] || nodes[i].right.right == nodes[i]) {
-                        impossible = true;
-                        break;
+                boolean retry = true;
+                while (retry) {
+                    retry = false;
+                    for (Node node : nodes) {
+                        node.inColors.clear();
+                        node.color = -1;
                     }
 
-                    Set<Integer> colors = new HashSet<>();
-                    getOutgoingColors(nodes[i], 3, colors);
-                    colors.addAll(nodes[i].inColors);
+                    for (Node node : nodes) {
+                        if (node.left.left == node || node.left.right == node
+                                || node.right.left == node || node.right.right == node) {
+                            impossible = true;
+                            break;
+                        }
 
-                    int color = 0;
-                    for (; colors.contains(color); color++) ;
-                    nodes[i].color = color;
-                    addIngoingColor(nodes[i], color, 3);
+                        Set<Integer> colors = new HashSet<>();
+                        getOutgoingColors(node, 3, colors);
+                        colors.addAll(node.inColors);
+
+                        int color = 0;
+                        for (; colors.contains(color); color++) ;
+                        if (color >= COLORS.length) {
+                            Collections.shuffle(nodes);
+                            retry = true;
+                        }
+                        node.color = color;
+                        addIngoingColor(node, color, 3);
+                    }
                 }
 
                 if (impossible) {
                     System.out.printf("Case #%s: IMPOSSIBLE\n", t);
                 } else {
-                    String colorsAssignments = Arrays.stream(nodes).map(node -> node.color).map(ind -> String.valueOf(COLORS[ind]))
+                    String colorsAssignments = nodes.stream()
+                            .sorted(Comparator.comparingInt(nd -> nd.index))
+                            .map(node -> node.color)
+                            .map(ind -> String.valueOf(COLORS[ind]))
                             .collect(Collectors.joining());
                     System.out.printf("Case #%s: %s\n", t, colorsAssignments);
                 }
