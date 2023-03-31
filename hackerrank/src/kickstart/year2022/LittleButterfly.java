@@ -17,12 +17,14 @@ public class LittleButterfly {
         private int x;
         private int y;
         private long c;
-        private long leftMaxEnergy = Long.MIN_VALUE;
-        private long rightMaxEnergy = Long.MIN_VALUE;
+        private long leftMaxEnergy;
+        private long rightMaxEnergy;
         public Flower(int x, int y, long c) {
             this.x = x;
             this.y = y;
             this.c = c;
+            this.leftMaxEnergy = c;
+            this.rightMaxEnergy = c;
         }
 
         public int getX() {
@@ -35,6 +37,12 @@ public class LittleButterfly {
 
         public long getC() {
             return c;
+        }
+
+        @Override
+        public String toString() {
+            return "<-" + leftMaxEnergy +
+                    ", ->" + rightMaxEnergy;
         }
     }
 
@@ -61,61 +69,99 @@ public class LittleButterfly {
                     heightFlowers.get(f.y).add(f);
                 }
                 for (List<Flower> lf : heightFlowers.values()) {
+                    int height = lf.get(0).getY();
+                    lf.add(new Flower(Integer.MIN_VALUE, height, 0));
+                    lf.add(new Flower(Integer.MAX_VALUE, height, 0));
                     lf.sort(Comparator.comparingInt(Flower::getX));
                 }
                 List<Flower> processed = new ArrayList<>();
                 while (!heightFlowers.isEmpty()) {
                     Map.Entry<Integer, List<Flower>> row = heightFlowers.pollFirstEntry();
                     List<Flower> rowFlowers = row.getValue();
-                    for (int i = 0; i < rowFlowers.size(); i++) {
-                        Flower testFlower = rowFlowers.get(i);
-                        long rowEnergy = testFlower.c;
 
-                        testFlower.leftMaxEnergy = Math.max(testFlower.leftMaxEnergy, rowEnergy);
-                        testFlower.rightMaxEnergy = Math.max(testFlower.rightMaxEnergy, rowEnergy);
-
-                        recalculateEnergy(testFlower, testFlower, processed, rowEnergy, e);
-
-                        for (int j = i + 1; j < rowFlowers.size(); j++) {
-                            Flower next = rowFlowers.get(j);
-                            rowEnergy = rowEnergy + next.c;
-
-                            testFlower.leftMaxEnergy = Math.max(testFlower.leftMaxEnergy, rowEnergy - e);
-                            testFlower.rightMaxEnergy = Math.max(testFlower.rightMaxEnergy, rowEnergy);
-
-                            recalculateEnergy(testFlower, next, processed, rowEnergy, e);
+                    //Calculate to right
+                    for (int i = rowFlowers.size() - 1; i > -1; i--) {
+                        Flower candidate = rowFlowers.get(i);
+                        for (Flower proc : processed) {
+                            if (proc.x >= candidate.x) {
+                                candidate.rightMaxEnergy = Math.max(
+                                        candidate.rightMaxEnergy,
+                                        candidate.c + Math.max(
+                                                proc.rightMaxEnergy, proc.leftMaxEnergy - e
+                                        )
+                                );
+                            } else if (proc.x < candidate.x) {
+                                candidate.rightMaxEnergy = Math.max(
+                                        candidate.rightMaxEnergy,
+                                        candidate.c + Math.max(
+                                                proc.leftMaxEnergy - e, proc.rightMaxEnergy - 2 * e
+                                        )
+                                );
+                            }
                         }
-
-                        processed.add(testFlower);
+                        if (i + 1 < rowFlowers.size()) {
+                            candidate.rightMaxEnergy = Math.max(
+                                    candidate.rightMaxEnergy,
+                                    candidate.c + rowFlowers.get(i + 1).rightMaxEnergy
+                            );
+                        }
                     }
-                }
-            }
-        }
-    }
 
-    private static void recalculateEnergy(Flower testFlower, Flower nextFlower, List<Flower> processed, long rowEnergy, long e) {
-        for (Flower procF : processed) {
-            if (procF.x > nextFlower.x) {
-                testFlower.leftMaxEnergy = Math.max(testFlower.leftMaxEnergy,
-                        Math.max(rowEnergy - e + procF.rightMaxEnergy,
-                                rowEnergy - 2 * e + procF.leftMaxEnergy));
-                testFlower.rightMaxEnergy = Math.max(testFlower.rightMaxEnergy,
-                        Math.max(rowEnergy + procF.rightMaxEnergy,
-                                rowEnergy - e + procF.leftMaxEnergy));
-            } else if (procF.x < nextFlower.x) {
-                testFlower.leftMaxEnergy = Math.max(testFlower.leftMaxEnergy,
-                        Math.max(rowEnergy + procF.leftMaxEnergy,
-                                rowEnergy - e + procF.rightMaxEnergy));
-                testFlower.rightMaxEnergy = Math.max(testFlower.rightMaxEnergy,
-                        Math.max(rowEnergy - e + procF.leftMaxEnergy,
-                                rowEnergy - 2 * e + procF.rightMaxEnergy));
-            } else if (procF.x == nextFlower.x) {
-                testFlower.leftMaxEnergy = Math.max(testFlower.leftMaxEnergy,
-                        Math.max(rowEnergy + procF.leftMaxEnergy,
-                                rowEnergy - e + procF.rightMaxEnergy));
-                testFlower.rightMaxEnergy = Math.max(testFlower.rightMaxEnergy,
-                        Math.max(rowEnergy + procF.rightMaxEnergy,
-                                rowEnergy - e + procF.leftMaxEnergy));
+                    //Calculate to left
+                    for (int i = 0; i < rowFlowers.size(); i++) {
+                        Flower candidate = rowFlowers.get(i);
+                        for (Flower proc : processed) {
+                            if (proc.x <= candidate.x) {
+                                candidate.leftMaxEnergy = Math.max(
+                                        candidate.leftMaxEnergy,
+                                        candidate.c + Math.max(
+                                                proc.leftMaxEnergy, proc.rightMaxEnergy - e
+                                        )
+                                );
+                            } else if (proc.x > candidate.x) {
+                                candidate.leftMaxEnergy = Math.max(
+                                        candidate.leftMaxEnergy,
+                                        candidate.c + Math.max(
+                                                proc.leftMaxEnergy - 2 * e, proc.rightMaxEnergy - e
+                                        )
+                                );
+                            }
+                        }
+                        if (i > 0) {
+                            candidate.leftMaxEnergy = Math.max(
+                                    candidate.leftMaxEnergy,
+                                    candidate.c + rowFlowers.get(i - 1).leftMaxEnergy
+                            );
+                        }
+                    }
+
+                    long[] toRightAccumulatedSum = new long[rowFlowers.size()];
+                    for (int i = rowFlowers.size() - 2; i > -1; i--) {
+                        toRightAccumulatedSum[i] = rowFlowers.get(i).c + toRightAccumulatedSum[i + 1];
+                    }
+                    long[] toLeftAccumulatedSum = new long[rowFlowers.size()];
+                    for (int i = 1; i < rowFlowers.size(); i++) {
+                        toLeftAccumulatedSum[i] = rowFlowers.get(i).c + toLeftAccumulatedSum[i - 1];
+                    }
+
+                    for (int i = 0; i < rowFlowers.size(); i++) {
+                        Flower fl = rowFlowers.get(i);
+                        long newLeft = Math.max(fl.leftMaxEnergy, toLeftAccumulatedSum[i] - e + fl.rightMaxEnergy - fl.c);
+                        long newRight = Math.max(fl.rightMaxEnergy, toRightAccumulatedSum[i] - e + fl.leftMaxEnergy - fl.c);
+                        fl.leftMaxEnergy = newLeft;
+                        fl.rightMaxEnergy = newRight;
+                    }
+
+                    //rowFlowers.forEach(System.out::println);
+                    //System.out.println("===============");
+                    processed.addAll(rowFlowers);
+                }
+
+                long res = Long.MIN_VALUE;
+                for (Flower f : processed) {
+                    res = Math.max(res, Math.max(f.rightMaxEnergy, f.leftMaxEnergy - e));
+                }
+                System.out.printf("Case #%s: %s\n", t, res);
             }
         }
     }
