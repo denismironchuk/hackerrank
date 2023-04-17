@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.StringTokenizer;
 
 public class HappySubarrays {
@@ -40,7 +41,7 @@ public class HappySubarrays {
                                 maxLenHappy[i] += maxLenHappy[j];
                                 happySubArraySums[i] += sums[i] * maxLenHappy[j] + happySubArraySums[j];
                                 sums[i] += sums[j];
-                                j += maxLenHappy[j] + 1;
+                                j += maxLenHappy[j];
                             } else {
                                 break;
                             }
@@ -48,7 +49,6 @@ public class HappySubarrays {
                         res += happySubArraySums[i];
                     }
                 }
-                //Arrays.stream(maxLenHappy).forEach(i -> System.out.printf("%s ", i));
                 System.out.printf("Case #%s: %s\n", t, res);
             }
         }
