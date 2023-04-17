@@ -23,31 +23,26 @@ public class HappySubarrays {
                 long[] sums = new long[n];
                 long[] happySubArraySums = new long[n];
 
-                maxLenHappy[n - 1] = a[n - 1] < 0 ? 0 : 1;
-                sums[n - 1] = a[n - 1] < 0 ? 0 : a[n - 1];
-                happySubArraySums[n - 1] = sums[n - 1];
-                long res = happySubArraySums[n - 1];
+                long res = 0;
 
-                for (int i = n - 2; i >= 0; i--) {
-                    if (a[i] >= 0) {
-                        int j = i;
-                        while (true) {
-                            for (; j < n && sums[i] + a[j] >= 0 && maxLenHappy[j] == 0; j++) {
-                                sums[i] += a[j];
-                                maxLenHappy[i]++;
-                                happySubArraySums[i] += sums[i];
-                            }
-                            if (j < n && maxLenHappy[j] != 0) {
-                                maxLenHappy[i] += maxLenHappy[j];
-                                happySubArraySums[i] += sums[i] * maxLenHappy[j] + happySubArraySums[j];
-                                sums[i] += sums[j];
-                                j += maxLenHappy[j];
-                            } else {
-                                break;
-                            }
+                for (int i = n - 1; i >= 0; i--) {
+                    int j = i;
+                    while (true) {
+                        for (; j < n && sums[i] + a[j] >= 0 && maxLenHappy[j] == 0; j++) {
+                            sums[i] += a[j];
+                            maxLenHappy[i]++;
+                            happySubArraySums[i] += sums[i];
                         }
-                        res += happySubArraySums[i];
+                        if (j < n && maxLenHappy[j] != 0) {
+                            maxLenHappy[i] += maxLenHappy[j];
+                            happySubArraySums[i] += sums[i] * maxLenHappy[j] + happySubArraySums[j];
+                            sums[i] += sums[j];
+                            j += maxLenHappy[j];
+                        } else {
+                            break;
+                        }
                     }
+                    res += happySubArraySums[i];
                 }
                 System.out.printf("Case #%s: %s\n", t, res);
             }
